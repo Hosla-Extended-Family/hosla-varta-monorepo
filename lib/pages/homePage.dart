@@ -39,7 +39,7 @@ class _HomepageState extends State<Homepage> {
         type: BottomNavigationBarType.fixed,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            icon: Icon(Icons.home_filled),
             label: 'Feed',
           ),
           BottomNavigationBarItem(
@@ -47,11 +47,11 @@ class _HomepageState extends State<Homepage> {
             label: 'Events',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
+            icon: Icon(Icons.chat_outlined),
             label: 'Chat',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.warning),
+            icon: Icon(Icons.emergency_rounded),
             label: 'Emergency',
           ),
           BottomNavigationBarItem(
