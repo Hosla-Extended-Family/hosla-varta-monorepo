@@ -33,7 +33,7 @@ class MainApp extends StatelessWidget {
         '/home': (context) => Homepage(),
         '/new-password': (context) => NewPasswordPage(),
       },
-      home: Homepage(),
+      home: SignupPage(),
     );
   }
 }
@@ -51,26 +51,3 @@ class __CheckUserState extends State<_CheckUser> {
     return const Placeholder();
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// muskan mast thi
-
-
-
-
-//sdbvisbviusbviusfbviusb
