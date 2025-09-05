@@ -6,7 +6,9 @@ import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/widgets/button.dart';
 
 class OtpVerificationPage extends StatefulWidget {
-  const OtpVerificationPage({super.key});
+  OtpVerificationPage({super.key, required this.endRoute});
+
+  final String endRoute;
 
   @override
   State<OtpVerificationPage> createState() => _OtpVerificationPageState();
@@ -144,7 +146,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
               text: 'Verify OTP',
               onPressed: () {
                 // TODO: Handle OTP verification logic here
-                Navigator.pushReplacementNamed(context, '/');
+                Navigator.pushReplacementNamed(context, widget.endRoute);
               },
             ),
           ],

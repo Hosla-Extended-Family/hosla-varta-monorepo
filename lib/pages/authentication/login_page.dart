@@ -104,6 +104,11 @@ class _LoginPageState extends State<LoginPage> {
               text: 'Login',
               onPressed: () {
                 // TODO: Handle login logic here
+                Navigator.pushNamed(
+                  context,
+                  '/otp-verification',
+                  arguments: '/home', // 👈 tell it where to go after OTP
+                );
               },
             ),
             Row(

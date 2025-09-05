@@ -1,0 +1,136 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:hosla/core/constants/text_theme.dart';
+import 'package:hosla/core/constants/constants.dart';
+import 'package:hosla/widgets/button.dart';
+
+class ForgetPasswordPage extends StatefulWidget {
+  const ForgetPasswordPage({super.key});
+
+  @override
+  State<ForgetPasswordPage> createState() => _ForgetPasswordPageState();
+}
+
+class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
+  late final TextEditingController _phoneController;
+
+  @override
+  void initState() {
+    _phoneController = TextEditingController();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: BackButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        title: const Text('Forgot Password', style: TextThemes.title),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: Constants.defaultPadding,
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            Center(
+              child: Text('Reset Your Password', style: TextThemes.bodyLarge),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Enter your phone number and we\'ll send you a code to reset your password.',
+              style: TextThemes.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            Row(
+              children: [
+                SizedBox(
+                  width: 100,
+                  child: DropdownButtonFormField<String>(
+                    borderRadius: BorderRadius.circular(16),
+                    value: '+91',
+                    items: const [
+                      DropdownMenuItem(value: '+91', child: Text('+91')),
+                    ],
+                    onChanged: (_) {},
+                    decoration: InputDecoration(
+                      labelText: 'Code',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12.0,
+                        vertical: 16.0,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      labelText: 'Phone Number',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            Button(
+              text: 'Send Reset Code',
+              onPressed: () {
+                // TODO: Handle forgot password logic here
+                if (_phoneController.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please enter your phone number'),
+                    ),
+                  );
+                  return;
+                }
+
+                // Navigate to OTP verification page
+                Navigator.pushNamed(
+                  context,
+                  '/otp-verification',
+                  arguments:
+                      '/new-password', // 👈 tell it where to go after OTP
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Remember your password?', style: TextThemes.bodySmall),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text('Sign In', style: TextThemes.bodySmall),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hosla/core/navigation/route_observer.dart';
 import 'package:hosla/pages/authentication/create_profile_page.dart';
+import 'package:hosla/pages/authentication/forget_password_page.dart';
 import 'package:hosla/pages/authentication/login_page.dart';
+import 'package:hosla/pages/authentication/new_password.dart';
 import 'package:hosla/pages/authentication/otp_verification_page.dart';
 import 'package:hosla/pages/authentication/signup_page.dart';
 import 'package:hosla/pages/homePage.dart';
@@ -22,11 +24,22 @@ class MainApp extends StatelessWidget {
         //'/': (context) => const _CheckUser(),
         '/login': (context) => const LoginPage(),
         '/signup': (context) => const SignupPage(),
-        '/otp-verification': (context) => const OtpVerificationPage(),
+        '/otp-verification': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as String;
+          return OtpVerificationPage(endRoute: args);
+        },
+
         '/create-profile': (context) => const CreateProfilePage(),
+<<<<<<< HEAD
         '/home': (context) => Homepage(),
       },
       home: Homepage(),
+=======
+        '/home': (context) => const Homepage(),
+        '/new-password': (context) => NewPasswordPage(),
+      },
+      home: const SignupPage(),
+>>>>>>> a2ba99d44d2e64fd0256591dde58eb4766849f5f
     );
   }
 }

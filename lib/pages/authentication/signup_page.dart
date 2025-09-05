@@ -15,6 +15,8 @@ class _SignupPageState extends State<SignupPage> {
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
   late final TextEditingController _confirmPasswordController;
+  bool _isNewPasswordVisible = true;
+  bool _isConfirmPasswordVisible = true;
 
   @override
   void initState() {
@@ -93,23 +95,47 @@ class _SignupPageState extends State<SignupPage> {
             SizedBox(height: 16),
             TextField(
               controller: _passwordController,
-              obscureText: true,
+              obscureText: _isNewPasswordVisible,
               decoration: InputDecoration(
                 labelText: 'Password',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
+                ),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _isNewPasswordVisible
+                        ? Icons.visibility
+                        : Icons.visibility_off,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isNewPasswordVisible = !_isNewPasswordVisible;
+                    });
+                  },
                 ),
               ),
             ),
             SizedBox(height: 16),
             TextField(
               controller: _confirmPasswordController,
-              obscureText: true,
+              obscureText: _isConfirmPasswordVisible,
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 labelText: 'Confirm Password',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
+                ),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _isNewPasswordVisible
+                        ? Icons.visibility
+                        : Icons.visibility_off,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isNewPasswordVisible = !_isNewPasswordVisible;
+                    });
+                  },
                 ),
                 errorText: _confirmPasswordController.text.isEmpty
                     ? null
@@ -136,3 +162,27 @@ class _SignupPageState extends State<SignupPage> {
     );
   }
 }
+
+
+// TextField(
+//               controller: _confirmPasswordController,
+//               obscureText: !_isConfirmPasswordVisible,
+//               decoration: InputDecoration(
+//                 labelText: 'Confirm New Password',
+//                 border: OutlineInputBorder(
+//                   borderRadius: BorderRadius.circular(8.0),
+//                 ),
+//                 suffixIcon: IconButton(
+//                   icon: Icon(
+//                     _isConfirmPasswordVisible
+//                         ? Icons.visibility
+//                         : Icons.visibility_off,
+//                   ),
+//                   onPressed: () {
+//                     setState(() {
+//                       _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+//                     });
+//                   },
+//                 ),
+//               ),
+//             ),
