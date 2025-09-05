@@ -26,7 +26,7 @@ class MainApp extends StatelessWidget {
         '/create-profile': (context) => const CreateProfilePage(),
         '/home': (context) => const Homepage(),
       },
-      home: const OtpVerificationPage(),
+      home: const Homepage(),
     );
   }
 }
@@ -44,3 +44,5 @@ class __CheckUserState extends State<_CheckUser> {
     return const Placeholder();
   }
 }
+
+//sdbvisbviusbviusfbviusb
