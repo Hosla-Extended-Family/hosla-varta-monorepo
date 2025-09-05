@@ -30,16 +30,10 @@ class MainApp extends StatelessWidget {
         },
 
         '/create-profile': (context) => const CreateProfilePage(),
-<<<<<<< HEAD
-        '/home': (context) => Homepage(),
-      },
-      home: Homepage(),
-=======
-        '/home': (context) => const Homepage(),
+        '/home': (context) =>  Homepage(),
         '/new-password': (context) => NewPasswordPage(),
       },
       home: const SignupPage(),
->>>>>>> a2ba99d44d2e64fd0256591dde58eb4766849f5f
     );
   }
 }
