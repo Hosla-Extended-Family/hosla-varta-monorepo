@@ -24,9 +24,9 @@ class MainApp extends StatelessWidget {
         '/signup': (context) => const SignupPage(),
         '/otp-verification': (context) => const OtpVerificationPage(),
         '/create-profile': (context) => const CreateProfilePage(),
-        '/home': (context) => const Homepage(),
+        '/home': (context) => Homepage(),
       },
-      home: const CreateProfilePage(),
+      home: Homepage(),
     );
   }
 }
