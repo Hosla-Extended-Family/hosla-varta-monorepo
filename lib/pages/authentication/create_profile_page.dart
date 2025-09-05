@@ -68,6 +68,7 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+<<<<<<< HEAD
       appBar: AppBar(
         leading: BackButton(
           onPressed: () {
@@ -266,7 +267,15 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
             ),
           ],
         ),
+=======
+      body: Center(
+        child: Text('Create Profile Page'),
+>>>>>>> a5cc0e8bd2c90cad401ec43d7ca7bd1ab5359970
       ),
     );
   }
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> a5cc0e8bd2c90cad401ec43d7ca7bd1ab5359970
