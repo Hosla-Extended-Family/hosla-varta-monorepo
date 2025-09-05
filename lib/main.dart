@@ -26,7 +26,7 @@ class MainApp extends StatelessWidget {
         '/create-profile': (context) => const CreateProfilePage(),
         '/home': (context) => const Homepage(),
       },
-      home: const Homepage(),
+      home: const CreateProfilePage(),
     );
   }
 }
