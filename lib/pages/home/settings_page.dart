@@ -20,7 +20,11 @@ class _SettingsPageState extends State<SettingsPage> {
         child: Column(
           children: [
             ListTileWidget(title: 'Profile', onTap: () {}),
-            ListTileWidget(title: 'Notifications', onTap: () {}),
+            ListTileWidget(title: 'Reset Password', onTap: () {}),
+            ListTileWidget(title: 'Update Personal Information', onTap: () {}),
+            ListTileWidget(title: 'App Language', onTap: () {}),
+            ListTileWidget(title: 'App Settings', onTap: () {}),
+            ListTileWidget(title: 'Help & Support', onTap: () {}),
             ListTileWidget(title: 'Privacy', onTap: () {}),
             ListTileWidget(title: 'About', onTap: () {}),
           ],
