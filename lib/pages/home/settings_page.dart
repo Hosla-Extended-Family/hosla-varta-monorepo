@@ -29,7 +29,6 @@ class _SettingsPageState extends State<SettingsPage> {
             ListTileWidget(title: 'About', onTap: () {}),
           ],
         ),
-
       ),
     );
   }
