@@ -19,11 +19,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   fonts:
-    - family: JakartaSans
+    - family: Quicksand
       fonts:
-        - asset: assets/fonts/PlusJakartaSans-Regular.ttf
-        - asset: assets/fonts/PlusJakartaSans-Bold.ttf
+        - asset: assets/fonts/Quicksand-Regular.ttf
+        - asset: assets/fonts/Quicksand-Bold.ttf
           weight: 700
-        - asset: assets/fonts/PlusJakartaSans-MediumItalic.ttf
-          style: italic
-          

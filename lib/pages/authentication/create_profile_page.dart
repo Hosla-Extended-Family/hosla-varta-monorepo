@@ -12,8 +12,7 @@ class CreateProfilePage extends StatefulWidget {
 }
 
 class _CreateProfilePageState extends State<CreateProfilePage> {
-  late final TextEditingController _firstNameController;
-  late final TextEditingController _lastNameController;
+  late final TextEditingController _nameController;
   late final TextEditingController _emailController;
   late final TextEditingController _bioController;
 
@@ -23,8 +22,7 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
 
   @override
   void initState() {
-    _firstNameController = TextEditingController();
-    _lastNameController = TextEditingController();
+    _nameController = TextEditingController();
     _emailController = TextEditingController();
     _bioController = TextEditingController();
     super.initState();
@@ -32,8 +30,7 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
 
   @override
   void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
+    _nameController.dispose();
     _emailController.dispose();
     _bioController.dispose();
     super.dispose();
@@ -106,37 +103,16 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
               style: TextButton.styleFrom(foregroundColor: Colors.grey[700]),
             ),
             const SizedBox(height: 24),
-
-            // Name Fields
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _firstNameController,
-                    decoration: InputDecoration(
-                      labelText: 'First Name',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                    ),
-                  ),
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: 'Name',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _lastNameController,
-                    decoration: InputDecoration(
-                      labelText: 'Last Name',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
             const SizedBox(height: 16),
-
             // Date of Birth Field
             GestureDetector(
               onTap: _selectDate,
@@ -168,7 +144,6 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
               ),
             ),
             const SizedBox(height: 16),
-
             // Email Field (Optional)
             TextField(
               controller: _emailController,
@@ -181,7 +156,6 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
               ),
             ),
             const SizedBox(height: 16),
-
             // Gender Dropdown
             DropdownButtonFormField<String>(
               value: _selectedGender,
@@ -229,18 +203,10 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
               text: 'Create Profile',
               onPressed: () {
                 // TODO: Handle profile creation logic
-                if (_firstNameController.text.isEmpty) {
+                if (_nameController.text.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Please enter your first name'),
-                    ),
-                  );
-                  return;
-                }
-                if (_lastNameController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please enter your last name'),
+                      content: Text('Please enter your name'),
                     ),
                   );
                   return;
@@ -259,6 +225,8 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
                   );
                   return;
                 }
+
+                // TODO: Save profile data to backend or local storage
 
                 // Navigate to home page after successful profile creation
                 Navigator.pushReplacementNamed(context, '/home');

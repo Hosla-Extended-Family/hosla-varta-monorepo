@@ -28,12 +28,12 @@ class MainApp extends StatelessWidget {
           final args = ModalRoute.of(context)!.settings.arguments as String;
           return OtpVerificationPage(endRoute: args);
         },
-
+        '/forget-password': (context) => const ForgetPasswordPage(),
         '/create-profile': (context) => const CreateProfilePage(),
         '/home': (context) => Homepage(),
         '/new-password': (context) => NewPasswordPage(),
       },
-      home: SignupPage(),
+      home: Homepage(),
     );
   }
 }

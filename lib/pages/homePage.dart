@@ -14,14 +14,14 @@ class Homepage extends StatefulWidget {
 }
 
 class _HomepageState extends State<Homepage> {
-  int _selectedIndex = 3;
+  int _selectedIndex = 4;
 
   List<Widget> _pages = [
     FeedPage(),
     EventsPage(),
     ChatPage(),
     EmergencyPage(),
-    SettingsPage()
+    SettingsPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -33,19 +33,22 @@ class _HomepageState extends State<Homepage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
+        selectedFontSize: 14,
+        selectedLabelStyle: TextStyle(
+          fontFamily: 'Quicksand',
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedFontSize: 12,
+        unselectedLabelStyle: TextStyle(
+          fontFamily: 'Quicksand',
+          fontWeight: FontWeight.w400,
+        ),
         type: BottomNavigationBarType.fixed,
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_filled),
-            label: 'Feed',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.event),
-            label: 'Events',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Feed'),
+          BottomNavigationBarItem(icon: Icon(Icons.event), label: 'Events'),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_outlined),
             label: 'Chat',
@@ -63,13 +66,9 @@ class _HomepageState extends State<Homepage> {
         selectedItemColor: ThemeColors.navBarIconColor,
         unselectedItemColor: ThemeColors.secondaryColor,
         onTap: _onItemTapped,
-        selectedLabelStyle: TextThemes.button,
-        unselectedLabelStyle: TextThemes.bodySmall,
         backgroundColor: ThemeColors.navBarColor,
         elevation: 10,
         iconSize: 20,
-        selectedFontSize: 8,
-        unselectedFontSize: 6,
       ),
     );
   }
