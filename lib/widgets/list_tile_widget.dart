@@ -11,7 +11,7 @@ class ListTileWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: Constants.defaultPadding / 2,
+      padding: Constants.defaultPadding / 4,
       child: ListTile(
         title: Text(title, style: TextThemes.bodyMedium),
         tileColor: Color.fromARGB(255, 240, 240, 240),
