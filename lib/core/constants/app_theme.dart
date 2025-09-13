@@ -17,6 +17,8 @@ class AppTheme {
       foregroundColor: ThemeColors.lightTextColor,
       elevation: 0,
       centerTitle: true,
+      surfaceTintColor: Colors.transparent,
+      shadowColor: ThemeColors.lightBorderColor,
       titleTextStyle: TextStyle(
         fontFamily: 'Quicksand',
         fontSize: 20,
@@ -31,38 +33,84 @@ class AppTheme {
       backgroundColor: ThemeColors.lightNavBarColor,
       selectedItemColor: ThemeColors.primaryColor,
       unselectedItemColor: ThemeColors.lightNavBarIconColor,
-      elevation: 8,
+      elevation: 16,
       type: BottomNavigationBarType.fixed,
+      selectedLabelStyle: TextStyle(fontWeight: FontWeight.w600),
+      unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w400),
     ),
     
     // Card Theme
     cardTheme: CardThemeData(
       color: ThemeColors.lightCardColor,
-      elevation: 2,
+      elevation: 4,
+      shadowColor: ThemeColors.lightBorderColor.withOpacity(0.5),
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
       ),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     ),
     
     // Text Theme
-    textTheme: const TextTheme(
+    textTheme: TextTheme(
       headlineLarge: TextStyle(
         fontFamily: 'Quicksand',
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: FontWeight.bold,
         color: ThemeColors.lightTextColor,
+        letterSpacing: -0.5,
+      ),
+      headlineMedium: TextStyle(
+        fontFamily: 'Quicksand',
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
+        color: ThemeColors.lightTextColor,
+        letterSpacing: -0.25,
       ),
       bodyLarge: TextStyle(
         fontFamily: 'Quicksand',
         fontSize: 16,
         fontWeight: FontWeight.normal,
         color: ThemeColors.lightTextColor,
+        height: 1.5,
       ),
       bodyMedium: TextStyle(
         fontFamily: 'Quicksand',
         fontSize: 14,
         fontWeight: FontWeight.normal,
         color: ThemeColors.lightSecondaryTextColor,
+        height: 1.4,
+      ),
+      bodySmall: TextStyle(
+        fontFamily: 'Quicksand',
+        fontSize: 12,
+        fontWeight: FontWeight.normal,
+        color: ThemeColors.lightSecondaryTextColor,
+        height: 1.3,
+      ),
+      labelLarge: TextStyle(
+        fontFamily: 'Quicksand',
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: ThemeColors.lightTextColor,
+      ),
+      labelMedium: TextStyle(
+        fontFamily: 'Quicksand',
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: ThemeColors.lightTextColor,
+      ),
+      titleLarge: TextStyle(
+        fontFamily: 'Quicksand',
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: ThemeColors.lightTextColor,
+      ),
+      titleMedium: TextStyle(
+        fontFamily: 'Quicksand',
+        fontSize: 18,
+        fontWeight: FontWeight.w500,
+        color: ThemeColors.lightTextColor,
       ),
     ),
     
@@ -70,17 +118,28 @@ class AppTheme {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: ThemeColors.lightSurfaceColor,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: ThemeColors.lightBorderColor),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: ThemeColors.lightBorderColor, width: 1.5),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: ThemeColors.lightBorderColor),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: ThemeColors.lightBorderColor, width: 1.5),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: ThemeColors.primaryColor),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: ThemeColors.primaryColor, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: ThemeColors.errorColor, width: 1.5),
+      ),
+      labelStyle: const TextStyle(
+        fontFamily: 'Quicksand',
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        color: ThemeColors.lightSecondaryTextColor,
       ),
     ),
     
@@ -89,7 +148,27 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         backgroundColor: ThemeColors.primaryColor,
         foregroundColor: ThemeColors.lightTextColor,
-        elevation: 2,
+        elevation: 4,
+        shadowColor: ThemeColors.primaryColor.withOpacity(0.3),
+        surfaceTintColor: Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        textStyle: const TextStyle(
+          fontFamily: 'Quicksand',
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+        ),
+      ),
+    ),
+    
+    // Text Button Theme
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: ThemeColors.primaryColor,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -99,6 +178,14 @@ class AppTheme {
           fontWeight: FontWeight.w600,
         ),
       ),
+    ),
+    
+    // Floating Action Button Theme
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      backgroundColor: ThemeColors.primaryColor,
+      foregroundColor: ThemeColors.lightTextColor,
+      elevation: 8,
+      shape: CircleBorder(),
     ),
     
     // Icon Theme
@@ -132,6 +219,8 @@ class AppTheme {
       foregroundColor: ThemeColors.darkTextColor,
       elevation: 0,
       centerTitle: true,
+      surfaceTintColor: Colors.transparent,
+      shadowColor: ThemeColors.darkBorderColor,
       titleTextStyle: TextStyle(
         fontFamily: 'Quicksand',
         fontSize: 20,
@@ -146,38 +235,84 @@ class AppTheme {
       backgroundColor: ThemeColors.darkNavBarColor,
       selectedItemColor: ThemeColors.primaryColor,
       unselectedItemColor: ThemeColors.darkNavBarIconColor,
-      elevation: 8,
+      elevation: 16,
       type: BottomNavigationBarType.fixed,
+      selectedLabelStyle: TextStyle(fontWeight: FontWeight.w600),
+      unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w400),
     ),
     
     // Card Theme
     cardTheme: CardThemeData(
       color: ThemeColors.darkCardColor,
-      elevation: 4,
+      elevation: 6,
+      shadowColor: Colors.black.withOpacity(0.3),
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
       ),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     ),
     
     // Text Theme
-    textTheme: const TextTheme(
+    textTheme: TextTheme(
       headlineLarge: TextStyle(
         fontFamily: 'Quicksand',
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: FontWeight.bold,
         color: ThemeColors.darkTextColor,
+        letterSpacing: -0.5,
+      ),
+      headlineMedium: TextStyle(
+        fontFamily: 'Quicksand',
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
+        color: ThemeColors.darkTextColor,
+        letterSpacing: -0.25,
       ),
       bodyLarge: TextStyle(
         fontFamily: 'Quicksand',
         fontSize: 16,
         fontWeight: FontWeight.normal,
         color: ThemeColors.darkTextColor,
+        height: 1.5,
       ),
       bodyMedium: TextStyle(
         fontFamily: 'Quicksand',
         fontSize: 14,
         fontWeight: FontWeight.normal,
         color: ThemeColors.darkSecondaryTextColor,
+        height: 1.4,
+      ),
+      bodySmall: TextStyle(
+        fontFamily: 'Quicksand',
+        fontSize: 12,
+        fontWeight: FontWeight.normal,
+        color: ThemeColors.darkSecondaryTextColor,
+        height: 1.3,
+      ),
+      labelLarge: TextStyle(
+        fontFamily: 'Quicksand',
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: ThemeColors.darkTextColor,
+      ),
+      labelMedium: TextStyle(
+        fontFamily: 'Quicksand',
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: ThemeColors.darkTextColor,
+      ),
+      titleLarge: TextStyle(
+        fontFamily: 'Quicksand',
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: ThemeColors.darkTextColor,
+      ),
+      titleMedium: TextStyle(
+        fontFamily: 'Quicksand',
+        fontSize: 18,
+        fontWeight: FontWeight.w500,
+        color: ThemeColors.darkTextColor,
       ),
     ),
     
@@ -185,17 +320,28 @@ class AppTheme {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: ThemeColors.darkSurfaceColor,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: ThemeColors.darkBorderColor),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: ThemeColors.darkBorderColor, width: 1.5),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: ThemeColors.darkBorderColor),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: ThemeColors.darkBorderColor, width: 1.5),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: ThemeColors.primaryColor),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: ThemeColors.primaryColor, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: ThemeColors.errorColor, width: 1.5),
+      ),
+      labelStyle: const TextStyle(
+        fontFamily: 'Quicksand',
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        color: ThemeColors.darkSecondaryTextColor,
       ),
     ),
     
@@ -204,7 +350,27 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         backgroundColor: ThemeColors.primaryColor,
         foregroundColor: ThemeColors.darkTextColor,
-        elevation: 2,
+        elevation: 6,
+        shadowColor: ThemeColors.primaryColor.withOpacity(0.3),
+        surfaceTintColor: Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        textStyle: const TextStyle(
+          fontFamily: 'Quicksand',
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+        ),
+      ),
+    ),
+    
+    // Text Button Theme
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: ThemeColors.primaryColor,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -214,6 +380,14 @@ class AppTheme {
           fontWeight: FontWeight.w600,
         ),
       ),
+    ),
+    
+    // Floating Action Button Theme
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      backgroundColor: ThemeColors.primaryColor,
+      foregroundColor: ThemeColors.darkTextColor,
+      elevation: 12,
+      shape: CircleBorder(),
     ),
     
     // Icon Theme

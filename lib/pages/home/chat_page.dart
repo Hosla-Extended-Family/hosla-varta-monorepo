@@ -32,21 +32,21 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     final filteredChats = _filterChats(chats);
 
     return Scaffold(
-      backgroundColor: ThemeColors.backgroundColor,
+      backgroundColor: ThemeColors.getBackgroundColor(context),
       appBar: AppBar(
-        backgroundColor: ThemeColors.navBarColor,
+        backgroundColor: ThemeColors.getNavBarColor(context),
         elevation: 1,
         title: Text(
           'Chats',
-          style: TextThemes.title.copyWith(fontSize: 20),
+          style: TextThemes.title.copyWith(fontSize: 20, color: ThemeColors.getTextColor(context)),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: ThemeColors.navBarIconColor),
+            icon: Icon(Icons.search, color: ThemeColors.getNavBarIconColor(context)),
             onPressed: () => _showSearchDelegate(context),
           ),
           IconButton(
-            icon: const Icon(Icons.more_vert, color: ThemeColors.navBarIconColor),
+            icon: Icon(Icons.more_vert, color: ThemeColors.getNavBarIconColor(context)),
             onPressed: () => _showMoreOptions(context),
           ),
         ],
@@ -79,7 +79,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showNewChatOptions(context),
         backgroundColor: ThemeColors.primaryColor,
-        child: const Icon(Icons.chat, color: Colors.white),
+        child: Icon(Icons.chat, color: ThemeColors.getCardColor(context)),
       ),
     );
   }
@@ -90,12 +90,12 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       margin: Constants.defaultMargin.copyWith(top: 8, bottom: 0),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: ThemeColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(25),
       ),
       child: Row(
         children: [
-          const Icon(Icons.search, color: Colors.grey),
+          Icon(Icons.search, color: ThemeColors.getSecondaryTextColor(context)),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
@@ -119,7 +119,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                   _searchQuery = '';
                 });
               },
-              child: const Icon(Icons.clear, color: Colors.grey),
+              child: Icon(Icons.clear, color: ThemeColors.getSecondaryTextColor(context)),
             ),
         ],
       ),
@@ -134,7 +134,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         padding: Constants.defaultPadding.copyWith(top: 12, bottom: 12),
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: ThemeColors.getCardColor(context),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -154,9 +154,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                       width: 12,
                       height: 12,
                       decoration: BoxDecoration(
-                        color: Colors.green,
+                        color: ThemeColors.getSuccessColor(context),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                        border: Border.all(color: ThemeColors.getCardColor(context), width: 2),
                       ),
                     ),
                   ),
@@ -187,7 +187,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                         style: TextThemes.bodySmall.copyWith(
                           color: chat.unreadCount > 0 
                               ? ThemeColors.primaryColor 
-                              : Colors.grey,
+                              : ThemeColors.getSecondaryTextColor(context),
                           fontSize: 12,
                         ),
                       ),
@@ -206,8 +206,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                                 : Icons.done,
                             size: 16,
                             color: chat.lastMessage?.isRead == true
-                                ? Colors.blue
-                                : Colors.grey,
+                                ? ThemeColors.getInfoColor(context)
+                                : ThemeColors.getSecondaryTextColor(context),
                           ),
                         ),
                       
@@ -217,8 +217,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           _getLastMessagePreview(chat),
                           style: TextThemes.bodySmall.copyWith(
                             color: chat.unreadCount > 0 
-                                ? Colors.black87 
-                                : Colors.grey.shade600,
+                                ? ThemeColors.getTextColor(context)
+                                : ThemeColors.getSecondaryTextColor(context),
                             fontWeight: chat.unreadCount > 0 
                                 ? FontWeight.w500 
                                 : FontWeight.normal,
@@ -241,7 +241,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           child: Text(
                             chat.unreadCount > 99 ? '99+' : '${chat.unreadCount}',
                             style: TextThemes.bodySmall.copyWith(
-                              color: Colors.white,
+                              color: ThemeColors.getCardColor(context),
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -250,12 +250,12 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                       
                       // Muted indicator
                       if (chat.isMuted)
-                        const Padding(
-                          padding: EdgeInsets.only(left: 4),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
                           child: Icon(
                             Icons.volume_off,
                             size: 16,
-                            color: Colors.grey,
+                            color: ThemeColors.getSecondaryTextColor(context),
                           ),
                         ),
                     ],
@@ -278,20 +278,20 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           Icon(
             Icons.chat_bubble_outline,
             size: 80,
-            color: Colors.grey.shade400,
+            color: ThemeColors.getDisabledColor(context),
           ),
           const SizedBox(height: 16),
           Text(
             'No chats yet',
             style: TextThemes.bodyLarge.copyWith(
-              color: Colors.grey.shade600,
+              color: ThemeColors.getSecondaryTextColor(context),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Start a conversation with someone!',
             style: TextThemes.bodySmall.copyWith(
-              color: Colors.grey.shade500,
+              color: ThemeColors.getSecondaryTextColor(context),
             ),
           ),
           const SizedBox(height: 24),

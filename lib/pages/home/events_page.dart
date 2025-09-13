@@ -7,6 +7,7 @@ import 'package:hosla/models/event_model.dart';
 import 'package:hosla/providers/event_provider.dart';
 import 'package:hosla/pages/event_detail_page.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
+import 'package:hosla/widgets/snack_bar_widget.dart';
 
 /// Events page displaying upcoming events in a scrollable list
 class EventsPage extends ConsumerStatefulWidget {
@@ -44,9 +45,9 @@ class _EventsPageState extends ConsumerState<EventsPage> {
     final filteredEvents = _filterEvents(events);
 
     return Scaffold(
-      backgroundColor: ThemeColors.backgroundColor,
+      backgroundColor: ThemeColors.getBackgroundColor(context),
       appBar: AppBar(
-        backgroundColor: ThemeColors.navBarColor,
+        backgroundColor: ThemeColors.getNavBarColor(context),
         elevation: 1,
         title: Text(
           'Events',
@@ -98,7 +99,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCreateEventDialog(),
         backgroundColor: ThemeColors.primaryColor,
-        child: const Icon(Icons.add, color: Colors.white),
+        child: Icon(Icons.add, color: ThemeColors.getCardColor(context)),
       ),
     );
   }
@@ -109,11 +110,11 @@ class _EventsPageState extends ConsumerState<EventsPage> {
       margin: Constants.defaultMargin.copyWith(bottom: 0),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: ThemeColors.getCardColor(context),
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: ThemeColors.getOverlayColor(context, opacity: 0.1),
             blurRadius: 3,
             offset: const Offset(0, 1),
           ),
@@ -121,7 +122,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.search, color: Colors.grey),
+          Icon(Icons.search, color: ThemeColors.getSecondaryTextColor(context)),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
@@ -145,7 +146,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                   _searchQuery = '';
                 });
               },
-              child: const Icon(Icons.clear, color: Colors.grey),
+              child: Icon(Icons.clear, color: ThemeColors.getSecondaryTextColor(context)),
             ),
         ],
       ),
@@ -176,11 +177,11 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                   _selectedCategory = category == 'All' ? '' : category;
                 });
               },
-              backgroundColor: Colors.white,
+              backgroundColor: ThemeColors.getCardColor(context),
               selectedColor: ThemeColors.primaryColor.withOpacity(0.2),
               checkmarkColor: ThemeColors.primaryColor,
               labelStyle: TextThemes.bodySmall.copyWith(
-                color: isSelected ? ThemeColors.primaryColor : Colors.grey.shade700,
+                color: isSelected ? ThemeColors.primaryColor : ThemeColors.getSecondaryTextColor(context),
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
@@ -215,20 +216,20 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                   width: double.infinity,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
-                      color: Colors.grey.shade200,
+                      color: ThemeColors.getSurfaceColor(context),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
                             Icons.event,
                             size: 48,
-                            color: Colors.grey.shade400,
+                            color: ThemeColors.getDisabledColor(context),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Event Image',
                             style: TextThemes.bodySmall.copyWith(
-                              color: Colors.grey.shade500,
+                              color: ThemeColors.getSecondaryTextColor(context),
                             ),
                           ),
                         ],
@@ -354,13 +355,13 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                       Icon(
                         Icons.people,
                         size: 16,
-                        color: Colors.grey.shade600,
+                        color: ThemeColors.getSecondaryTextColor(context),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         '${event.goingUserIds.length} going • ${event.interestedUserIds.length} interested',
                         style: TextThemes.bodySmall.copyWith(
-                          color: Colors.grey.shade600,
+                          color: ThemeColors.getSecondaryTextColor(context),
                         ),
                       ),
                       const Spacer(),
@@ -386,17 +387,17 @@ class _EventsPageState extends ConsumerState<EventsPage> {
     
     switch (status) {
       case EventStatus.going:
-        chipColor = Colors.green;
+        chipColor = ThemeColors.getSuccessColor(context);
         label = 'Going';
         icon = Icons.check_circle;
         break;
       case EventStatus.interested:
-        chipColor = Colors.orange;
+        chipColor = ThemeColors.getWarningColor(context);
         label = 'Interested';
         icon = Icons.star;
         break;
       case EventStatus.notGoing:
-        chipColor = Colors.grey;
+        chipColor = ThemeColors.getSecondaryTextColor(context);
         label = 'Not Going';
         icon = Icons.close;
         break;
@@ -469,7 +470,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
           size: 20,
           color: isSelected 
               ? ThemeColors.primaryColor 
-              : Colors.grey.shade600,
+              : ThemeColors.getSecondaryTextColor(context),
         ),
       ),
     );
@@ -484,20 +485,20 @@ class _EventsPageState extends ConsumerState<EventsPage> {
           Icon(
             Icons.event_note,
             size: 80,
-            color: Colors.grey.shade400,
+            color: ThemeColors.getDisabledColor(context),
           ),
           const SizedBox(height: 16),
           Text(
             'No events available',
             style: TextThemes.bodyLarge.copyWith(
-              color: Colors.grey.shade600,
+              color: ThemeColors.getSecondaryTextColor(context),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Check back later for upcoming events!',
             style: TextThemes.bodySmall.copyWith(
-              color: Colors.grey.shade500,
+              color: ThemeColors.getSecondaryTextColor(context),
             ),
           ),
         ],
@@ -514,20 +515,20 @@ class _EventsPageState extends ConsumerState<EventsPage> {
           Icon(
             Icons.search_off,
             size: 80,
-            color: Colors.grey.shade400,
+            color: ThemeColors.getDisabledColor(context),
           ),
           const SizedBox(height: 16),
           Text(
             'No events found',
             style: TextThemes.bodyLarge.copyWith(
-              color: Colors.grey.shade600,
+              color: ThemeColors.getSecondaryTextColor(context),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Try adjusting your search or filters',
             style: TextThemes.bodySmall.copyWith(
-              color: Colors.grey.shade500,
+              color: ThemeColors.getSecondaryTextColor(context),
             ),
           ),
         ],

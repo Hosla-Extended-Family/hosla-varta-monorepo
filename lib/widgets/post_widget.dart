@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/core/constants/text_theme.dart';
+import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/widgets/profile_pic.dart';
 
 class PostWidget extends StatefulWidget {
@@ -33,8 +34,15 @@ class _PostWidgetState extends State<PostWidget>
       margin: Constants.defaultMargin.copyWith(bottom: 8, top: 8),
       padding: Constants.defaultPadding,
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
+        color: ThemeColors.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: ThemeColors.getOverlayColor(context, opacity: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       constraints: BoxConstraints(minWidth: double.infinity),
       child: Column(
@@ -58,7 +66,7 @@ class _PostWidgetState extends State<PostWidget>
                     ),
                     Text(
                       '2 hours ago',
-                      style: TextThemes.bodySmall.copyWith(color: Colors.grey),
+                      style: TextThemes.bodySmall.copyWith(color: ThemeColors.getSecondaryTextColor(context)),
                     ),
                   ],
                 ),
@@ -97,7 +105,7 @@ class _PostWidgetState extends State<PostWidget>
                       child: Text(
                         _isExpanded ? 'show less' : 'show more',
                         style: TextThemes.bodySmall.copyWith(
-                          color: Colors.blue,
+                          color: ThemeColors.getInfoColor(context),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -120,17 +128,17 @@ class _PostWidgetState extends State<PostWidget>
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.blue.shade100,
+                        color: ThemeColors.getInfoSurface(context),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: Colors.blue.shade300,
+                          color: ThemeColors.getInfoColor(context).withOpacity(0.3),
                           width: 1,
                         ),
                       ),
                       child: Text(
                         tag,
                         style: TextThemes.bodySmall.copyWith(
-                          color: Colors.blue.shade700,
+                          color: ThemeColors.getInfoColor(context),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -159,9 +167,9 @@ class _PostWidgetState extends State<PostWidget>
                     width: double.infinity,
                     height: 200,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
+                      color: ThemeColors.getSurfaceColor(context),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade300, width: 1),
+                      border: Border.all(color: ThemeColors.getBorderColor(context), width: 1),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -169,13 +177,13 @@ class _PostWidgetState extends State<PostWidget>
                         Icon(
                           Icons.image_not_supported_outlined,
                           size: 48,
-                          color: Colors.grey.shade400,
+                          color: ThemeColors.getDisabledColor(context),
                         ),
                         SizedBox(height: 8),
                         Text(
                           'Image not available',
                           style: TextThemes.bodySmall.copyWith(
-                            color: Colors.grey.shade500,
+                            color: ThemeColors.getSecondaryTextColor(context),
                           ),
                         ),
                       ],
@@ -227,11 +235,11 @@ class _PostWidgetState extends State<PostWidget>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 20, color: Colors.grey.shade600),
+          Icon(icon, size: 20, color: ThemeColors.getSecondaryTextColor(context)),
           SizedBox(width: 4),
           Text(
             label,
-            style: TextThemes.bodySmall.copyWith(color: Colors.grey.shade600),
+            style: TextThemes.bodySmall.copyWith(color: ThemeColors.getSecondaryTextColor(context)),
           ),
         ],
       ),

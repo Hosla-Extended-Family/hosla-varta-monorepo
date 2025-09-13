@@ -181,15 +181,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             _buildSection(
               'App Settings',
               [
-                _buildSwitchTile(
-                  icon: Icons.dark_mode_outlined,
-                  title: 'Dark Mode',
-                  subtitle: 'Enable dark theme',
-                  value: appSettings.darkMode,
-                  onChanged: (value) {
-                    ref.read(appSettingsProvider.notifier).updateDarkMode(value);
-                  },
-                ),
                 _buildSettingsTile(
                   icon: Icons.language,
                   title: 'Language',
@@ -255,7 +246,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   title: 'Delete Account',
                   subtitle: 'Permanently delete your account',
                   onTap: () => _showDeleteAccountDialog(),
-                  textColor: Colors.red,
+                  textColor: ThemeColors.getErrorColor(context),
                 ),
               ],
             ),
@@ -270,8 +261,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 icon: const Icon(Icons.logout),
                 label: const Text('Logout'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
+                  backgroundColor: ThemeColors.getErrorColor(context),
+                  foregroundColor: ThemeColors.getCardColor(context),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -292,11 +283,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     return Container(
       padding: Constants.defaultPadding,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: ThemeColors.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: ThemeColors.getOverlayColor(context, opacity: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -327,7 +318,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 Text(
                   currentUser?.email ?? '',
                   style: TextThemes.bodySmall.copyWith(
-                    color: Colors.grey.shade600,
+                    color: ThemeColors.getSecondaryTextColor(context),
                   ),
                 ),
                 if (currentUser?.bio != null && currentUser!.bio!.isNotEmpty) ...[
@@ -335,7 +326,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   Text(
                     currentUser!.bio!,
                     style: TextThemes.bodySmall.copyWith(
-                      color: Colors.grey.shade700,
+                      color: ThemeColors.getSecondaryTextColor(context),
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -372,11 +363,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: ThemeColors.getCardColor(context),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: ThemeColors.getOverlayColor(context, opacity: 0.08),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
@@ -421,13 +412,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       subtitle: Text(
         subtitle,
         style: TextThemes.bodySmall.copyWith(
-          color: Colors.grey.shade600,
+          color: ThemeColors.getSecondaryTextColor(context),
         ),
       ),
       trailing: Icon(
         Icons.arrow_forward_ios,
         size: 16,
-        color: Colors.grey.shade400,
+        color: ThemeColors.getDisabledColor(context),
       ),
       onTap: onTap,
     );
@@ -463,7 +454,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       subtitle: Text(
         subtitle,
         style: TextThemes.bodySmall.copyWith(
-          color: Colors.grey.shade600,
+          color: ThemeColors.getSecondaryTextColor(context),
         ),
       ),
       trailing: Switch(
@@ -552,7 +543,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               Navigator.pop(context);
               // TODO: Navigate to login screen
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: ThemeColors.getErrorColor(context)),
             child: const Text('Logout'),
           ),
         ],
@@ -573,7 +564,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           children: [
             const Text(
               'This action cannot be undone. All your data will be permanently deleted.',
-              style: TextStyle(color: Colors.red),
+              style: TextStyle(color: ThemeColors.errorColor),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -597,7 +588,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               Navigator.pop(context);
               SnackBarWidget.show(context, 'Account deletion requested');
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: ThemeColors.getErrorColor(context)),
             child: const Text('Delete Account'),
           ),
         ],
