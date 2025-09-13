@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
+import 'package:hosla/pages/authentication/update_password_page.dart';
 import 'package:hosla/providers/user_provider.dart';
+import 'package:hosla/providers/theme_provider.dart';
 import 'package:hosla/widgets/profile_pic.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
 
@@ -22,13 +24,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final appSettings = ref.watch(appSettingsProvider);
 
     return Scaffold(
-      backgroundColor: ThemeColors.backgroundColor,
+      backgroundColor: ThemeColors.getBackgroundColor(context),
       appBar: AppBar(
-        backgroundColor: ThemeColors.navBarColor,
+        backgroundColor: ThemeColors.getNavBarColor(context),
         elevation: 1,
         title: Text(
           'Settings',
-          style: TextThemes.title.copyWith(fontSize: 20),
+          style: TextThemes.title.copyWith(
+            fontSize: 20,
+            color: ThemeColors.getTextColor(context),
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -55,7 +60,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   icon: Icons.lock_outline,
                   title: 'Change Password',
                   subtitle: 'Update your password',
-                  onTap: () => _showChangePasswordDialog(),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => UpdatePasswordPage(),
+                    ),
+                  ),
                 ),
                 _buildSettingsTile(
                   icon: Icons.email_outlined,
@@ -104,6 +114,24 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   title: 'Notification Preferences',
                   subtitle: 'Customize which notifications you receive',
                   onTap: () => _showNotificationPreferences(),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // Appearance Settings
+            _buildSection(
+              'Appearance',
+              [
+                _buildSwitchTile(
+                  icon: Icons.dark_mode_outlined,
+                  title: 'Dark Mode',
+                  subtitle: 'Switch between light and dark theme',
+                  value: ref.watch(themeProvider) == ThemeMode.dark,
+                  onChanged: (value) {
+                    ref.read(themeProvider.notifier).toggleTheme();
+                  },
                 ),
               ],
             ),
@@ -500,69 +528,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               Navigator.pop(context);
             },
             child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Show change password dialog
-  void _showChangePasswordDialog() {
-    final currentPasswordController = TextEditingController();
-    final newPasswordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Change Password'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: currentPasswordController,
-              decoration: const InputDecoration(
-                labelText: 'Current Password',
-                border: OutlineInputBorder(),
-              ),
-              obscureText: true,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: newPasswordController,
-              decoration: const InputDecoration(
-                labelText: 'New Password',
-                border: OutlineInputBorder(),
-              ),
-              obscureText: true,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: confirmPasswordController,
-              decoration: const InputDecoration(
-                labelText: 'Confirm New Password',
-                border: OutlineInputBorder(),
-              ),
-              obscureText: true,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (newPasswordController.text == confirmPasswordController.text) {
-                // TODO: Implement password change
-                Navigator.pop(context);
-                SnackBarWidget.show(context, 'Password updated successfully!');
-              } else {
-                SnackBarWidget.show(context, 'Passwords do not match!');
-              }
-            },
-            child: const Text('Update'),
           ),
         ],
       ),

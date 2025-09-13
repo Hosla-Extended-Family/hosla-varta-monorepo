@@ -36,12 +36,12 @@ class _HomepageState extends State<Homepage> {
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         selectedFontSize: 14,
-        selectedLabelStyle: TextStyle(
+        selectedLabelStyle: const TextStyle(
           fontFamily: 'Quicksand',
           fontWeight: FontWeight.w600,
         ),
         unselectedFontSize: 12,
-        unselectedLabelStyle: TextStyle(
+        unselectedLabelStyle: const TextStyle(
           fontFamily: 'Quicksand',
           fontWeight: FontWeight.w400,
         ),
@@ -63,10 +63,10 @@ class _HomepageState extends State<Homepage> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: ThemeColors.navBarIconColor,
-        unselectedItemColor: ThemeColors.secondaryColor,
+        selectedItemColor: ThemeColors.primaryColor,
+        unselectedItemColor: ThemeColors.getSecondaryTextColor(context),
         onTap: _onItemTapped,
-        backgroundColor: ThemeColors.navBarColor,
+        backgroundColor: ThemeColors.getNavBarColor(context),
         elevation: 10,
         iconSize: 20,
       ),

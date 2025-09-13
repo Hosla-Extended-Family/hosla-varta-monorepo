@@ -36,4 +36,25 @@ class TextThemes {
     fontWeight: FontWeight.w600,
     color: ThemeColors.textColor,
   );
+
+  // Context-aware text styles
+  static TextStyle getTitleStyle(BuildContext context) {
+    return title.copyWith(color: ThemeColors.getTextColor(context));
+  }
+
+  static TextStyle getBodySmallStyle(BuildContext context) {
+    return bodySmall.copyWith(color: ThemeColors.getSecondaryTextColor(context));
+  }
+
+  static TextStyle getBodyMediumStyle(BuildContext context) {
+    return bodyMedium.copyWith(color: ThemeColors.getTextColor(context));
+  }
+
+  static TextStyle getBodyLargeStyle(BuildContext context) {
+    return bodyLarge.copyWith(color: ThemeColors.getTextColor(context));
+  }
+
+  static TextStyle getButtonStyle(BuildContext context) {
+    return button.copyWith(color: ThemeColors.getTextColor(context));
+  }
 }
