@@ -6,6 +6,7 @@ import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/models/event_model.dart';
 import 'package:hosla/providers/event_provider.dart';
 import 'package:hosla/pages/event_detail_page.dart';
+import 'package:hosla/widgets/snack_bar_widget.dart';
 
 /// Events page displaying upcoming events in a scrollable list
 class EventsPage extends ConsumerStatefulWidget {
@@ -634,12 +635,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
   /// Show create event dialog
   void _showCreateEventDialog() {
     // TODO: Implement create event dialog or navigate to create event page
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Create event feature coming soon!'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    SnackBarWidget.show(context, 'Create event feature coming soon!');
   }
 
   /// Open event detail page

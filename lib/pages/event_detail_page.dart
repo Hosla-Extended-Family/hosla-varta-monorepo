@@ -5,6 +5,7 @@ import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/models/event_model.dart';
 import 'package:hosla/providers/event_provider.dart';
+import 'package:hosla/widgets/snack_bar_widget.dart';
 
 /// Detailed event page with full information and action buttons
 class EventDetailPage extends ConsumerStatefulWidget {
@@ -614,12 +615,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
   /// Toggle going status
   void _toggleGoing(EventStatus? currentStatus) {
     if (widget.event.isFull && currentStatus != EventStatus.going) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('This event is full!'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      SnackBarWidget.show(context, 'This event is full!');
       return;
     }
 
@@ -633,12 +629,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
   /// Share event
   void _shareEvent() {
     // TODO: Implement share functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Share functionality coming soon!'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    SnackBarWidget.show(context, 'Share functionality coming soon!');
   }
 
   /// Show more options

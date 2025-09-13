@@ -193,21 +193,21 @@ class _PostWidgetState extends State<PostWidget>
                 icon: Icons.favorite_border,
                 label: 'Like',
                 onTap: () {
-                  // Todo: Handle like action
+                  // TODO: Handle like action
                 },
               ),
               _buildActionButton(
                 icon: Icons.comment_outlined,
                 label: 'Comment',
                 onTap: () {
-                  // Todo: Handle comment action
+                  // TODO: Handle comment action
                 },
               ),
               _buildActionButton(
                 icon: Icons.share_outlined,
                 label: 'Share',
                 onTap: () {
-                  // Todo: Handle share action
+                  // TODO: Handle share action
                 },
               ),
             ],

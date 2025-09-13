@@ -4,6 +4,7 @@ import 'package:hosla/core/navigation/route_observer.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/widgets/button.dart';
+import 'package:hosla/widgets/snack_bar_widget.dart';
 
 class OtpVerificationPage extends StatefulWidget {
   OtpVerificationPage({super.key, required this.endRoute});
@@ -67,9 +68,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
     if (!_canResend) return;
     // TODO: Integrate your resend OTP API call here.
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('OTP resent')));
+    SnackBarWidget.show(context, 'OTP resent');
     _startResendCountdown();
   }
 

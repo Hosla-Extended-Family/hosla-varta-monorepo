@@ -18,26 +18,20 @@ class _FeedPageState extends State<FeedPage> {
         actions: [
           IconButton(
             onPressed: () {
-              // Todo: Add action for the icon button here
+              // TODO: Add action for the icon button here
             },
             icon: Icon(Icons.add_photo_alternate),
           ),
-            IconButton(
+          IconButton(
             onPressed: () {
-              // Todo: Add action for the icon button here
+              // TODO: Add action for the icon button here
             },
             icon: Icon(Icons.person_4_rounded),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        child: Column(
-          children: [
-            PostWidget(),
-            PostWidget(),
-            PostWidget(),
-          ],
-        ),
+        child: Column(children: [PostWidget(), PostWidget(), PostWidget()]),
       ),
     );
   }

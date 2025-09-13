@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/widgets/button.dart';
+import 'package:hosla/widgets/snack_bar_widget.dart';
 
 class NewPasswordPage extends StatefulWidget {
   const NewPasswordPage({super.key});
@@ -141,48 +142,27 @@ class _NewPasswordPageState extends State<NewPasswordPage> {
               onPressed: () {
                 // TODO: Handle new password logic here
                 if (_newPasswordController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please enter a new password'),
-                    ),
-                  );
+                  SnackBarWidget.show(context, 'Please enter a new password');
                   return;
                 }
 
                 if (!_isPasswordValid(_newPasswordController.text)) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Password must be at least 6 characters long',
-                      ),
-                    ),
-                  );
+                  SnackBarWidget.show(context, 'Password must be at least 6 characters long');
                   return;
                 }
 
                 if (_confirmPasswordController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please confirm your new password'),
-                    ),
-                  );
+                  SnackBarWidget.show(context, 'Please confirm your new password');
                   return;
                 }
 
                 if (!_doPasswordsMatch()) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Passwords do not match')),
-                  );
+                  SnackBarWidget.show(context, 'Passwords do not match');
                   return;
                 }
 
                 // Show success message and navigate to login
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Password reset successfully!'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
+                SnackBarWidget.show(context, 'Password reset successfully!');
 
                 // Navigate to login page after successful password reset
                 Navigator.pushNamedAndRemoveUntil(

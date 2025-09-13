@@ -7,6 +7,7 @@ import 'package:hosla/models/chat_model.dart';
 import 'package:hosla/models/user_model.dart';
 import 'package:hosla/providers/chat_provider.dart';
 import 'package:hosla/widgets/profile_pic.dart';
+import 'package:hosla/widgets/snack_bar_widget.dart';
 
 /// Detailed chat screen with message bubbles and input functionality
 class ChatDetailPage extends ConsumerStatefulWidget {
@@ -507,12 +508,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
   /// Show emoji picker (placeholder)
   void _showEmojiPicker() {
     // TODO: Implement emoji picker
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Emoji picker coming soon!'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    SnackBarWidget.show(context, 'Emoji picker coming soon!');
   }
 
   /// Show chat options menu

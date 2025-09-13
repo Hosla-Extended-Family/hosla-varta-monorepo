@@ -7,6 +7,7 @@ import 'package:hosla/pages/authentication/login_page.dart';
 import 'package:hosla/pages/authentication/new_password.dart';
 import 'package:hosla/pages/authentication/otp_verification_page.dart';
 import 'package:hosla/pages/authentication/signup_page.dart';
+import 'package:hosla/pages/authentication/update_password_page.dart';
 import 'package:hosla/pages/homePage.dart';
 
 void main() {
@@ -37,8 +38,9 @@ class MainApp extends StatelessWidget {
         '/create-profile': (context) => const CreateProfilePage(),
         '/home': (context) => Homepage(),
         '/new-password': (context) => NewPasswordPage(),
+        '/update-password': (context) => UpdatePasswordPage(),
       },
-      home: Homepage(),
+      home: UpdatePasswordPage(),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/widgets/button.dart';
+import 'package:hosla/widgets/snack_bar_widget.dart';
 
 class ForgetPasswordPage extends StatefulWidget {
   const ForgetPasswordPage({super.key});
@@ -98,11 +99,7 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
               onPressed: () {
                 // TODO: Handle forgot password logic here
                 if (_phoneController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please enter your phone number'),
-                    ),
-                  );
+                  SnackBarWidget.show(context, 'Please enter your phone number');
                   return;
                 }
 

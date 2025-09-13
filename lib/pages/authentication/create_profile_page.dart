@@ -3,6 +3,7 @@ import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/widgets/button.dart';
 import 'package:hosla/widgets/profile_pic.dart';
+import 'package:hosla/widgets/snack_bar_widget.dart';
 
 class CreateProfilePage extends StatefulWidget {
   const CreateProfilePage({super.key});
@@ -204,25 +205,15 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
               onPressed: () {
                 // TODO: Handle profile creation logic
                 if (_nameController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please enter your name'),
-                    ),
-                  );
+                  SnackBarWidget.show(context, 'Please enter your name');
                   return;
                 }
                 if (_selectedDate == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please select your date of birth'),
-                    ),
-                  );
+                  SnackBarWidget.show(context, 'Please select your date of birth');
                   return;
                 }
                 if (_selectedGender == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please select your gender')),
-                  );
+                  SnackBarWidget.show(context, 'Please select your gender');
                   return;
                 }
 

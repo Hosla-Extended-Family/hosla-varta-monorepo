@@ -5,6 +5,7 @@ import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/widgets/profile_pic.dart';
+import 'package:hosla/widgets/snack_bar_widget.dart';
 
 /// Enhanced Settings page with profile, notifications, privacy options, and logout
 class SettingsPage extends ConsumerStatefulWidget {
@@ -556,13 +557,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               if (newPasswordController.text == confirmPasswordController.text) {
                 // TODO: Implement password change
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Password updated successfully!')),
-                );
+                SnackBarWidget.show(context, 'Password updated successfully!');
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Passwords do not match!')),
-                );
+                SnackBarWidget.show(context, 'Passwords do not match!');
               }
             },
             child: const Text('Update'),
@@ -633,12 +630,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             onPressed: () {
               // TODO: Implement account deletion
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Account deletion requested'),
-                  backgroundColor: Colors.red,
-                ),
-              );
+              SnackBarWidget.show(context, 'Account deletion requested');
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Delete Account'),
@@ -662,11 +654,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   void _exportUserData() => _showComingSoon();
 
   void _showComingSoon() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Feature coming soon!'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    SnackBarWidget.show(context, 'Feature coming soon!');
   }
 }
