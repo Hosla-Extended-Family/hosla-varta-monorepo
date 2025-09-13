@@ -36,20 +36,14 @@ class _PostWidgetState extends State<PostWidget>
         color: Colors.grey.shade200,
         borderRadius: BorderRadius.circular(16),
       ),
-      constraints: BoxConstraints(
-        minHeight: 100,
-        minWidth: double.infinity,
-        maxHeight: _isExpanded
-            ? double
-                  .infinity // Todo: Adjust as needed by the post content
-            : 450,
-      ),
+      constraints: BoxConstraints(minWidth: double.infinity),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Row(
             children: [
               ProfilePic(
+                radius: 25,
                 imageUrl:
                     'https://static.vecteezy.com/system/resources/thumbnails/004/511/281/small/default-avatar-photo-placeholder-profile-picture-vector.jpg',
               ),
@@ -160,6 +154,34 @@ class _PostWidgetState extends State<PostWidget>
                 'assets/images/Sample_image.jpg',
                 fit: BoxFit.cover,
                 width: double.infinity,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: double.infinity,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300, width: 1),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.image_not_supported_outlined,
+                          size: 48,
+                          color: Colors.grey.shade400,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Image not available',
+                          style: TextThemes.bodySmall.copyWith(
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           ),
