@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hosla/core/navigation/route_observer.dart';
 import 'package:hosla/pages/authentication/create_profile_page.dart';
 import 'package:hosla/pages/authentication/forget_password_page.dart';
@@ -9,7 +10,11 @@ import 'package:hosla/pages/authentication/signup_page.dart';
 import 'package:hosla/pages/homePage.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(
+    const ProviderScope(
+      child: MainApp(),
+    ),
+  );
 }
 
 class MainApp extends StatelessWidget {
