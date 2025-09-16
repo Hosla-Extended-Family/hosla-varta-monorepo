@@ -18,7 +18,7 @@ class Button extends StatelessWidget {
       ),
       child: TextButton(
         onPressed: onPressed,
-        child: Text(text, style: TextThemes.button),
+        child: Text(text, style: TextThemes.getButtonStyle(context)),
       ),
     );
   }

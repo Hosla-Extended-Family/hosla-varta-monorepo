@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hosla/core/constants/constants.dart';
-import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/pages/home/chat_page.dart';
 import 'package:hosla/pages/home/emergency_page.dart';

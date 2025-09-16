@@ -14,7 +14,7 @@ class ListTileWidget extends StatelessWidget {
     return Padding(
       padding: Constants.defaultPadding / 4,
       child: ListTile(
-        title: Text(title, style: TextThemes.bodyMedium),
+        title: Text(title, style: TextThemes.getBodyMediumStyle(context)),
         tileColor: ThemeColors.getSurfaceColor(context),
         onTap: onTap,
         selectedTileColor: ThemeColors.getOverlayColor(context, opacity: 0.1),

@@ -53,7 +53,7 @@ class MainApp extends ConsumerWidget {
 }
 
 class _CheckUser extends StatefulWidget {
-  const _CheckUser({super.key});
+  const _CheckUser();
 
   @override
   State<_CheckUser> createState() => __CheckUserState();

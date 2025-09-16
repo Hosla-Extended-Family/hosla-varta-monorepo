@@ -43,7 +43,7 @@ class _SignupPageState extends State<SignupPage> {
             Navigator.pop(context);
           },
         ),
-        title: Text('Sign Up', style: TextThemes.title),
+        title: Text('Sign Up', style: TextThemes.getTitleStyle(context)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -51,7 +51,7 @@ class _SignupPageState extends State<SignupPage> {
         child: Column(
           children: [
             const SizedBox(height: 24),
-            Text('Welcome to Hosla Varta!', style: TextThemes.bodyLarge),
+            Text('Welcome to Hosla Varta!', style: TextThemes.getBodyLargeStyle(context)),
             const SizedBox(height: 24),
             Row(
               children: [

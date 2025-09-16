@@ -14,7 +14,8 @@ class _FeedPageState extends State<FeedPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Varta Wall', style: TextThemes.title),
+        centerTitle: false,
+        title: Text('Varta Wall', style: TextThemes.getTitleStyle(context)),
         actions: [
           IconButton(
             onPressed: () {

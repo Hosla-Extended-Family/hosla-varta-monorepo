@@ -33,7 +33,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hosla Varta', style: TextThemes.title),
+        title: Text('Hosla Varta', style: TextThemes.getTitleStyle(context)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -41,7 +41,7 @@ class _LoginPageState extends State<LoginPage> {
         child: Column(
           children: [
             SizedBox(height: 20),
-            Center(child: Text('Welcome Back!', style: TextThemes.bodyLarge)),
+            Center(child: Text('Welcome Back!', style: TextThemes.getBodyLargeStyle(context))),
             SizedBox(height: 20),
             Row(
               children: [
@@ -97,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
               onPressed: () {
                 // TODO: Handle forgot password logic here
               },
-              child: Text('Forgot Password?', style: TextThemes.bodySmall),
+              child: Text('Forgot Password?', style: TextThemes.getBodySmallStyle(context)),
             ),
             SizedBox(height: 16),
             Button(
@@ -114,10 +114,10 @@ class _LoginPageState extends State<LoginPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Don\'t have an account?', style: TextThemes.bodySmall),
+                Text('Don\'t have an account?', style: TextThemes.getBodySmallStyle(context)),
                 TextButton(
                   onPressed: () {},
-                  child: Text('Sign Up', style: TextThemes.bodySmall),
+                  child: Text('Sign Up', style: TextThemes.getBodySmallStyle(context)),
                 ),
               ],
             ),

@@ -62,11 +62,11 @@ class _PostWidgetState extends State<PostWidget>
                   children: [
                     Text(
                       'Hosla',
-                      style: TextThemes.bodyMedium.copyWith(fontSize: 20),
+                      style: TextThemes.getBodyMediumStyle(context).copyWith(fontSize: 20),
                     ),
                     Text(
                       '2 hours ago',
-                      style: TextThemes.bodySmall.copyWith(color: ThemeColors.getSecondaryTextColor(context)),
+                      style: TextThemes.getBodySmallStyle(context).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
                     ),
                   ],
                 ),
@@ -78,7 +78,7 @@ class _PostWidgetState extends State<PostWidget>
             builder: (context, constraints) {
               const text =
                   'This is a sample post content. It can be multiple lines long and should display properly within the post widget.';
-              final span = TextSpan(text: text, style: TextThemes.bodyMedium);
+              final span = TextSpan(text: text, style: TextThemes.getBodyMediumStyle(context));
               final tp = TextPainter(
                 text: span,
                 textDirection: TextDirection.ltr,
@@ -91,7 +91,7 @@ class _PostWidgetState extends State<PostWidget>
                 children: [
                   Text(
                     text,
-                    style: TextThemes.bodyMedium,
+                    style: TextThemes.getBodyMediumStyle(context),
                     overflow: _isExpanded ? null : TextOverflow.ellipsis,
                     maxLines: _isExpanded ? null : 2,
                   ),
@@ -104,7 +104,7 @@ class _PostWidgetState extends State<PostWidget>
                       },
                       child: Text(
                         _isExpanded ? 'show less' : 'show more',
-                        style: TextThemes.bodySmall.copyWith(
+                        style: TextThemes.getBodySmallStyle(context).copyWith(
                           color: ThemeColors.getInfoColor(context),
                           fontWeight: FontWeight.w500,
                         ),
@@ -137,7 +137,7 @@ class _PostWidgetState extends State<PostWidget>
                       ),
                       child: Text(
                         tag,
-                        style: TextThemes.bodySmall.copyWith(
+                        style: TextThemes.getBodySmallStyle(context).copyWith(
                           color: ThemeColors.getInfoColor(context),
                           fontWeight: FontWeight.w500,
                         ),
@@ -182,7 +182,7 @@ class _PostWidgetState extends State<PostWidget>
                         SizedBox(height: 8),
                         Text(
                           'Image not available',
-                          style: TextThemes.bodySmall.copyWith(
+                          style: TextThemes.getBodySmallStyle(context).copyWith(
                             color: ThemeColors.getSecondaryTextColor(context),
                           ),
                         ),
@@ -239,7 +239,7 @@ class _PostWidgetState extends State<PostWidget>
           SizedBox(width: 4),
           Text(
             label,
-            style: TextThemes.bodySmall.copyWith(color: ThemeColors.getSecondaryTextColor(context)),
+            style: TextThemes.getBodySmallStyle(context).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
           ),
         ],
       ),

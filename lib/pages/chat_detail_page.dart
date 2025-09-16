@@ -4,7 +4,6 @@ import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/models/chat_model.dart';
-import 'package:hosla/models/user_model.dart';
 import 'package:hosla/providers/chat_provider.dart';
 import 'package:hosla/widgets/profile_pic.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
@@ -45,10 +44,9 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
   @override
   Widget build(BuildContext context) {
     final messages = ref.watch(chatMessagesProvider(widget.chat.id));
-    final currentUser = ref.watch(currentUserProvider);
 
     return Scaffold(
-      backgroundColor: ThemeColors.backgroundColor,
+      backgroundColor: ThemeColors.getBackgroundColor(context),
       appBar: _buildAppBar(),
       body: Column(
         children: [
@@ -93,10 +91,10 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
   /// Build app bar with chat info
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: ThemeColors.navBarColor,
+      backgroundColor: ThemeColors.getNavBarColor(context),
       elevation: 1,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: ThemeColors.navBarIconColor),
+        icon: Icon(Icons.arrow_back, color: ThemeColors.getNavBarIconColor(context)),
         onPressed: () => Navigator.pop(context),
       ),
       title: Row(
@@ -112,16 +110,16 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
               children: [
                 Text(
                   widget.chat.name,
-                  style: TextThemes.bodyMedium.copyWith(
+                  style: TextThemes.getBodyMediumStyle(context).copyWith(
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
                   ),
                 ),
                 Text(
                   _getOnlineStatus(),
-                  style: TextThemes.bodySmall.copyWith(
+                  style: TextThemes.getBodySmallStyle(context).copyWith(
                     fontSize: 12,
-                    color: Colors.grey.shade600,
+                    color: ThemeColors.getSecondaryTextColor(context),
                   ),
                 ),
               ],
@@ -131,19 +129,19 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.videocam, color: ThemeColors.navBarIconColor),
+          icon: Icon(Icons.videocam, color: ThemeColors.getNavBarIconColor(context)),
           onPressed: () {
             // TODO: Implement video call
           },
         ),
         IconButton(
-          icon: const Icon(Icons.call, color: ThemeColors.navBarIconColor),
+          icon: Icon(Icons.call, color: ThemeColors.getNavBarIconColor(context)),
           onPressed: () {
             // TODO: Implement voice call
           },
         ),
         IconButton(
-          icon: const Icon(Icons.more_vert, color: ThemeColors.navBarIconColor),
+          icon: Icon(Icons.more_vert, color: ThemeColors.getNavBarIconColor(context)),
           onPressed: () => _showChatOptions(),
         ),
       ],
@@ -170,7 +168,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
               decoration: BoxDecoration(
                 color: isCurrentUser 
                     ? ThemeColors.primaryColor 
-                    : Colors.white,
+                    : ThemeColors.getCardColor(context),
                 borderRadius: BorderRadius.circular(18).copyWith(
                   bottomLeft: isCurrentUser 
                       ? const Radius.circular(18) 
@@ -181,7 +179,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: ThemeColors.getOverlayColor(context, opacity: 0.1),
                     blurRadius: 3,
                     offset: const Offset(0, 1),
                   ),
@@ -196,9 +194,9 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                       padding: const EdgeInsets.only(bottom: 4),
                       child: Text(
                         'Alice Johnson', // TODO: Get actual sender name
-                        style: TextThemes.bodySmall.copyWith(
+                        style: TextThemes.getBodySmallStyle(context).copyWith(
                           fontWeight: FontWeight.w600,
-                          color: ThemeColors.secondaryColor,
+                          color: ThemeColors.getSecondaryTextColor(context),
                         ),
                       ),
                     ),
@@ -214,11 +212,11 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                     children: [
                       Text(
                         _formatMessageTime(message.timestamp),
-                        style: TextThemes.bodySmall.copyWith(
+                        style: TextThemes.getBodySmallStyle(context).copyWith(
                           fontSize: 11,
                           color: isCurrentUser 
                               ? Colors.white.withOpacity(0.8)
-                              : Colors.grey.shade600,
+                              : ThemeColors.getSecondaryTextColor(context),
                         ),
                       ),
                       if (isCurrentUser) ...[
@@ -248,8 +246,8 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
       case MessageType.text:
         return Text(
           message.content,
-          style: TextThemes.bodyMedium.copyWith(
-            color: isCurrentUser ? Colors.white : Colors.black87,
+          style: TextThemes.getBodyMediumStyle(context).copyWith(
+            color: isCurrentUser ? Colors.white : ThemeColors.getTextColor(context),
           ),
         );
       case MessageType.image:
@@ -268,12 +266,12 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                     width: 200,
                     height: 150,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
+                      color: ThemeColors.getBorderColor(context),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.image_not_supported,
-                      color: Colors.grey,
+                      color: ThemeColors.getSecondaryTextColor(context),
                     ),
                   );
                 },
@@ -283,7 +281,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
               const SizedBox(height: 8),
               Text(
                 message.content,
-                style: TextThemes.bodyMedium.copyWith(
+                style: TextThemes.getBodyMediumStyle(context).copyWith(
                   color: isCurrentUser ? Colors.white : Colors.black87,
                 ),
               ),
@@ -310,13 +308,13 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.grey.shade200,
+                color: ThemeColors.getSurfaceColor(context),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 _formatDate(date),
-                style: TextThemes.bodySmall.copyWith(
-                  color: Colors.grey.shade600,
+                style: TextThemes.getBodySmallStyle(context).copyWith(
+                  color: ThemeColors.getSecondaryTextColor(context),
                 ),
               ),
             ),
@@ -345,7 +343,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
         children: [
           // Attach button
           IconButton(
-            icon: const Icon(Icons.attach_file, color: Colors.grey),
+            icon: Icon(Icons.attach_file, color: ThemeColors.getSecondaryTextColor(context)),
             onPressed: _showAttachmentOptions,
           ),
           
@@ -354,7 +352,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: ThemeColors.getSurfaceColor(context),
                 borderRadius: BorderRadius.circular(25),
               ),
               child: TextField(
@@ -373,7 +371,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
           
           // Emoji button
           IconButton(
-            icon: const Icon(Icons.emoji_emotions_outlined, color: Colors.grey),
+            icon: Icon(Icons.emoji_emotions_outlined, color: ThemeColors.getSecondaryTextColor(context)),
             onPressed: _showEmojiPicker,
           ),
           
@@ -403,20 +401,20 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
           Icon(
             Icons.chat_bubble_outline,
             size: 80,
-            color: Colors.grey.shade400,
+            color: ThemeColors.getSecondaryTextColor(context),
           ),
           const SizedBox(height: 16),
           Text(
             'No messages yet',
-            style: TextThemes.bodyLarge.copyWith(
-              color: Colors.grey.shade600,
+            style: TextThemes.getBodyLargeStyle(context).copyWith(
+              color: ThemeColors.getSecondaryTextColor(context),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Start the conversation!',
-            style: TextThemes.bodySmall.copyWith(
-              color: Colors.grey.shade500,
+            style: TextThemes.getBodySmallStyle(context).copyWith(
+              color: ThemeColors.getSecondaryTextColor(context),
             ),
           ),
         ],

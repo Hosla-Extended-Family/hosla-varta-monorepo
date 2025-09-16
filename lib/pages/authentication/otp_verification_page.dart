@@ -100,7 +100,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
             Navigator.pop(context);
           },
         ),
-        title: Text('OTP Verification', style: TextThemes.title),
+        title: Text('OTP Verification', style: TextThemes.getTitleStyle(context)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -111,7 +111,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
             SizedBox(height: 24),
             Text(
               'Enter the OTP sent to your phone:',
-              style: TextThemes.bodyMedium,
+              style: TextThemes.getBodyMediumStyle(context),
             ),
             SizedBox(height: 20),
             TextField(
@@ -131,7 +131,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                   _canResend
                       ? "Didn't receive the code?"
                       : 'You can resend in ${_formatTime(_secondsRemaining)}',
-                  style: TextThemes.bodySmall,
+                  style: TextThemes.getBodySmallStyle(context),
                 ),
                 const SizedBox(width: 8),
                 TextButton(

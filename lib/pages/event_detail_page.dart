@@ -59,20 +59,20 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        color: Colors.grey.shade300,
+                        color: ThemeColors.getBorderColor(context),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
                               Icons.event,
                               size: 80,
-                              color: Colors.grey.shade500,
+                              color: ThemeColors.getSecondaryTextColor(context),
                             ),
                             const SizedBox(height: 16),
                             Text(
                               widget.event.title,
-                              style: TextThemes.bodyLarge.copyWith(
-                                color: Colors.grey.shade700,
+                              style: TextThemes.getBodyLargeStyle(context).copyWith(
+                                color: ThemeColors.getTextColor(context),
                                 fontWeight: FontWeight.w600,
                               ),
                               textAlign: TextAlign.center,
@@ -124,7 +124,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                         // Title
                         Text(
                           widget.event.title,
-                          style: TextThemes.title.copyWith(
+                          style: TextThemes.getTitleStyle(context).copyWith(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
@@ -181,14 +181,14 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                       children: [
                         Text(
                           'About This Event',
-                          style: TextThemes.bodyLarge.copyWith(
+                          style: TextThemes.getBodyLargeStyle(context).copyWith(
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(height: 12),
                         Text(
                           widget.event.description,
-                          style: TextThemes.bodyMedium.copyWith(
+                          style: TextThemes.getBodyMediumStyle(context).copyWith(
                             height: 1.5,
                           ),
                         ),
@@ -233,7 +233,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
         icon = Icons.star;
         break;
       case EventStatus.notGoing:
-        badgeColor = Colors.grey;
+        badgeColor = ThemeColors.getSecondaryTextColor(context);
         label = 'Not Going';
         icon = Icons.close;
         break;
@@ -259,7 +259,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
           const SizedBox(width: 6),
           Text(
             label,
-            style: TextThemes.bodySmall.copyWith(
+            style: TextThemes.getBodySmallStyle(context).copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w600,
             ),
@@ -298,15 +298,15 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
             children: [
               Text(
                 title,
-                style: TextThemes.bodySmall.copyWith(
-                  color: Colors.grey.shade600,
+                style: TextThemes.getBodySmallStyle(context).copyWith(
+                  color: ThemeColors.getSecondaryTextColor(context),
                   fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 content,
-                style: TextThemes.bodyMedium.copyWith(
+                style: TextThemes.getBodyMediumStyle(context).copyWith(
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -314,8 +314,8 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: TextThemes.bodySmall.copyWith(
-                    color: Colors.grey.shade600,
+                  style: TextThemes.getBodySmallStyle(context).copyWith(
+                    color: ThemeColors.getSecondaryTextColor(context),
                   ),
                 ),
               ],
@@ -346,15 +346,15 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
               children: [
                 Text(
                   '$goingCount',
-                  style: TextThemes.bodyLarge.copyWith(
+                  style: TextThemes.getBodyLargeStyle(context).copyWith(
                     fontWeight: FontWeight.bold,
                     color: ThemeColors.primaryColor,
                   ),
                 ),
                 Text(
                   'Going',
-                  style: TextThemes.bodySmall.copyWith(
-                    color: Colors.grey.shade700,
+                  style: TextThemes.getBodySmallStyle(context).copyWith(
+                    color: ThemeColors.getTextColor(context),
                   ),
                 ),
               ],
@@ -364,7 +364,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
           Container(
             height: 30,
             width: 1,
-            color: Colors.grey.shade300,
+            color: ThemeColors.getBorderColor(context),
           ),
           
           // Interested count
@@ -373,15 +373,15 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
               children: [
                 Text(
                   '$interestedCount',
-                  style: TextThemes.bodyLarge.copyWith(
+                  style: TextThemes.getBodyLargeStyle(context).copyWith(
                     fontWeight: FontWeight.bold,
                     color: Colors.orange,
                   ),
                 ),
                 Text(
                   'Interested',
-                  style: TextThemes.bodySmall.copyWith(
-                    color: Colors.grey.shade700,
+                  style: TextThemes.getBodySmallStyle(context).copyWith(
+                    color: ThemeColors.getTextColor(context),
                   ),
                 ),
               ],
@@ -392,7 +392,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
             Container(
               height: 30,
               width: 1,
-              color: Colors.grey.shade300,
+              color: ThemeColors.getBorderColor(context),
             ),
             
             // Max participants
@@ -401,15 +401,15 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                 children: [
                   Text(
                     '$maxParticipants',
-                    style: TextThemes.bodyLarge.copyWith(
+                    style: TextThemes.getBodyLargeStyle(context).copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade700,
+                      color: ThemeColors.getTextColor(context),
                     ),
                   ),
                   Text(
                     'Max',
-                    style: TextThemes.bodySmall.copyWith(
-                      color: Colors.grey.shade700,
+                    style: TextThemes.getBodySmallStyle(context).copyWith(
+                      color: ThemeColors.getTextColor(context),
                     ),
                   ),
                 ],
@@ -428,7 +428,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
       children: [
         Text(
           'Tags',
-          style: TextThemes.bodyMedium.copyWith(
+          style: TextThemes.getBodyMediumStyle(context).copyWith(
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -448,7 +448,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
               ),
               child: Text(
                 '#$tag',
-                style: TextThemes.bodySmall.copyWith(
+                style: TextThemes.getBodySmallStyle(context).copyWith(
                   color: ThemeColors.primaryColor,
                   fontWeight: FontWeight.w500,
                 ),
@@ -470,7 +470,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
           padding: Constants.defaultPadding.copyWith(bottom: 12),
           child: Text(
             'Location',
-            style: TextThemes.bodyLarge.copyWith(
+            style: TextThemes.getBodyLargeStyle(context).copyWith(
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -479,7 +479,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
           height: 200,
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: Colors.grey.shade200,
+            color: ThemeColors.getSurfaceColor(context),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Center(
@@ -489,20 +489,20 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                 Icon(
                   Icons.map,
                   size: 48,
-                  color: Colors.grey.shade400,
+                  color: ThemeColors.getSecondaryTextColor(context),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Map View',
-                  style: TextThemes.bodyMedium.copyWith(
-                    color: Colors.grey.shade600,
+                  style: TextThemes.getBodyMediumStyle(context).copyWith(
+                    color: ThemeColors.getSecondaryTextColor(context),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Tap to open in maps',
-                  style: TextThemes.bodySmall.copyWith(
-                    color: Colors.grey.shade500,
+                  style: TextThemes.getBodySmallStyle(context).copyWith(
+                    color: ThemeColors.getSecondaryTextColor(context),
                   ),
                 ),
               ],
@@ -548,11 +548,11 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
               style: OutlinedButton.styleFrom(
                 foregroundColor: userStatus == EventStatus.interested
                     ? Colors.orange
-                    : Colors.grey.shade700,
+                    : ThemeColors.getTextColor(context),
                 side: BorderSide(
                   color: userStatus == EventStatus.interested
                       ? Colors.orange
-                      : Colors.grey.shade300,
+                      : ThemeColors.getBorderColor(context),
                 ),
                 backgroundColor: userStatus == EventStatus.interested
                     ? Colors.orange.withOpacity(0.1)

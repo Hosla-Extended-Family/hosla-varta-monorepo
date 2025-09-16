@@ -36,7 +36,7 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
             Navigator.pop(context);
           },
         ),
-        title: const Text('Forgot Password', style: TextThemes.title),
+        title: Text('Forgot Password', style: TextThemes.getTitleStyle(context)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -45,12 +45,12 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
           children: [
             const SizedBox(height: 20),
             Center(
-              child: Text('Reset Your Password', style: TextThemes.bodyLarge),
+              child: Text('Reset Your Password', style: TextThemes.getBodyLargeStyle(context)),
             ),
             const SizedBox(height: 16),
             Text(
               'Enter your phone number and we\'ll send you a code to reset your password.',
-              style: TextThemes.bodySmall,
+              style: TextThemes.getBodySmallStyle(context),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
@@ -116,12 +116,12 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Remember your password?', style: TextThemes.bodySmall),
+                Text('Remember your password?', style: TextThemes.getBodySmallStyle(context)),
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: Text('Sign In', style: TextThemes.bodySmall),
+                  child: Text('Sign In', style: TextThemes.getBodySmallStyle(context)),
                 ),
               ],
             ),

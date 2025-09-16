@@ -15,7 +15,7 @@ class _EmergencyPageState extends State<EmergencyPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Emergency', style: TextThemes.title),
+        title: Text('Emergency', style: TextThemes.getTitleStyle(context)),
       ),
       body: SingleChildScrollView(
         padding: Constants.defaultPadding,
@@ -23,11 +23,11 @@ class _EmergencyPageState extends State<EmergencyPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 20),
-            Text('Are you in distress?', style: TextThemes.bodyLarge),
+            Text('Are you in distress?', style: TextThemes.getBodyLargeStyle(context)),
             SizedBox(height: 10),
             Text(
               'If you\'re feeling unsafe or need immediate assistance, please use the options below.',
-              style: TextThemes.bodyMedium,
+              style: TextThemes.getBodyMediumStyle(context),
             ),
             SizedBox(height: 30),
 

@@ -38,7 +38,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         elevation: 1,
         title: Text(
           'Chats',
-          style: TextThemes.title.copyWith(fontSize: 20, color: ThemeColors.getTextColor(context)),
+          style: TextThemes.getTitleStyle(context).copyWith(fontSize: 20, color: ThemeColors.getTextColor(context)),
         ),
         actions: [
           IconButton(
@@ -174,7 +174,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                       Expanded(
                         child: Text(
                           chat.name,
-                          style: TextThemes.bodyMedium.copyWith(
+                          style: TextThemes.getBodyMediumStyle(context).copyWith(
                             fontWeight: chat.unreadCount > 0 
                                 ? FontWeight.w600 
                                 : FontWeight.normal,
@@ -184,7 +184,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                       ),
                       Text(
                         _formatTimestamp(chat.lastActivity),
-                        style: TextThemes.bodySmall.copyWith(
+                        style: TextThemes.getBodySmallStyle(context).copyWith(
                           color: chat.unreadCount > 0 
                               ? ThemeColors.primaryColor 
                               : ThemeColors.getSecondaryTextColor(context),
@@ -215,7 +215,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                       Expanded(
                         child: Text(
                           _getLastMessagePreview(chat),
-                          style: TextThemes.bodySmall.copyWith(
+                          style: TextThemes.getBodySmallStyle(context).copyWith(
                             color: chat.unreadCount > 0 
                                 ? ThemeColors.getTextColor(context)
                                 : ThemeColors.getSecondaryTextColor(context),
@@ -240,7 +240,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           ),
                           child: Text(
                             chat.unreadCount > 99 ? '99+' : '${chat.unreadCount}',
-                            style: TextThemes.bodySmall.copyWith(
+                            style: TextThemes.getBodySmallStyle(context).copyWith(
                               color: ThemeColors.getCardColor(context),
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -283,14 +283,14 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           const SizedBox(height: 16),
           Text(
             'No chats yet',
-            style: TextThemes.bodyLarge.copyWith(
+            style: TextThemes.getBodyLargeStyle(context).copyWith(
               color: ThemeColors.getSecondaryTextColor(context),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Start a conversation with someone!',
-            style: TextThemes.bodySmall.copyWith(
+            style: TextThemes.getBodySmallStyle(context).copyWith(
               color: ThemeColors.getSecondaryTextColor(context),
             ),
           ),

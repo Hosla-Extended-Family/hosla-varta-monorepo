@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
+import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/widgets/button.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
 
@@ -49,7 +50,7 @@ class _UpdatePasswordPageState extends State<UpdatePasswordPage> {
             Navigator.pop(context);
           },
         ),
-        title: const Text('New Password', style: TextThemes.title),
+        title: Text('New Password', style: TextThemes.getTitleStyle(context)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -110,7 +111,7 @@ class _UpdatePasswordPageState extends State<UpdatePasswordPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: ThemeColors.getSurfaceColor(context),
                 borderRadius: BorderRadius.circular(8.0),
               ),
               child: Column(
@@ -118,18 +119,18 @@ class _UpdatePasswordPageState extends State<UpdatePasswordPage> {
                 children: [
                   Text(
                     'Password Requirements:',
-                    style: TextThemes.bodySmall.copyWith(
+                    style: TextThemes.getBodySmallStyle(context).copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '• At least 6 characters long',
-                    style: TextThemes.bodySmall,
+                    style: TextThemes.getBodySmallStyle(context),
                   ),
                   Text(
                     '• Must be different from previous password',
-                    style: TextThemes.bodySmall,
+                    style: TextThemes.getBodySmallStyle(context),
                   ),
                 ],
               ),

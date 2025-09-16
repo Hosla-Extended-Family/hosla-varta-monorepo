@@ -10,7 +10,7 @@ class SnackBarWidget {
       SnackBar(
         content: Text(
           message,
-          style: TextThemes.bodySmall.copyWith(
+          style: TextThemes.getBodySmallStyle(context).copyWith(
             color: isDark ? ThemeColors.darkTextColor : ThemeColors.lightTextColor,
           ),
         ),

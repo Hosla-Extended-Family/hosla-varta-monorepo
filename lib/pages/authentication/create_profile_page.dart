@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
+import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/widgets/button.dart';
 import 'package:hosla/widgets/profile_pic.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
@@ -72,7 +73,7 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
             Navigator.pop(context);
           },
         ),
-        title: const Text('Create Profile', style: TextThemes.title),
+        title: Text('Create Profile', style: TextThemes.getTitleStyle(context)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -81,7 +82,7 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
           children: [
             const SizedBox(height: 20),
             Center(
-              child: Text('Complete Your Profile', style: TextThemes.bodyLarge),
+              child: Text('Complete Your Profile', style: TextThemes.getBodyLargeStyle(context)),
             ),
             const SizedBox(height: 24),
 
@@ -101,7 +102,7 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
               },
               icon: const Icon(Icons.camera_alt),
               label: const Text('Upload Picture'),
-              style: TextButton.styleFrom(foregroundColor: Colors.grey[700]),
+              style: TextButton.styleFrom(foregroundColor: ThemeColors.getSecondaryTextColor(context)),
             ),
             const SizedBox(height: 24),
             TextField(
@@ -123,7 +124,7 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
                   vertical: 16,
                 ),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
+                  border: Border.all(color: ThemeColors.getBorderColor(context)),
                   borderRadius: BorderRadius.circular(8.0),
                 ),
                 child: Row(
@@ -134,12 +135,12 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
                           ? _formatDate(_selectedDate!)
                           : 'Date of Birth',
                       style: _selectedDate != null
-                          ? TextThemes.bodyMedium
-                          : TextThemes.bodyMedium.copyWith(
-                              color: Colors.grey[600],
+                          ? TextThemes.getBodyMediumStyle(context)
+                          : TextThemes.getBodyMediumStyle(context).copyWith(
+                              color: ThemeColors.getSecondaryTextColor(context),
                             ),
                     ),
-                    const Icon(Icons.calendar_today, color: Colors.grey),
+                    Icon(Icons.calendar_today, color: ThemeColors.getBorderColor(context)),
                   ],
                 ),
               ),

@@ -30,7 +30,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         elevation: 1,
         title: Text(
           'Settings',
-          style: TextThemes.title.copyWith(
+          style: TextThemes.getTitleStyle(context).copyWith(
             fontSize: 20,
             color: ThemeColors.getTextColor(context),
           ),
@@ -310,14 +310,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               children: [
                 Text(
                   currentUser?.name ?? 'Loading...',
-                  style: TextThemes.bodyLarge.copyWith(
+                  style: TextThemes.getBodyLargeStyle(context).copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   currentUser?.email ?? '',
-                  style: TextThemes.bodySmall.copyWith(
+                  style: TextThemes.getBodySmallStyle(context).copyWith(
                     color: ThemeColors.getSecondaryTextColor(context),
                   ),
                 ),
@@ -325,7 +325,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   const SizedBox(height: 4),
                   Text(
                     currentUser!.bio!,
-                    style: TextThemes.bodySmall.copyWith(
+                    style: TextThemes.getBodySmallStyle(context).copyWith(
                       color: ThemeColors.getSecondaryTextColor(context),
                     ),
                     maxLines: 2,
@@ -355,7 +355,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           padding: const EdgeInsets.only(left: 4, bottom: 12),
           child: Text(
             title,
-            style: TextThemes.bodyMedium.copyWith(
+            style: TextThemes.getBodyMediumStyle(context).copyWith(
               fontWeight: FontWeight.w600,
               color: ThemeColors.secondaryColor,
             ),
@@ -404,14 +404,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ),
       title: Text(
         title,
-        style: TextThemes.bodyMedium.copyWith(
+        style: TextThemes.getBodyMediumStyle(context).copyWith(
           color: textColor,
           fontWeight: FontWeight.w500,
         ),
       ),
       subtitle: Text(
         subtitle,
-        style: TextThemes.bodySmall.copyWith(
+        style: TextThemes.getBodySmallStyle(context).copyWith(
           color: ThemeColors.getSecondaryTextColor(context),
         ),
       ),
@@ -447,13 +447,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ),
       title: Text(
         title,
-        style: TextThemes.bodyMedium.copyWith(
+        style: TextThemes.getBodyMediumStyle(context).copyWith(
           fontWeight: FontWeight.w500,
         ),
       ),
       subtitle: Text(
         subtitle,
-        style: TextThemes.bodySmall.copyWith(
+        style: TextThemes.getBodySmallStyle(context).copyWith(
           color: ThemeColors.getSecondaryTextColor(context),
         ),
       ),

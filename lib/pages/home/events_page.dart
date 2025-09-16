@@ -7,7 +7,6 @@ import 'package:hosla/models/event_model.dart';
 import 'package:hosla/providers/event_provider.dart';
 import 'package:hosla/pages/event_detail_page.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
-import 'package:hosla/widgets/snack_bar_widget.dart';
 
 /// Events page displaying upcoming events in a scrollable list
 class EventsPage extends ConsumerStatefulWidget {
@@ -51,11 +50,11 @@ class _EventsPageState extends ConsumerState<EventsPage> {
         elevation: 1,
         title: Text(
           'Events',
-          style: TextThemes.title.copyWith(fontSize: 20),
+          style: TextThemes.getTitleStyle(context).copyWith(fontSize: 20),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: ThemeColors.navBarIconColor),
+            icon: Icon(Icons.search, color: ThemeColors.getNavBarIconColor(context)),
             onPressed: () => _toggleSearch(),
           ),
           IconButton(
@@ -180,7 +179,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
               backgroundColor: ThemeColors.getCardColor(context),
               selectedColor: ThemeColors.primaryColor.withOpacity(0.2),
               checkmarkColor: ThemeColors.primaryColor,
-              labelStyle: TextThemes.bodySmall.copyWith(
+              labelStyle: TextThemes.getBodySmallStyle(context).copyWith(
                 color: isSelected ? ThemeColors.primaryColor : ThemeColors.getSecondaryTextColor(context),
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
@@ -228,7 +227,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                           const SizedBox(height: 8),
                           Text(
                             'Event Image',
-                            style: TextThemes.bodySmall.copyWith(
+                            style: TextThemes.getBodySmallStyle(context).copyWith(
                               color: ThemeColors.getSecondaryTextColor(context),
                             ),
                           ),
@@ -253,7 +252,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                       Expanded(
                         child: Text(
                           event.title,
-                          style: TextThemes.bodyLarge.copyWith(
+                          style: TextThemes.getBodyLargeStyle(context).copyWith(
                             fontWeight: FontWeight.w600,
                           ),
                           maxLines: 2,
@@ -273,13 +272,13 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                       Icon(
                         Icons.calendar_today,
                         size: 16,
-                        color: ThemeColors.secondaryColor,
+                        color: ThemeColors.getSecondaryTextColor(context),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         '${event.formattedDate} • ${event.formattedTime}',
-                        style: TextThemes.bodySmall.copyWith(
-                          color: ThemeColors.secondaryColor,
+                        style: TextThemes.getBodySmallStyle(context).copyWith(
+                          color: ThemeColors.getSecondaryTextColor(context),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -294,14 +293,14 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                       Icon(
                         Icons.location_on,
                         size: 16,
-                        color: ThemeColors.secondaryColor,
+                        color: ThemeColors.getSecondaryTextColor(context),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           event.location,
-                          style: TextThemes.bodySmall.copyWith(
-                            color: ThemeColors.secondaryColor,
+                          style: TextThemes.getBodySmallStyle(context).copyWith(
+                            color: ThemeColors.getSecondaryTextColor(context),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -314,7 +313,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                   // Description
                   Text(
                     event.description,
-                    style: TextThemes.bodyMedium,
+                    style: TextThemes.getBodyMediumStyle(context),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -338,7 +337,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                           ),
                           child: Text(
                             '#$tag',
-                            style: TextThemes.bodySmall.copyWith(
+                            style: TextThemes.getBodySmallStyle(context).copyWith(
                               color: ThemeColors.primaryColor,
                               fontSize: 11,
                             ),
@@ -360,7 +359,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                       const SizedBox(width: 4),
                       Text(
                         '${event.goingUserIds.length} going • ${event.interestedUserIds.length} interested',
-                        style: TextThemes.bodySmall.copyWith(
+                        style: TextThemes.getBodySmallStyle(context).copyWith(
                           color: ThemeColors.getSecondaryTextColor(context),
                         ),
                       ),
@@ -417,7 +416,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextThemes.bodySmall.copyWith(
+            style: TextThemes.getBodySmallStyle(context).copyWith(
               color: chipColor,
               fontSize: 10,
               fontWeight: FontWeight.w600,
@@ -490,14 +489,14 @@ class _EventsPageState extends ConsumerState<EventsPage> {
           const SizedBox(height: 16),
           Text(
             'No events available',
-            style: TextThemes.bodyLarge.copyWith(
+            style: TextThemes.getBodyLargeStyle(context).copyWith(
               color: ThemeColors.getSecondaryTextColor(context),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Check back later for upcoming events!',
-            style: TextThemes.bodySmall.copyWith(
+            style: TextThemes.getBodySmallStyle(context).copyWith(
               color: ThemeColors.getSecondaryTextColor(context),
             ),
           ),
@@ -520,14 +519,14 @@ class _EventsPageState extends ConsumerState<EventsPage> {
           const SizedBox(height: 16),
           Text(
             'No events found',
-            style: TextThemes.bodyLarge.copyWith(
+            style: TextThemes.getBodyLargeStyle(context).copyWith(
               color: ThemeColors.getSecondaryTextColor(context),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Try adjusting your search or filters',
-            style: TextThemes.bodySmall.copyWith(
+            style: TextThemes.getBodySmallStyle(context).copyWith(
               color: ThemeColors.getSecondaryTextColor(context),
             ),
           ),
@@ -589,7 +588,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
           children: [
             Text(
               'Filter Events',
-              style: TextThemes.bodyLarge.copyWith(
+              style: TextThemes.getBodyLargeStyle(context).copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
