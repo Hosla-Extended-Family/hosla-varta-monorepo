@@ -12,10 +12,7 @@ import 'package:hosla/widgets/snack_bar_widget.dart';
 class ChatDetailPage extends ConsumerStatefulWidget {
   final Chat chat;
 
-  const ChatDetailPage({
-    super.key,
-    required this.chat,
-  });
+  const ChatDetailPage({super.key, required this.chat});
 
   @override
   ConsumerState<ChatDetailPage> createState() => _ChatDetailPageState();
@@ -24,13 +21,15 @@ class ChatDetailPage extends ConsumerStatefulWidget {
 class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  
+
   @override
   void initState() {
     super.initState();
     // Mark messages as read when opening chat
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(chatMessagesProvider(widget.chat.id).notifier).markMessagesAsRead();
+      ref
+          .read(chatMessagesProvider(widget.chat.id).notifier)
+          .markMessagesAsRead();
     });
   }
 
@@ -61,26 +60,30 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                     itemBuilder: (context, index) {
                       final message = messages[index];
                       final isCurrentUser = message.senderId == 'current_user';
-                      
+
                       // Show date separator if needed
                       bool showDateSeparator = false;
                       if (index == 0) {
                         showDateSeparator = true;
                       } else {
                         final prevMessage = messages[index - 1];
-                        showDateSeparator = !_isSameDay(message.timestamp, prevMessage.timestamp);
+                        showDateSeparator = !_isSameDay(
+                          message.timestamp,
+                          prevMessage.timestamp,
+                        );
                       }
 
                       return Column(
                         children: [
-                          if (showDateSeparator) _buildDateSeparator(message.timestamp),
+                          if (showDateSeparator)
+                            _buildDateSeparator(message.timestamp),
                           _buildMessageBubble(message, isCurrentUser),
                         ],
                       );
                     },
                   ),
           ),
-          
+
           // Message input bar
           _buildMessageInputBar(),
         ],
@@ -94,15 +97,15 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
       backgroundColor: ThemeColors.getNavBarColor(context),
       elevation: 1,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: ThemeColors.getNavBarIconColor(context)),
+        icon: Icon(
+          Icons.arrow_back,
+          color: ThemeColors.getNavBarIconColor(context),
+        ),
         onPressed: () => Navigator.pop(context),
       ),
       title: Row(
         children: [
-          ProfilePic(
-            radius: 18,
-            imageUrl: widget.chat.avatarUrl ?? '',
-          ),
+          ProfilePic(radius: 18, imageUrl: widget.chat.avatarUrl ?? ''),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -110,10 +113,9 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
               children: [
                 Text(
                   widget.chat.name,
-                  style: TextThemes.getBodyMediumStyle(context).copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
+                  style: TextThemes.getBodyMediumStyle(
+                    context,
+                  ).copyWith(fontWeight: FontWeight.w600, fontSize: 16),
                 ),
                 Text(
                   _getOnlineStatus(),
@@ -129,19 +131,28 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
       ),
       actions: [
         IconButton(
-          icon: Icon(Icons.videocam, color: ThemeColors.getNavBarIconColor(context)),
+          icon: Icon(
+            Icons.videocam,
+            color: ThemeColors.getNavBarIconColor(context),
+          ),
           onPressed: () {
             // TODO: Implement video call
           },
         ),
         IconButton(
-          icon: Icon(Icons.call, color: ThemeColors.getNavBarIconColor(context)),
+          icon: Icon(
+            Icons.call,
+            color: ThemeColors.getNavBarIconColor(context),
+          ),
           onPressed: () {
             // TODO: Implement voice call
           },
         ),
         IconButton(
-          icon: Icon(Icons.more_vert, color: ThemeColors.getNavBarIconColor(context)),
+          icon: Icon(
+            Icons.more_vert,
+            color: ThemeColors.getNavBarIconColor(context),
+          ),
           onPressed: () => _showChatOptions(),
         ),
       ],
@@ -153,28 +164,28 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment: isCurrentUser 
-            ? MainAxisAlignment.end 
+        mainAxisAlignment: isCurrentUser
+            ? MainAxisAlignment.end
             : MainAxisAlignment.start,
         children: [
           if (!isCurrentUser && widget.chat.type == ChatType.group)
             ProfilePic(radius: 16, imageUrl: ''),
           if (!isCurrentUser && widget.chat.type == ChatType.group)
             const SizedBox(width: 8),
-          
+
           Flexible(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: isCurrentUser 
-                    ? ThemeColors.primaryColor 
+                color: isCurrentUser
+                    ? ThemeColors.primaryColor
                     : ThemeColors.getCardColor(context),
                 borderRadius: BorderRadius.circular(18).copyWith(
-                  bottomLeft: isCurrentUser 
-                      ? const Radius.circular(18) 
+                  bottomLeft: isCurrentUser
+                      ? const Radius.circular(18)
                       : const Radius.circular(4),
-                  bottomRight: isCurrentUser 
-                      ? const Radius.circular(4) 
+                  bottomRight: isCurrentUser
+                      ? const Radius.circular(4)
                       : const Radius.circular(18),
                 ),
                 boxShadow: [
@@ -200,12 +211,12 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                         ),
                       ),
                     ),
-                  
+
                   // Message content
                   _buildMessageContent(message, isCurrentUser),
-                  
+
                   const SizedBox(height: 4),
-                  
+
                   // Timestamp and read status
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -214,7 +225,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                         _formatMessageTime(message.timestamp),
                         style: TextThemes.getBodySmallStyle(context).copyWith(
                           fontSize: 11,
-                          color: isCurrentUser 
+                          color: isCurrentUser
                               ? Colors.white.withOpacity(0.8)
                               : ThemeColors.getSecondaryTextColor(context),
                         ),
@@ -224,8 +235,8 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                         Icon(
                           message.isRead ? Icons.done_all : Icons.done,
                           size: 14,
-                          color: message.isRead 
-                              ? Colors.white 
+                          color: message.isRead
+                              ? Colors.white
                               : Colors.white.withOpacity(0.8),
                         ),
                       ],
@@ -247,7 +258,9 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
         return Text(
           message.content,
           style: TextThemes.getBodyMediumStyle(context).copyWith(
-            color: isCurrentUser ? Colors.white : ThemeColors.getTextColor(context),
+            color: isCurrentUser
+                ? Colors.white
+                : ThemeColors.getTextColor(context),
           ),
         );
       case MessageType.image:
@@ -289,10 +302,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
           ],
         );
       case MessageType.emoji:
-        return Text(
-          message.content,
-          style: const TextStyle(fontSize: 24),
-        );
+        return Text(message.content, style: const TextStyle(fontSize: 24));
     }
   }
 
@@ -313,9 +323,9 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
               ),
               child: Text(
                 _formatDate(date),
-                style: TextThemes.getBodySmallStyle(context).copyWith(
-                  color: ThemeColors.getSecondaryTextColor(context),
-                ),
+                style: TextThemes.getBodySmallStyle(
+                  context,
+                ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
               ),
             ),
           ),
@@ -343,10 +353,13 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
         children: [
           // Attach button
           IconButton(
-            icon: Icon(Icons.attach_file, color: ThemeColors.getSecondaryTextColor(context)),
+            icon: Icon(
+              Icons.attach_file,
+              color: ThemeColors.getSecondaryTextColor(context),
+            ),
             onPressed: _showAttachmentOptions,
           ),
-          
+
           // Text input field
           Expanded(
             child: Container(
@@ -366,15 +379,18 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
               ),
             ),
           ),
-          
+
           const SizedBox(width: 8),
-          
+
           // Emoji button
           IconButton(
-            icon: Icon(Icons.emoji_emotions_outlined, color: ThemeColors.getSecondaryTextColor(context)),
+            icon: Icon(
+              Icons.emoji_emotions_outlined,
+              color: ThemeColors.getSecondaryTextColor(context),
+            ),
             onPressed: _showEmojiPicker,
           ),
-          
+
           // Send button
           IconButton(
             icon: Container(
@@ -406,16 +422,16 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
           const SizedBox(height: 16),
           Text(
             'No messages yet',
-            style: TextThemes.getBodyLargeStyle(context).copyWith(
-              color: ThemeColors.getSecondaryTextColor(context),
-            ),
+            style: TextThemes.getBodyLargeStyle(
+              context,
+            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
           ),
           const SizedBox(height: 8),
           Text(
             'Start the conversation!',
-            style: TextThemes.getBodySmallStyle(context).copyWith(
-              color: ThemeColors.getSecondaryTextColor(context),
-            ),
+            style: TextThemes.getBodySmallStyle(
+              context,
+            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
           ),
         ],
       ),
@@ -427,7 +443,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
     if (widget.chat.type == ChatType.group) {
       return '${widget.chat.participantIds.length} participants';
     }
-    
+
     // TODO: Implement actual online status check
     return 'Online'; // Dummy status
   }
@@ -437,13 +453,12 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
-    ref.read(chatMessagesProvider(widget.chat.id).notifier).sendMessage(
-      text,
-      MessageType.text,
-    );
+    ref
+        .read(chatMessagesProvider(widget.chat.id).notifier)
+        .sendMessage(text, MessageType.text);
 
     _messageController.clear();
-    
+
     // Scroll to bottom
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -466,7 +481,10 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_camera, color: ThemeColors.primaryColor),
+              leading: const Icon(
+                Icons.photo_camera,
+                color: ThemeColors.primaryColor,
+              ),
               title: const Text('Camera'),
               onTap: () {
                 Navigator.pop(context);
@@ -474,7 +492,10 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: ThemeColors.primaryColor),
+              leading: const Icon(
+                Icons.photo_library,
+                color: ThemeColors.primaryColor,
+              ),
               title: const Text('Gallery'),
               onTap: () {
                 Navigator.pop(context);
@@ -482,7 +503,10 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.insert_drive_file, color: ThemeColors.primaryColor),
+              leading: const Icon(
+                Icons.insert_drive_file,
+                color: ThemeColors.primaryColor,
+              ),
               title: const Text('Document'),
               onTap: () {
                 Navigator.pop(context);
@@ -490,7 +514,10 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.location_on, color: ThemeColors.primaryColor),
+              leading: const Icon(
+                Icons.location_on,
+                color: ThemeColors.primaryColor,
+              ),
               title: const Text('Location'),
               onTap: () {
                 Navigator.pop(context);
@@ -553,7 +580,10 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
             if (widget.chat.type == ChatType.group)
               ListTile(
                 leading: const Icon(Icons.exit_to_app, color: Colors.red),
-                title: const Text('Leave Group', style: TextStyle(color: Colors.red)),
+                title: const Text(
+                  'Leave Group',
+                  style: TextStyle(color: Colors.red),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   // TODO: Leave group
@@ -568,8 +598,8 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
   /// Check if two dates are the same day
   bool _isSameDay(DateTime date1, DateTime date2) {
     return date1.year == date2.year &&
-           date1.month == date2.month &&
-           date1.day == date2.day;
+        date1.month == date2.month &&
+        date1.day == date2.day;
   }
 
   /// Format message timestamp

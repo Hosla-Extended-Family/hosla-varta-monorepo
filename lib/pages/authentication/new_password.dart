@@ -119,9 +119,9 @@ class _NewPasswordPageState extends State<NewPasswordPage> {
                 children: [
                   Text(
                     'Password Requirements:',
-                    style: TextThemes.getBodySmallStyle(context).copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextThemes.getBodySmallStyle(
+                      context,
+                    ).copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -148,12 +148,18 @@ class _NewPasswordPageState extends State<NewPasswordPage> {
                 }
 
                 if (!_isPasswordValid(_newPasswordController.text)) {
-                  SnackBarWidget.show(context, 'Password must be at least 6 characters long');
+                  SnackBarWidget.show(
+                    context,
+                    'Password must be at least 6 characters long',
+                  );
                   return;
                 }
 
                 if (_confirmPasswordController.text.isEmpty) {
-                  SnackBarWidget.show(context, 'Please confirm your new password');
+                  SnackBarWidget.show(
+                    context,
+                    'Please confirm your new password',
+                  );
                   return;
                 }
 

@@ -20,7 +20,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedCategory = '';
-  
+
   final List<String> _categories = [
     'All',
     'Technology',
@@ -54,11 +54,17 @@ class _EventsPageState extends ConsumerState<EventsPage> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.search, color: ThemeColors.getNavBarIconColor(context)),
+            icon: Icon(
+              Icons.search,
+              color: ThemeColors.getNavBarIconColor(context),
+            ),
             onPressed: () => _toggleSearch(),
           ),
           IconButton(
-            icon: const Icon(Icons.filter_list, color: ThemeColors.navBarIconColor),
+            icon: const Icon(
+              Icons.filter_list,
+              color: ThemeColors.navBarIconColor,
+            ),
             onPressed: () => _showFilterOptions(),
           ),
         ],
@@ -72,25 +78,25 @@ class _EventsPageState extends ConsumerState<EventsPage> {
             // Search bar
             if (_searchQuery.isNotEmpty || _searchController.text.isNotEmpty)
               _buildSearchBar(),
-            
+
             // Category filter
             _buildCategoryFilter(),
-            
+
             // Events list
             Expanded(
               child: events.isEmpty
                   ? _buildEmptyState()
                   : filteredEvents.isEmpty
-                      ? _buildNoResultsState()
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: filteredEvents.length,
-                          itemBuilder: (context, index) {
-                            final event = filteredEvents[index];
-                            final userStatus = userPreferences[event.id];
-                            return _buildEventCard(event, userStatus);
-                          },
-                        ),
+                  ? _buildNoResultsState()
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: filteredEvents.length,
+                      itemBuilder: (context, index) {
+                        final event = filteredEvents[index];
+                        final userStatus = userPreferences[event.id];
+                        return _buildEventCard(event, userStatus);
+                      },
+                    ),
             ),
           ],
         ),
@@ -145,7 +151,10 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                   _searchQuery = '';
                 });
               },
-              child: Icon(Icons.clear, color: ThemeColors.getSecondaryTextColor(context)),
+              child: Icon(
+                Icons.clear,
+                color: ThemeColors.getSecondaryTextColor(context),
+              ),
             ),
         ],
       ),
@@ -163,9 +172,10 @@ class _EventsPageState extends ConsumerState<EventsPage> {
         itemCount: _categories.length,
         itemBuilder: (context, index) {
           final category = _categories[index];
-          final isSelected = _selectedCategory == category || 
+          final isSelected =
+              _selectedCategory == category ||
               (category == 'All' && _selectedCategory.isEmpty);
-          
+
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: FilterChip(
@@ -180,7 +190,9 @@ class _EventsPageState extends ConsumerState<EventsPage> {
               selectedColor: ThemeColors.primaryColor.withOpacity(0.2),
               checkmarkColor: ThemeColors.primaryColor,
               labelStyle: TextThemes.getBodySmallStyle(context).copyWith(
-                color: isSelected ? ThemeColors.primaryColor : ThemeColors.getSecondaryTextColor(context),
+                color: isSelected
+                    ? ThemeColors.primaryColor
+                    : ThemeColors.getSecondaryTextColor(context),
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
@@ -195,9 +207,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () => _openEventDetail(event),
         borderRadius: BorderRadius.circular(16),
@@ -206,7 +216,9 @@ class _EventsPageState extends ConsumerState<EventsPage> {
           children: [
             // Event image
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
               child: AspectRatio(
                 aspectRatio: 16 / 9,
                 child: Image.network(
@@ -227,9 +239,12 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                           const SizedBox(height: 8),
                           Text(
                             'Event Image',
-                            style: TextThemes.getBodySmallStyle(context).copyWith(
-                              color: ThemeColors.getSecondaryTextColor(context),
-                            ),
+                            style: TextThemes.getBodySmallStyle(context)
+                                .copyWith(
+                                  color: ThemeColors.getSecondaryTextColor(
+                                    context,
+                                  ),
+                                ),
                           ),
                         ],
                       ),
@@ -238,7 +253,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                 ),
               ),
             ),
-            
+
             // Event content
             Padding(
               padding: Constants.defaultPadding,
@@ -252,9 +267,9 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                       Expanded(
                         child: Text(
                           event.title,
-                          style: TextThemes.getBodyLargeStyle(context).copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: TextThemes.getBodyLargeStyle(
+                            context,
+                          ).copyWith(fontWeight: FontWeight.w600),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -263,9 +278,9 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                       _buildUserStatusChip(userStatus),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   // Date and time
                   Row(
                     children: [
@@ -284,9 +299,9 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   // Location
                   Row(
                     children: [
@@ -307,9 +322,9 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Description
                   Text(
                     event.description,
@@ -317,9 +332,9 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Tags
                   if (event.tags.isNotEmpty)
                     Wrap(
@@ -337,17 +352,18 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                           ),
                           child: Text(
                             '#$tag',
-                            style: TextThemes.getBodySmallStyle(context).copyWith(
-                              color: ThemeColors.primaryColor,
-                              fontSize: 11,
-                            ),
+                            style: TextThemes.getBodySmallStyle(context)
+                                .copyWith(
+                                  color: ThemeColors.primaryColor,
+                                  fontSize: 11,
+                                ),
                           ),
                         );
                       }).toList(),
                     ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Participants info and actions
                   Row(
                     children: [
@@ -379,11 +395,11 @@ class _EventsPageState extends ConsumerState<EventsPage> {
   /// Build user status chip
   Widget _buildUserStatusChip(EventStatus? status) {
     if (status == null) return const SizedBox.shrink();
-    
+
     Color chipColor;
     String label;
     IconData icon;
-    
+
     switch (status) {
       case EventStatus.going:
         chipColor = ThemeColors.getSuccessColor(context);
@@ -401,7 +417,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
         icon = Icons.close;
         break;
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -459,7 +475,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
       child: Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: isSelected 
+          color: isSelected
               ? ThemeColors.primaryColor.withOpacity(0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
@@ -467,8 +483,8 @@ class _EventsPageState extends ConsumerState<EventsPage> {
         child: Icon(
           icon,
           size: 20,
-          color: isSelected 
-              ? ThemeColors.primaryColor 
+          color: isSelected
+              ? ThemeColors.primaryColor
               : ThemeColors.getSecondaryTextColor(context),
         ),
       ),
@@ -489,16 +505,16 @@ class _EventsPageState extends ConsumerState<EventsPage> {
           const SizedBox(height: 16),
           Text(
             'No events available',
-            style: TextThemes.getBodyLargeStyle(context).copyWith(
-              color: ThemeColors.getSecondaryTextColor(context),
-            ),
+            style: TextThemes.getBodyLargeStyle(
+              context,
+            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
           ),
           const SizedBox(height: 8),
           Text(
             'Check back later for upcoming events!',
-            style: TextThemes.getBodySmallStyle(context).copyWith(
-              color: ThemeColors.getSecondaryTextColor(context),
-            ),
+            style: TextThemes.getBodySmallStyle(
+              context,
+            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
           ),
         ],
       ),
@@ -519,16 +535,16 @@ class _EventsPageState extends ConsumerState<EventsPage> {
           const SizedBox(height: 16),
           Text(
             'No events found',
-            style: TextThemes.getBodyLargeStyle(context).copyWith(
-              color: ThemeColors.getSecondaryTextColor(context),
-            ),
+            style: TextThemes.getBodyLargeStyle(
+              context,
+            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
           ),
           const SizedBox(height: 8),
           Text(
             'Try adjusting your search or filters',
-            style: TextThemes.getBodySmallStyle(context).copyWith(
-              color: ThemeColors.getSecondaryTextColor(context),
-            ),
+            style: TextThemes.getBodySmallStyle(
+              context,
+            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
           ),
         ],
       ),
@@ -543,17 +559,21 @@ class _EventsPageState extends ConsumerState<EventsPage> {
     if (_searchQuery.isNotEmpty) {
       filtered = filtered.where((event) {
         return event.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-               event.description.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-               event.location.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-               event.tags.any((tag) => tag.toLowerCase().contains(_searchQuery.toLowerCase()));
+            event.description.toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            ) ||
+            event.location.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            event.tags.any(
+              (tag) => tag.toLowerCase().contains(_searchQuery.toLowerCase()),
+            );
       }).toList();
     }
 
     // Filter by category
     if (_selectedCategory.isNotEmpty) {
       filtered = filtered.where((event) {
-        return event.tags.any((tag) => 
-          tag.toLowerCase().contains(_selectedCategory.toLowerCase())
+        return event.tags.any(
+          (tag) => tag.toLowerCase().contains(_selectedCategory.toLowerCase()),
         );
       }).toList();
     }
@@ -588,9 +608,9 @@ class _EventsPageState extends ConsumerState<EventsPage> {
           children: [
             Text(
               'Filter Events',
-              style: TextThemes.getBodyLargeStyle(context).copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextThemes.getBodyLargeStyle(
+                context,
+              ).copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 16),
             const Divider(),
@@ -642,9 +662,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
   void _openEventDetail(Event event) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => EventDetailPage(event: event),
-      ),
+      MaterialPageRoute(builder: (context) => EventDetailPage(event: event)),
     );
   }
 

@@ -12,7 +12,6 @@ class Button extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        
         color: ThemeColors.primaryColor,
         borderRadius: BorderRadius.circular(8.0),
       ),

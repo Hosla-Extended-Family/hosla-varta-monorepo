@@ -36,7 +36,10 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
             Navigator.pop(context);
           },
         ),
-        title: Text('Forgot Password', style: TextThemes.getTitleStyle(context)),
+        title: Text(
+          'Forgot Password',
+          style: TextThemes.getTitleStyle(context),
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -45,7 +48,10 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
           children: [
             const SizedBox(height: 20),
             Center(
-              child: Text('Reset Your Password', style: TextThemes.getBodyLargeStyle(context)),
+              child: Text(
+                'Reset Your Password',
+                style: TextThemes.getBodyLargeStyle(context),
+              ),
             ),
             const SizedBox(height: 16),
             Text(
@@ -99,7 +105,10 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
               onPressed: () {
                 // TODO: Handle forgot password logic here
                 if (_phoneController.text.isEmpty) {
-                  SnackBarWidget.show(context, 'Please enter your phone number');
+                  SnackBarWidget.show(
+                    context,
+                    'Please enter your phone number',
+                  );
                   return;
                 }
 
@@ -116,12 +125,18 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Remember your password?', style: TextThemes.getBodySmallStyle(context)),
+                Text(
+                  'Remember your password?',
+                  style: TextThemes.getBodySmallStyle(context),
+                ),
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: Text('Sign In', style: TextThemes.getBodySmallStyle(context)),
+                  child: Text(
+                    'Sign In',
+                    style: TextThemes.getBodySmallStyle(context),
+                  ),
                 ),
               ],
             ),

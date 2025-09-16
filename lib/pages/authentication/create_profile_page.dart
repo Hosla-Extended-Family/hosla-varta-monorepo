@@ -82,7 +82,10 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
           children: [
             const SizedBox(height: 20),
             Center(
-              child: Text('Complete Your Profile', style: TextThemes.getBodyLargeStyle(context)),
+              child: Text(
+                'Complete Your Profile',
+                style: TextThemes.getBodyLargeStyle(context),
+              ),
             ),
             const SizedBox(height: 24),
 
@@ -102,7 +105,9 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
               },
               icon: const Icon(Icons.camera_alt),
               label: const Text('Upload Picture'),
-              style: TextButton.styleFrom(foregroundColor: ThemeColors.getSecondaryTextColor(context)),
+              style: TextButton.styleFrom(
+                foregroundColor: ThemeColors.getSecondaryTextColor(context),
+              ),
             ),
             const SizedBox(height: 24),
             TextField(
@@ -124,7 +129,9 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
                   vertical: 16,
                 ),
                 decoration: BoxDecoration(
-                  border: Border.all(color: ThemeColors.getBorderColor(context)),
+                  border: Border.all(
+                    color: ThemeColors.getBorderColor(context),
+                  ),
                   borderRadius: BorderRadius.circular(8.0),
                 ),
                 child: Row(
@@ -140,7 +147,10 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
                               color: ThemeColors.getSecondaryTextColor(context),
                             ),
                     ),
-                    Icon(Icons.calendar_today, color: ThemeColors.getBorderColor(context)),
+                    Icon(
+                      Icons.calendar_today,
+                      color: ThemeColors.getBorderColor(context),
+                    ),
                   ],
                 ),
               ),
@@ -210,7 +220,10 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
                   return;
                 }
                 if (_selectedDate == null) {
-                  SnackBarWidget.show(context, 'Please select your date of birth');
+                  SnackBarWidget.show(
+                    context,
+                    'Please select your date of birth',
+                  );
                   return;
                 }
                 if (_selectedGender == null) {

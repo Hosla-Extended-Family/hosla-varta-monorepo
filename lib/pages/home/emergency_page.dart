@@ -23,7 +23,10 @@ class _EmergencyPageState extends State<EmergencyPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 20),
-            Text('Are you in distress?', style: TextThemes.getBodyLargeStyle(context)),
+            Text(
+              'Are you in distress?',
+              style: TextThemes.getBodyLargeStyle(context),
+            ),
             SizedBox(height: 10),
             Text(
               'If you\'re feeling unsafe or need immediate assistance, please use the options below.',
@@ -32,9 +35,9 @@ class _EmergencyPageState extends State<EmergencyPage> {
             SizedBox(height: 30),
 
             // TODO: Add functionalities to the buttons
-            Button(text: "Give a Call", onPressed: () {},),
+            Button(text: "Give a Call", onPressed: () {}),
             SizedBox(height: 16),
-            Button(text: "Post an emergency message", onPressed: () {},),
+            Button(text: "Post an emergency message", onPressed: () {}),
           ],
         ),
       ),

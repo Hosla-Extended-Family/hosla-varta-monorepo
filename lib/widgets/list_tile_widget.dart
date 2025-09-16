@@ -19,7 +19,11 @@ class ListTileWidget extends StatelessWidget {
         onTap: onTap,
         selectedTileColor: ThemeColors.getOverlayColor(context, opacity: 0.1),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        trailing: Icon(Icons.arrow_forward_ios, size: 16, color: ThemeColors.getSecondaryTextColor(context)),
+        trailing: Icon(
+          Icons.arrow_forward_ios,
+          size: 16,
+          color: ThemeColors.getSecondaryTextColor(context),
+        ),
       ),
     );
   }

@@ -62,11 +62,15 @@ class _PostWidgetState extends State<PostWidget>
                   children: [
                     Text(
                       'Hosla',
-                      style: TextThemes.getBodyMediumStyle(context).copyWith(fontSize: 20),
+                      style: TextThemes.getBodyMediumStyle(
+                        context,
+                      ).copyWith(fontSize: 20),
                     ),
                     Text(
                       '2 hours ago',
-                      style: TextThemes.getBodySmallStyle(context).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
+                      style: TextThemes.getBodySmallStyle(context).copyWith(
+                        color: ThemeColors.getSecondaryTextColor(context),
+                      ),
                     ),
                   ],
                 ),
@@ -78,7 +82,10 @@ class _PostWidgetState extends State<PostWidget>
             builder: (context, constraints) {
               const text =
                   'This is a sample post content. It can be multiple lines long and should display properly within the post widget.';
-              final span = TextSpan(text: text, style: TextThemes.getBodyMediumStyle(context));
+              final span = TextSpan(
+                text: text,
+                style: TextThemes.getBodyMediumStyle(context),
+              );
               final tp = TextPainter(
                 text: span,
                 textDirection: TextDirection.ltr,
@@ -131,7 +138,9 @@ class _PostWidgetState extends State<PostWidget>
                         color: ThemeColors.getInfoSurface(context),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: ThemeColors.getInfoColor(context).withOpacity(0.3),
+                          color: ThemeColors.getInfoColor(
+                            context,
+                          ).withOpacity(0.3),
                           width: 1,
                         ),
                       ),
@@ -169,7 +178,10 @@ class _PostWidgetState extends State<PostWidget>
                     decoration: BoxDecoration(
                       color: ThemeColors.getSurfaceColor(context),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: ThemeColors.getBorderColor(context), width: 1),
+                      border: Border.all(
+                        color: ThemeColors.getBorderColor(context),
+                        width: 1,
+                      ),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -235,11 +247,17 @@ class _PostWidgetState extends State<PostWidget>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 20, color: ThemeColors.getSecondaryTextColor(context)),
+          Icon(
+            icon,
+            size: 20,
+            color: ThemeColors.getSecondaryTextColor(context),
+          ),
           SizedBox(width: 4),
           Text(
             label,
-            style: TextThemes.getBodySmallStyle(context).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
+            style: TextThemes.getBodySmallStyle(
+              context,
+            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
           ),
         ],
       ),

@@ -100,7 +100,10 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
             Navigator.pop(context);
           },
         ),
-        title: Text('OTP Verification', style: TextThemes.getTitleStyle(context)),
+        title: Text(
+          'OTP Verification',
+          style: TextThemes.getTitleStyle(context),
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(

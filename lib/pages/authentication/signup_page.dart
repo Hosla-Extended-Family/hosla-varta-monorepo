@@ -51,7 +51,10 @@ class _SignupPageState extends State<SignupPage> {
         child: Column(
           children: [
             const SizedBox(height: 24),
-            Text('Welcome to Hosla Varta!', style: TextThemes.getBodyLargeStyle(context)),
+            Text(
+              'Welcome to Hosla Varta!',
+              style: TextThemes.getBodyLargeStyle(context),
+            ),
             const SizedBox(height: 24),
             Row(
               children: [
