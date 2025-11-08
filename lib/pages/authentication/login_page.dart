@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/widgets/button.dart';
+import 'package:http/http.dart' as http;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,19 +13,47 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  late final TextEditingController _emailController;
+  late final TextEditingController _phoneNumberController;
   late final TextEditingController _passwordController;
+
+  Future<String> _handleLogin() async {
+    final phoneNumber = _phoneNumberController.text;
+    final password = _passwordController.text;
+
+    if (phoneNumber.isEmpty || password.isEmpty) {
+      // Show error message
+      return "Please enter both phone number and password.";
+    }
+
+    try {
+      final request = http.Request('POST', Uri.parse('/api/auth/login'))
+        ..headers['Content-Type'] = 'application/json'
+        ..body = '{"phone": "$phoneNumber", "password": "$password"}';
+
+      final response = await http.Client().send(request);
+      final responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 200) {
+        // Parse response if needed
+        return "Login successful!";
+      } else {
+        return "Login failed: $responseBody";
+      }
+    } catch (e) {
+      return "Login failed. Please try again.";
+    }
+  }
 
   @override
   void initState() {
-    _emailController = TextEditingController();
+    _phoneNumberController = TextEditingController();
     _passwordController = TextEditingController();
     super.initState();
   }
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _phoneNumberController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -74,7 +103,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
-                    controller: _emailController,
+                    controller: _phoneNumberController,
                     keyboardType: TextInputType.phone,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: InputDecoration(
@@ -101,6 +130,7 @@ class _LoginPageState extends State<LoginPage> {
             TextButton(
               onPressed: () {
                 // TODO: Handle forgot password logic here
+                Navigator.pushNamed(context, '/forget-password');
               },
               child: Text(
                 'Forgot Password?',
@@ -110,13 +140,19 @@ class _LoginPageState extends State<LoginPage> {
             SizedBox(height: 16),
             Button(
               text: 'Login',
-              onPressed: () {
-                // TODO: Handle login logic here
-                Navigator.pushNamed(
-                  context,
-                  '/otp-verification',
-                  arguments: '/home', // 👈 tell it where to go after OTP
-                );
+              onPressed: () async {
+                final result = await _handleLogin();
+                if (result == "Login successful!") {
+                  Navigator.pushNamed(
+                    context,
+                    '/otp-verification',
+                    arguments: '/home',
+                  );
+                } else {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(result)));
+                }
               },
             ),
             Row(

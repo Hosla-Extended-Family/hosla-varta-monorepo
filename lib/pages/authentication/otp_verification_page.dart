@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hosla/core/navigation/route_observer.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/widgets/button.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
+import 'package:http/http.dart' as http;
 
 class OtpVerificationPage extends StatefulWidget {
   OtpVerificationPage({super.key, required this.endRoute});
@@ -64,6 +66,29 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
     });
   }
 
+  Future<String> _handleVerifyOtp() async {
+    final otp = _otpController.text;
+
+    if (otp.isEmpty) {
+      return "Please enter the OTP.";
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('/api/auth/verify-otp'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'otp': otp}),
+      );
+
+      if (response.statusCode == 200) {
+        return "OTP verified successfully!";
+      } else {
+        return "OTP verification failed.";
+      }
+    } catch (e) {
+      return "OTP verification failed. Please try again.";
+    }
+  }
   Future<void> _handleResendOtp() async {
     if (!_canResend) return;
     // TODO: Integrate your resend OTP API call here.
@@ -148,7 +173,13 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
               text: 'Verify OTP',
               onPressed: () {
                 // TODO: Handle OTP verification logic here
-                Navigator.pushReplacementNamed(context, widget.endRoute);
+                _handleVerifyOtp().then((result) {
+                  if (result == "OTP verified successfully!") {
+                    Navigator.pushReplacementNamed(context, widget.endRoute);
+                  } else {
+                    SnackBarWidget.show(context, result);
+                  }
+                });
               },
             ),
           ],

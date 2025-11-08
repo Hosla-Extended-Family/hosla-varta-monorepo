@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/widgets/button.dart';
+import 'package:http/http.dart' as http;
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -34,6 +35,38 @@ class _SignupPageState extends State<SignupPage> {
     super.dispose();
   }
 
+  Future<String> _handleSignup() async{
+    final phoneNumber = _emailController.text;
+    final password =  _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    if (phoneNumber.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+      // Show error message
+      return "Please enter all fields.";
+    }
+
+    if (password != confirmPassword) {
+      return "Passwords do not match.";
+    }
+
+    try {
+      final request = http.Request('POST', Uri.parse('/api/auth/signup'))
+        ..headers['Content-Type'] = 'application/json'
+        ..body = '{"phone": "$phoneNumber", "password": "$password"}';
+
+      final response = await http.Client().send(request);
+      final responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 200) {
+        // Parse response if needed
+        return "Signup successful!";
+      } else {
+        return "Signup failed: $responseBody";
+      }
+    } catch (e) {
+      return "Signup failed. Please try again.";
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
