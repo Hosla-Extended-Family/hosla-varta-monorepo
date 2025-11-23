@@ -4,9 +4,10 @@ import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/models/chat_model.dart';
+import 'package:hosla/models/user_model.dart';
+import 'package:hosla/pages/home/contact_info_page.dart';
 import 'package:hosla/providers/chat_provider.dart';
 import 'package:hosla/widgets/profile_pic.dart';
-import 'package:hosla/widgets/snack_bar_widget.dart';
 
 /// Detailed chat screen with message bubbles and input functionality
 class ChatDetailPage extends ConsumerStatefulWidget {
@@ -21,6 +22,7 @@ class ChatDetailPage extends ConsumerStatefulWidget {
 class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  bool _hasText = false;
 
   @override
   void initState() {
@@ -30,6 +32,15 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
       ref
           .read(chatMessagesProvider(widget.chat.id).notifier)
           .markMessagesAsRead();
+    });
+
+    // Listen to text changes
+    _messageController.addListener(() {
+      if (mounted) {
+        setState(() {
+          _hasText = _messageController.text.trim().isNotEmpty;
+        });
+      }
     });
   }
 
@@ -43,9 +54,12 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
   @override
   Widget build(BuildContext context) {
     final messages = ref.watch(chatMessagesProvider(widget.chat.id));
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: ThemeColors.getBackgroundColor(context),
+      backgroundColor: isDark
+          ? const Color(0xFF0E1418)
+          : const Color(0xFFECE5DD),
       appBar: _buildAppBar(),
       body: Column(
         children: [
@@ -55,7 +69,10 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                 ? _buildEmptyMessagesState()
                 : ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 10,
+                    ),
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
                       final message = messages[index];
@@ -95,7 +112,8 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: ThemeColors.getNavBarColor(context),
-      elevation: 1,
+      elevation: 0,
+      titleSpacing: 0,
       leading: IconButton(
         icon: Icon(
           Icons.arrow_back,
@@ -103,31 +121,40 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
         ),
         onPressed: () => Navigator.pop(context),
       ),
-      title: Row(
-        children: [
-          ProfilePic(radius: 18, imageUrl: widget.chat.avatarUrl ?? ''),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.chat.name,
-                  style: TextThemes.getBodyMediumStyle(
-                    context,
-                  ).copyWith(fontWeight: FontWeight.w600, fontSize: 16),
-                ),
-                Text(
-                  _getOnlineStatus(),
-                  style: TextThemes.getBodySmallStyle(context).copyWith(
-                    fontSize: 12,
-                    color: ThemeColors.getSecondaryTextColor(context),
-                  ),
-                ),
-              ],
+      title: InkWell(
+        onTap: () => _viewContactInfo(),
+        child: Row(
+          children: [
+            Hero(
+              tag: 'chat_avatar_${widget.chat.id}',
+              child: ProfilePic(
+                radius: 18,
+                imageUrl: widget.chat.avatarUrl ?? '',
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.chat.name,
+                    style: TextThemes.getBodyMediumStyle(
+                      context,
+                    ).copyWith(fontWeight: FontWeight.w600, fontSize: 16),
+                  ),
+                  Text(
+                    _getOnlineStatus(),
+                    style: TextThemes.getBodySmallStyle(context).copyWith(
+                      fontSize: 12,
+                      color: ThemeColors.getSecondaryTextColor(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
       actions: [
         IconButton(
@@ -161,37 +188,46 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
 
   /// Build message bubble
   Widget _buildMessageBubble(Message message, bool isCurrentUser) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
       child: Row(
         mainAxisAlignment: isCurrentUser
             ? MainAxisAlignment.end
             : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isCurrentUser && widget.chat.type == ChatType.group)
-            ProfilePic(radius: 16, imageUrl: ''),
-          if (!isCurrentUser && widget.chat.type == ChatType.group)
-            const SizedBox(width: 8),
+            Padding(
+              padding: const EdgeInsets.only(right: 6, bottom: 2),
+              child: ProfilePic(radius: 14, imageUrl: ''),
+            ),
 
           Flexible(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.75,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: isCurrentUser
-                    ? ThemeColors.primaryColor
-                    : ThemeColors.getCardColor(context),
-                borderRadius: BorderRadius.circular(18).copyWith(
+                    ? (isDark
+                          ? const Color(0xFF005C4B)
+                          : const Color(0xFFDCF8C6))
+                    : (isDark ? const Color(0xFF1F2C34) : Colors.white),
+                borderRadius: BorderRadius.circular(8).copyWith(
                   bottomLeft: isCurrentUser
-                      ? const Radius.circular(18)
-                      : const Radius.circular(4),
+                      ? const Radius.circular(8)
+                      : const Radius.circular(0),
                   bottomRight: isCurrentUser
-                      ? const Radius.circular(4)
-                      : const Radius.circular(18),
+                      ? const Radius.circular(0)
+                      : const Radius.circular(8),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: ThemeColors.getOverlayColor(context, opacity: 0.1),
-                    blurRadius: 3,
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 1,
                     offset: const Offset(0, 1),
                   ),
                 ],
@@ -220,24 +256,22 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
                   // Timestamp and read status
                   Row(
                     mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
                         _formatMessageTime(message.timestamp),
-                        style: TextThemes.getBodySmallStyle(context).copyWith(
-                          fontSize: 11,
-                          color: isCurrentUser
-                              ? Colors.white.withOpacity(0.8)
-                              : ThemeColors.getSecondaryTextColor(context),
-                        ),
+                        style: TextThemes.getBodySmallStyle(
+                          context,
+                        ).copyWith(fontSize: 11, color: Colors.black45),
                       ),
                       if (isCurrentUser) ...[
                         const SizedBox(width: 4),
                         Icon(
                           message.isRead ? Icons.done_all : Icons.done,
-                          size: 14,
+                          size: 16,
                           color: message.isRead
-                              ? Colors.white
-                              : Colors.white.withOpacity(0.8),
+                              ? const Color(0xFF53BDEB)
+                              : Colors.black45,
                         ),
                       ],
                     ],
@@ -253,14 +287,17 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
 
   /// Build message content based on type
   Widget _buildMessageContent(Message message, bool isCurrentUser) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     switch (message.type) {
       case MessageType.text:
         return Text(
           message.content,
           style: TextThemes.getBodyMediumStyle(context).copyWith(
             color: isCurrentUser
-                ? Colors.white
-                : ThemeColors.getTextColor(context),
+                ? (isDark ? Colors.white : Colors.black87)
+                : (isDark ? Colors.white : Colors.black87),
+            fontSize: 15,
           ),
         );
       case MessageType.image:
@@ -338,70 +375,92 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
   /// Build message input bar
   Widget _buildMessageInputBar() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 3,
-            offset: const Offset(0, -1),
-          ),
-        ],
+        color: ThemeColors.getNavBarColor(context),
       ),
       child: Row(
         children: [
-          // Attach button
-          IconButton(
-            icon: Icon(
-              Icons.attach_file,
-              color: ThemeColors.getSecondaryTextColor(context),
-            ),
-            onPressed: _showAttachmentOptions,
-          ),
-
           // Text input field
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               decoration: BoxDecoration(
                 color: ThemeColors.getSurfaceColor(context),
-                borderRadius: BorderRadius.circular(25),
+                borderRadius: BorderRadius.circular(30),
               ),
-              child: TextField(
-                controller: _messageController,
-                decoration: const InputDecoration(
-                  hintText: 'Type a message...',
-                  border: InputBorder.none,
-                ),
-                maxLines: null,
-                onSubmitted: (_) => _sendMessage(),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _messageController,
+                      decoration: InputDecoration(
+                        hintText: 'Message',
+                        hintStyle: TextStyle(
+                          color: ThemeColors.getSecondaryTextColor(context),
+                        ),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      minLines: 1,
+                      maxLines: 5,
+                      style: TextThemes.getBodyMediumStyle(context),
+                      onSubmitted: (_) => _sendMessage(),
+                      onTapOutside: (event) {
+                        FocusScope.of(context).unfocus();
+                      },
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      Icons.attach_file,
+                      color: ThemeColors.getSecondaryTextColor(context),
+                      size: 22,
+                    ),
+                    onPressed: _showAttachmentOptions,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: Icon(
+                      Icons.camera_alt_outlined,
+                      color: ThemeColors.getSecondaryTextColor(context),
+                      size: 22,
+                    ),
+                    onPressed: () {
+                      // TODO: Open camera
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
               ),
             ),
           ),
 
           const SizedBox(width: 8),
 
-          // Emoji button
-          IconButton(
-            icon: Icon(
-              Icons.emoji_emotions_outlined,
-              color: ThemeColors.getSecondaryTextColor(context),
+          // Send/Voice button
+          Container(
+            decoration: BoxDecoration(
+              color: ThemeColors.primaryColor,
+              shape: BoxShape.circle,
             ),
-            onPressed: _showEmojiPicker,
-          ),
-
-          // Send button
-          IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                color: ThemeColors.primaryColor,
-                shape: BoxShape.circle,
+            child: IconButton(
+              icon: Icon(
+                _hasText ? Icons.send : Icons.mic,
+                color: Colors.white,
+                size: 22,
               ),
-              child: const Icon(Icons.send, color: Colors.white, size: 20),
+              onPressed: _hasText
+                  ? _sendMessage
+                  : () {
+                      // TODO: Record voice
+                    },
             ),
-            onPressed: _sendMessage,
           ),
         ],
       ),
@@ -530,27 +589,34 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
     );
   }
 
-  /// Show emoji picker (placeholder)
-  void _showEmojiPicker() {
-    // TODO: Implement emoji picker
-    SnackBarWidget.show(context, 'Emoji picker coming soon!');
-  }
-
   /// Show chat options menu
   void _showChatOptions() {
     showModalBottomSheet(
       context: context,
+      backgroundColor: ThemeColors.getSurfaceColor(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) => Container(
         padding: Constants.defaultPadding,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: ThemeColors.getBorderColor(context),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
             ListTile(
               leading: const Icon(Icons.info_outline),
-              title: const Text('Chat Info'),
+              title: const Text('Contact Info'),
               onTap: () {
                 Navigator.pop(context);
-                // TODO: Show chat info
+                _viewContactInfo();
               },
             ),
             ListTile(
@@ -591,6 +657,35 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// View contact info
+  void _viewContactInfo() {
+    // Create a dummy user for demonstration
+    // In real app, fetch actual user data
+    final user = User(
+      id: widget.chat.participantIds.isNotEmpty
+          ? widget.chat.participantIds.first
+          : 'user_id',
+      name: widget.chat.name,
+      avatarUrl: widget.chat.avatarUrl,
+      bio: 'Hey there! I am using Hosla Varta',
+      email: 'user@example.com',
+      isOnline: true,
+    );
+
+    // Mock mutual groups - in real app, fetch from backend
+    final mutualGroups = widget.chat.type == ChatType.group
+        ? <String>[]
+        : ['Study Group', 'Friends Forever', 'Weekend Warriors'];
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            ContactInfoPage(user: user, mutualGroups: mutualGroups),
       ),
     );
   }

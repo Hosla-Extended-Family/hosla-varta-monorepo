@@ -11,10 +11,7 @@ import 'package:hosla/widgets/snack_bar_widget.dart';
 class EventDetailPage extends ConsumerStatefulWidget {
   final Event event;
 
-  const EventDetailPage({
-    super.key,
-    required this.event,
-  });
+  const EventDetailPage({super.key, required this.event});
 
   @override
   ConsumerState<EventDetailPage> createState() => _EventDetailPageState();
@@ -25,28 +22,52 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
   Widget build(BuildContext context) {
     final userPreferences = ref.watch(userEventPreferencesProvider);
     final userStatus = userPreferences[widget.event.id];
-    
+
     return Scaffold(
-      backgroundColor: ThemeColors.backgroundColor,
+      backgroundColor: ThemeColors.getBackgroundColor(context),
       body: CustomScrollView(
         slivers: [
           // App bar with image
           SliverAppBar(
-            expandedHeight: 300,
+            expandedHeight: 320,
             pinned: true,
-            backgroundColor: ThemeColors.navBarColor,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
+            backgroundColor: ThemeColors.getNavBarColor(context),
+            leading: Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.5),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+                padding: EdgeInsets.zero,
+              ),
             ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.share, color: Colors.white),
-                onPressed: () => _shareEvent(),
+              Container(
+                margin: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.5),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.share, color: Colors.white),
+                  onPressed: () => _shareEvent(),
+                  padding: EdgeInsets.zero,
+                ),
               ),
-              IconButton(
-                icon: const Icon(Icons.more_vert, color: Colors.white),
-                onPressed: () => _showMoreOptions(),
+              Container(
+                margin: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.5),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.more_vert, color: Colors.white),
+                  onPressed: () => _showMoreOptions(),
+                  padding: EdgeInsets.zero,
+                ),
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
@@ -71,10 +92,11 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                             const SizedBox(height: 16),
                             Text(
                               widget.event.title,
-                              style: TextThemes.getBodyLargeStyle(context).copyWith(
-                                color: ThemeColors.getTextColor(context),
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: TextThemes.getBodyLargeStyle(context)
+                                  .copyWith(
+                                    color: ThemeColors.getTextColor(context),
+                                    fontWeight: FontWeight.w600,
+                                  ),
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -107,40 +129,62 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
               ),
             ),
           ),
-          
+
           // Event details
           SliverToBoxAdapter(
             child: Container(
-              color: Colors.white,
+              color: ThemeColors.getBackgroundColor(context),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Event header
-                  Padding(
-                    padding: Constants.defaultPadding,
+                  // Event header card
+                  Container(
+                    margin: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: ThemeColors.getCardColor(context),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: ThemeColors.getBorderColor(
+                          context,
+                        ).withOpacity(0.1),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.black.withOpacity(0.3)
+                              : ThemeColors.getOverlayColor(
+                                  context,
+                                  opacity: 0.08,
+                                ),
+                          blurRadius: 20,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Title
                         Text(
                           widget.event.title,
-                          style: TextThemes.getTitleStyle(context).copyWith(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextThemes.getTitleStyle(
+                            context,
+                          ).copyWith(fontSize: 24, fontWeight: FontWeight.bold),
                         ),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Date and time
                         _buildInfoRow(
                           Icons.calendar_today,
                           'Date & Time',
                           '${widget.event.formattedDate} at ${widget.event.formattedTime}',
                         ),
-                        
+
                         const SizedBox(height: 12),
-                        
+
                         // Location
                         _buildInfoRow(
                           Icons.location_on,
@@ -148,60 +192,95 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                           widget.event.location,
                           subtitle: widget.event.address,
                         ),
-                        
+
                         const SizedBox(height: 12),
-                        
+
                         // Organizer info
                         _buildInfoRow(
                           Icons.person,
                           'Organizer',
                           'Event Organizer', // TODO: Get actual organizer name
                         ),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Participants info
                         _buildParticipantsInfo(),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Tags
                         if (widget.event.tags.isNotEmpty) _buildTags(),
-                      ],
-                    ),
-                  ),
-                  
-                  const Divider(height: 1),
-                  
-                  // Description section
-                  Padding(
-                    padding: Constants.defaultPadding,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+
+                        const SizedBox(height: 20),
+
+                        // Description
                         Text(
                           'About This Event',
-                          style: TextThemes.getBodyLargeStyle(context).copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: TextThemes.getBodyLargeStyle(
+                            context,
+                          ).copyWith(fontWeight: FontWeight.bold, fontSize: 18),
                         ),
                         const SizedBox(height: 12),
                         Text(
                           widget.event.description,
-                          style: TextThemes.getBodyMediumStyle(context).copyWith(
-                            height: 1.5,
-                          ),
+                          style: TextThemes.getBodyMediumStyle(
+                            context,
+                          ).copyWith(height: 1.6, fontSize: 15),
                         ),
                       ],
                     ),
                   ),
-                  
-                  const SizedBox(height: 24),
-                  
+
+                  const SizedBox(height: 16),
+
+                  // Attendees Section
+                  if (widget.event.goingUserIds.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: ThemeColors.getCardColor(context),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: ThemeColors.getBorderColor(
+                            context,
+                          ).withOpacity(0.1),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Attendees',
+                            style: TextThemes.getBodyLargeStyle(context)
+                                .copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            '${widget.event.goingUserIds.length} people are going to this event',
+                            style: TextThemes.getBodyMediumStyle(context)
+                                .copyWith(
+                                  color: ThemeColors.getSecondaryTextColor(
+                                    context,
+                                  ),
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  const SizedBox(height: 16),
+
                   // Location map placeholder
-                  if (widget.event.latitude != null && widget.event.longitude != null)
+                  if (widget.event.latitude != null &&
+                      widget.event.longitude != null)
                     _buildLocationSection(),
-                  
+
                   const SizedBox(height: 100), // Space for action buttons
                 ],
               ),
@@ -209,7 +288,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
           ),
         ],
       ),
-      
+
       // Action buttons
       bottomNavigationBar: _buildActionButtons(userStatus),
     );
@@ -220,7 +299,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
     Color badgeColor;
     String label;
     IconData icon;
-    
+
     switch (status) {
       case EventStatus.going:
         badgeColor = Colors.green;
@@ -238,7 +317,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
         icon = Icons.close;
         break;
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -259,10 +338,9 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
           const SizedBox(width: 6),
           Text(
             label,
-            style: TextThemes.getBodySmallStyle(context).copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextThemes.getBodySmallStyle(
+              context,
+            ).copyWith(color: Colors.white, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -285,11 +363,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
             color: ThemeColors.primaryColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            icon,
-            size: 20,
-            color: ThemeColors.primaryColor,
-          ),
+          child: Icon(icon, size: 20, color: ThemeColors.primaryColor),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -306,17 +380,17 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
               const SizedBox(height: 2),
               Text(
                 content,
-                style: TextThemes.getBodyMediumStyle(context).copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
+                style: TextThemes.getBodyMediumStyle(
+                  context,
+                ).copyWith(fontWeight: FontWeight.w500),
               ),
               if (subtitle != null) ...[
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: TextThemes.getBodySmallStyle(context).copyWith(
-                    color: ThemeColors.getSecondaryTextColor(context),
-                  ),
+                  style: TextThemes.getBodySmallStyle(
+                    context,
+                  ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
                 ),
               ],
             ],
@@ -331,12 +405,21 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
     final goingCount = widget.event.goingUserIds.length;
     final interestedCount = widget.event.interestedUserIds.length;
     final maxParticipants = widget.event.maxParticipants;
-    
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: ThemeColors.primaryColor.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          colors: [
+            ThemeColors.primaryColor.withOpacity(0.08),
+            ThemeColors.primaryColor.withOpacity(0.03),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: ThemeColors.primaryColor.withOpacity(0.2),
+          width: 1,
+        ),
       ),
       child: Row(
         children: [
@@ -353,48 +436,47 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                 ),
                 Text(
                   'Going',
-                  style: TextThemes.getBodySmallStyle(context).copyWith(
-                    color: ThemeColors.getTextColor(context),
-                  ),
+                  style: TextThemes.getBodySmallStyle(
+                    context,
+                  ).copyWith(color: ThemeColors.getTextColor(context)),
                 ),
               ],
             ),
           ),
-          
+
           Container(
             height: 30,
             width: 1,
             color: ThemeColors.getBorderColor(context),
           ),
-          
+
           // Interested count
           Expanded(
             child: Column(
               children: [
                 Text(
                   '$interestedCount',
-                  style: TextThemes.getBodyLargeStyle(context).copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange,
-                  ),
+                  style: TextThemes.getBodyLargeStyle(
+                    context,
+                  ).copyWith(fontWeight: FontWeight.bold, color: Colors.orange),
                 ),
                 Text(
                   'Interested',
-                  style: TextThemes.getBodySmallStyle(context).copyWith(
-                    color: ThemeColors.getTextColor(context),
-                  ),
+                  style: TextThemes.getBodySmallStyle(
+                    context,
+                  ).copyWith(color: ThemeColors.getTextColor(context)),
                 ),
               ],
             ),
           ),
-          
+
           if (maxParticipants > 0) ...[
             Container(
               height: 30,
               width: 1,
               color: ThemeColors.getBorderColor(context),
             ),
-            
+
             // Max participants
             Expanded(
               child: Column(
@@ -408,9 +490,9 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                   ),
                   Text(
                     'Max',
-                    style: TextThemes.getBodySmallStyle(context).copyWith(
-                      color: ThemeColors.getTextColor(context),
-                    ),
+                    style: TextThemes.getBodySmallStyle(
+                      context,
+                    ).copyWith(color: ThemeColors.getTextColor(context)),
                   ),
                 ],
               ),
@@ -426,37 +508,37 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Tags',
-          style: TextThemes.getBodyMediumStyle(context).copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         Wrap(
           spacing: 8,
-          runSpacing: 6,
+          runSpacing: 8,
           children: widget.event.tags.map((tag) {
             return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: ThemeColors.primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  colors: [
+                    ThemeColors.primaryColor.withOpacity(0.15),
+                    ThemeColors.primaryColor.withOpacity(0.08),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: ThemeColors.primaryColor.withOpacity(0.3),
+                  width: 1,
                 ),
               ),
               child: Text(
                 '#$tag',
                 style: TextThemes.getBodySmallStyle(context).copyWith(
                   color: ThemeColors.primaryColor,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
                 ),
               ),
             );
           }).toList(),
         ),
-        const SizedBox(height: 16),
       ],
     );
   }
@@ -470,9 +552,9 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
           padding: Constants.defaultPadding.copyWith(bottom: 12),
           child: Text(
             'Location',
-            style: TextThemes.getBodyLargeStyle(context).copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextThemes.getBodyLargeStyle(
+              context,
+            ).copyWith(fontWeight: FontWeight.w600),
           ),
         ),
         Container(
@@ -494,16 +576,16 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                 const SizedBox(height: 8),
                 Text(
                   'Map View',
-                  style: TextThemes.getBodyMediumStyle(context).copyWith(
-                    color: ThemeColors.getSecondaryTextColor(context),
-                  ),
+                  style: TextThemes.getBodyMediumStyle(
+                    context,
+                  ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Tap to open in maps',
-                  style: TextThemes.getBodySmallStyle(context).copyWith(
-                    color: ThemeColors.getSecondaryTextColor(context),
-                  ),
+                  style: TextThemes.getBodySmallStyle(
+                    context,
+                  ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
                 ),
               ],
             ),
@@ -517,14 +599,14 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
   /// Build action buttons
   Widget _buildActionButtons(EventStatus? userStatus) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: ThemeColors.getSurfaceColor(context),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, -2),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
           ),
         ],
       ),
@@ -532,69 +614,106 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
         children: [
           // Interested button
           Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () => _toggleInterested(userStatus),
-              icon: Icon(
-                userStatus == EventStatus.interested
-                    ? Icons.star
-                    : Icons.star_border,
-                size: 20,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                gradient: userStatus == EventStatus.interested
+                    ? LinearGradient(
+                        colors: [
+                          Colors.orange.withOpacity(0.15),
+                          Colors.orange.withOpacity(0.05),
+                        ],
+                      )
+                    : null,
               ),
-              label: Text(
-                userStatus == EventStatus.interested
-                    ? 'Interested'
-                    : 'Interested?',
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: userStatus == EventStatus.interested
-                    ? Colors.orange
-                    : ThemeColors.getTextColor(context),
-                side: BorderSide(
-                  color: userStatus == EventStatus.interested
+              child: OutlinedButton.icon(
+                onPressed: () => _toggleInterested(userStatus),
+                icon: Icon(
+                  userStatus == EventStatus.interested
+                      ? Icons.star
+                      : Icons.star_border,
+                  size: 20,
+                ),
+                label: Text(
+                  userStatus == EventStatus.interested
+                      ? 'Interested'
+                      : 'Interested?',
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: userStatus == EventStatus.interested
                       ? Colors.orange
-                      : ThemeColors.getBorderColor(context),
+                      : ThemeColors.getTextColor(context),
+                  side: BorderSide(
+                    color: userStatus == EventStatus.interested
+                        ? Colors.orange
+                        : ThemeColors.getBorderColor(context),
+                    width: 1.5,
+                  ),
+                  backgroundColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                backgroundColor: userStatus == EventStatus.interested
-                    ? Colors.orange.withOpacity(0.1)
-                    : Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
           ),
-          
+
           const SizedBox(width: 12),
-          
+
           // Going button
           Expanded(
-            child: ElevatedButton.icon(
-              onPressed: widget.event.isFull && userStatus != EventStatus.going
-                  ? null
-                  : () => _toggleGoing(userStatus),
-              icon: Icon(
-                userStatus == EventStatus.going
-                    ? Icons.check_circle
-                    : Icons.check_circle_outline,
-                size: 20,
-              ),
-              label: Text(
-                widget.event.isFull && userStatus != EventStatus.going
-                    ? 'Event Full'
-                    : userStatus == EventStatus.going
-                        ? 'Going'
-                        : 'Join Event',
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: userStatus == EventStatus.going
-                    ? Colors.green
-                    : ThemeColors.primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            flex: 2,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                gradient: LinearGradient(
+                  colors: userStatus == EventStatus.going
+                      ? [Colors.green, Colors.green.withOpacity(0.8)]
+                      : [
+                          ThemeColors.primaryColor,
+                          ThemeColors.primaryColor.withBlue(200),
+                        ],
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                boxShadow: [
+                  BoxShadow(
+                    color:
+                        (userStatus == EventStatus.going
+                                ? Colors.green
+                                : ThemeColors.primaryColor)
+                            .withOpacity(0.4),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: ElevatedButton.icon(
+                onPressed:
+                    widget.event.isFull && userStatus != EventStatus.going
+                    ? null
+                    : () => _toggleGoing(userStatus),
+                icon: Icon(
+                  userStatus == EventStatus.going
+                      ? Icons.check_circle
+                      : Icons.check_circle_outline,
+                  size: 20,
+                ),
+                label: Text(
+                  widget.event.isFull && userStatus != EventStatus.going
+                      ? 'Event Full'
+                      : userStatus == EventStatus.going
+                      ? 'Going'
+                      : 'Join Event',
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
               ),
             ),
           ),
@@ -606,9 +725,13 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
   /// Toggle interested status
   void _toggleInterested(EventStatus? currentStatus) {
     if (currentStatus == EventStatus.interested) {
-      ref.read(userEventPreferencesProvider.notifier).removeFromEvent(widget.event.id);
+      ref
+          .read(userEventPreferencesProvider.notifier)
+          .removeFromEvent(widget.event.id);
     } else {
-      ref.read(userEventPreferencesProvider.notifier).markInterested(widget.event.id);
+      ref
+          .read(userEventPreferencesProvider.notifier)
+          .markInterested(widget.event.id);
     }
   }
 
@@ -620,9 +743,13 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
     }
 
     if (currentStatus == EventStatus.going) {
-      ref.read(userEventPreferencesProvider.notifier).removeFromEvent(widget.event.id);
+      ref
+          .read(userEventPreferencesProvider.notifier)
+          .removeFromEvent(widget.event.id);
     } else {
-      ref.read(userEventPreferencesProvider.notifier).markGoing(widget.event.id);
+      ref
+          .read(userEventPreferencesProvider.notifier)
+          .markGoing(widget.event.id);
     }
   }
 

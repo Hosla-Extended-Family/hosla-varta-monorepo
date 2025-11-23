@@ -47,10 +47,13 @@ class _EventsPageState extends ConsumerState<EventsPage> {
       backgroundColor: ThemeColors.getBackgroundColor(context),
       appBar: AppBar(
         backgroundColor: ThemeColors.getNavBarColor(context),
-        elevation: 1,
+        elevation: 0,
         title: Text(
           'Events',
-          style: TextThemes.getTitleStyle(context).copyWith(fontSize: 20),
+          style: TextThemes.getTitleStyle(context).copyWith(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           IconButton(
@@ -61,9 +64,9 @@ class _EventsPageState extends ConsumerState<EventsPage> {
             onPressed: () => _toggleSearch(),
           ),
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.filter_list,
-              color: ThemeColors.navBarIconColor,
+              color: ThemeColors.getNavBarIconColor(context),
             ),
             onPressed: () => _showFilterOptions(),
           ),
@@ -112,16 +115,16 @@ class _EventsPageState extends ConsumerState<EventsPage> {
   /// Build search bar
   Widget _buildSearchBar() {
     return Container(
-      margin: Constants.defaultMargin.copyWith(bottom: 0),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.all(16).copyWith(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: ThemeColors.getCardColor(context),
-        borderRadius: BorderRadius.circular(25),
+        borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: ThemeColors.getOverlayColor(context, opacity: 0.1),
-            blurRadius: 3,
-            offset: const Offset(0, 1),
+            color: ThemeColors.primaryColor.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -164,8 +167,8 @@ class _EventsPageState extends ConsumerState<EventsPage> {
   /// Build category filter
   Widget _buildCategoryFilter() {
     return Container(
-      height: 50,
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      height: 56,
+      margin: const EdgeInsets.symmetric(vertical: 12),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -186,14 +189,25 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                   _selectedCategory = category == 'All' ? '' : category;
                 });
               },
+              elevation: isSelected ? 2 : 0,
               backgroundColor: ThemeColors.getCardColor(context),
-              selectedColor: ThemeColors.primaryColor.withOpacity(0.2),
-              checkmarkColor: ThemeColors.primaryColor,
+              selectedColor: ThemeColors.primaryColor,
+              checkmarkColor: Colors.white,
               labelStyle: TextThemes.getBodySmallStyle(context).copyWith(
                 color: isSelected
-                    ? ThemeColors.primaryColor
+                    ? Colors.white
                     : ThemeColors.getSecondaryTextColor(context),
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+                side: BorderSide(
+                  color: isSelected
+                      ? ThemeColors.primaryColor
+                      : ThemeColors.getSecondaryTextColor(context).withOpacity(0.2),
+                  width: 1.5,
+                ),
               ),
             ),
           );
@@ -206,108 +220,131 @@ class _EventsPageState extends ConsumerState<EventsPage> {
   Widget _buildEventCard(Event event, EventStatus? userStatus) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 4,
+      shadowColor: ThemeColors.primaryColor.withOpacity(0.15),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: InkWell(
         onTap: () => _openEventDetail(event),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Event image
             ClipRRect(
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
+                top: Radius.circular(20),
               ),
-              child: AspectRatio(
-                aspectRatio: 16 / 9,
-                child: Image.network(
-                  event.imageUrl ?? '',
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: ThemeColors.getSurfaceColor(context),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.event,
-                            size: 48,
-                            color: ThemeColors.getDisabledColor(context),
+              child: Stack(
+                children: [
+                  AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: Image.network(
+                      event.imageUrl ?? '',
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                ThemeColors.primaryColor.withOpacity(0.3),
+                                ThemeColors.primaryColor.withOpacity(0.1),
+                              ],
+                            ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Event Image',
-                            style: TextThemes.getBodySmallStyle(context)
-                                .copyWith(
-                                  color: ThemeColors.getSecondaryTextColor(
-                                    context,
-                                  ),
-                                ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.event,
+                                size: 56,
+                                color: ThemeColors.primaryColor,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Event Image',
+                                style: TextThemes.getBodyMediumStyle(context)
+                                    .copyWith(
+                                      color: ThemeColors.primaryColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                        );
+                      },
+                    ),
+                  ),
+                  // Status badge overlay
+                  if (userStatus != null)
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: _buildUserStatusChip(userStatus),
+                    ),
+                ],
               ),
             ),
 
             // Event content
             Padding(
-              padding: Constants.defaultPadding,
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Event title and date
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          event.title,
-                          style: TextThemes.getBodyLargeStyle(
-                            context,
-                          ).copyWith(fontWeight: FontWeight.w600),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildUserStatusChip(userStatus),
-                    ],
+                  // Event title
+                  Text(
+                    event.title,
+                    style: TextThemes.getBodyLargeStyle(
+                      context,
+                    ).copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
 
                   // Date and time
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today,
-                        size: 16,
-                        color: ThemeColors.getSecondaryTextColor(context),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${event.formattedDate} • ${event.formattedTime}',
-                        style: TextThemes.getBodySmallStyle(context).copyWith(
-                          color: ThemeColors.getSecondaryTextColor(context),
-                          fontWeight: FontWeight.w500,
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: ThemeColors.primaryColor.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 18,
+                          color: ThemeColors.primaryColor,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            '${event.formattedDate} • ${event.formattedTime}',
+                            style: TextThemes.getBodySmallStyle(context).copyWith(
+                              color: ThemeColors.primaryColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
 
                   // Location
                   Row(
                     children: [
                       Icon(
                         Icons.location_on,
-                        size: 16,
+                        size: 18,
                         color: ThemeColors.getSecondaryTextColor(context),
                       ),
                       const SizedBox(width: 8),
@@ -316,6 +353,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                           event.location,
                           style: TextThemes.getBodySmallStyle(context).copyWith(
                             color: ThemeColors.getSecondaryTextColor(context),
+                            fontWeight: FontWeight.w500,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -338,45 +376,94 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                   // Tags
                   if (event.tags.isNotEmpty)
                     Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
+                      spacing: 8,
+                      runSpacing: 6,
                       children: event.tags.take(3).map((tag) {
                         return Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                            horizontal: 12,
+                            vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: ThemeColors.primaryColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
+                            gradient: LinearGradient(
+                              colors: [
+                                ThemeColors.primaryColor.withOpacity(0.15),
+                                ThemeColors.primaryColor.withOpacity(0.08),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: ThemeColors.primaryColor.withOpacity(0.3),
+                              width: 1,
+                            ),
                           ),
                           child: Text(
                             '#$tag',
                             style: TextThemes.getBodySmallStyle(context)
                                 .copyWith(
                                   color: ThemeColors.primaryColor,
-                                  fontSize: 11,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
                                 ),
                           ),
                         );
                       }).toList(),
                     ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
 
                   // Participants info and actions
                   Row(
                     children: [
-                      Icon(
-                        Icons.people,
-                        size: 16,
-                        color: ThemeColors.getSecondaryTextColor(context),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: ThemeColors.getSuccessColor(context).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.people,
+                              size: 16,
+                              color: ThemeColors.getSuccessColor(context),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${event.goingUserIds.length}',
+                              style: TextThemes.getBodySmallStyle(context).copyWith(
+                                color: ThemeColors.getSuccessColor(context),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${event.goingUserIds.length} going • ${event.interestedUserIds.length} interested',
-                        style: TextThemes.getBodySmallStyle(context).copyWith(
-                          color: ThemeColors.getSecondaryTextColor(context),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: ThemeColors.getWarningColor(context).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.star,
+                              size: 16,
+                              color: ThemeColors.getWarningColor(context),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${event.interestedUserIds.length}',
+                              style: TextThemes.getBodySmallStyle(context).copyWith(
+                                color: ThemeColors.getWarningColor(context),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const Spacer(),
@@ -419,23 +506,30 @@ class _EventsPageState extends ConsumerState<EventsPage> {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: chipColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: chipColor.withOpacity(0.3)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: chipColor, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: chipColor.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: chipColor),
-          const SizedBox(width: 4),
+          Icon(icon, size: 16, color: chipColor),
+          const SizedBox(width: 6),
           Text(
             label,
             style: TextThemes.getBodySmallStyle(context).copyWith(
               color: chipColor,
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
@@ -471,20 +565,35 @@ class _EventsPageState extends ConsumerState<EventsPage> {
   }) {
     return InkWell(
       onTap: onPressed,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(24),
       child: Container(
-        padding: const EdgeInsets.all(6),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: isSelected
-              ? ThemeColors.primaryColor.withOpacity(0.1)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+              ? ThemeColors.primaryColor
+              : ThemeColors.getCardColor(context),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isSelected
+                ? ThemeColors.primaryColor
+                : ThemeColors.getSecondaryTextColor(context).withOpacity(0.3),
+            width: 2,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: ThemeColors.primaryColor.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
         ),
         child: Icon(
           icon,
-          size: 20,
+          size: 22,
           color: isSelected
-              ? ThemeColors.primaryColor
+              ? Colors.white
               : ThemeColors.getSecondaryTextColor(context),
         ),
       ),
@@ -497,22 +606,33 @@ class _EventsPageState extends ConsumerState<EventsPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.event_note,
-            size: 80,
-            color: ThemeColors.getDisabledColor(context),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: ThemeColors.primaryColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.event_note,
+              size: 72,
+              color: ThemeColors.primaryColor,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           Text(
             'No events available',
             style: TextThemes.getBodyLargeStyle(
               context,
-            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
+            ).copyWith(
+              color: ThemeColors.getTextColor(context),
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Check back later for upcoming events!',
-            style: TextThemes.getBodySmallStyle(
+            style: TextThemes.getBodyMediumStyle(
               context,
             ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
           ),
@@ -527,22 +647,33 @@ class _EventsPageState extends ConsumerState<EventsPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.search_off,
-            size: 80,
-            color: ThemeColors.getDisabledColor(context),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: ThemeColors.primaryColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.search_off,
+              size: 72,
+              color: ThemeColors.primaryColor,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           Text(
             'No events found',
             style: TextThemes.getBodyLargeStyle(
               context,
-            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
+            ).copyWith(
+              color: ThemeColors.getTextColor(context),
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Try adjusting your search or filters',
-            style: TextThemes.getBodySmallStyle(
+            style: TextThemes.getBodyMediumStyle(
               context,
             ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
           ),
@@ -600,22 +731,37 @@ class _EventsPageState extends ConsumerState<EventsPage> {
   void _showFilterOptions() {
     showModalBottomSheet(
       context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) => Container(
         padding: Constants.defaultPadding,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: ThemeColors.getSecondaryTextColor(context).withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
             Text(
               'Filter Events',
               style: TextThemes.getBodyLargeStyle(
                 context,
-              ).copyWith(fontWeight: FontWeight.w600),
+              ).copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
             ),
             const SizedBox(height: 16),
             const Divider(),
             ListTile(
-              leading: const Icon(Icons.today),
+              leading: Icon(Icons.today, color: ThemeColors.primaryColor),
               title: const Text('Today'),
               onTap: () {
                 Navigator.pop(context);
@@ -623,7 +769,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.date_range),
+              leading: Icon(Icons.date_range, color: ThemeColors.primaryColor),
               title: const Text('This Week'),
               onTap: () {
                 Navigator.pop(context);
@@ -631,7 +777,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.location_on),
+              leading: Icon(Icons.location_on, color: ThemeColors.primaryColor),
               title: const Text('Nearby'),
               onTap: () {
                 Navigator.pop(context);
@@ -639,13 +785,14 @@ class _EventsPageState extends ConsumerState<EventsPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.people),
+              leading: Icon(Icons.people, color: ThemeColors.primaryColor),
               title: const Text('My Events'),
               onTap: () {
                 Navigator.pop(context);
                 // TODO: Filter by user's events
               },
             ),
+            const SizedBox(height: 8),
           ],
         ),
       ),
