@@ -376,9 +376,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage> {
   Widget _buildMessageInputBar() {
     return Container(
       padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: ThemeColors.getNavBarColor(context),
-      ),
+      decoration: BoxDecoration(color: ThemeColors.getNavBarColor(context)),
       child: Row(
         children: [
           // Text input field

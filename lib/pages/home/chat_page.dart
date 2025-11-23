@@ -46,7 +46,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.more_vert, color: ThemeColors.getNavBarIconColor(context)),
+            icon: Icon(
+              Icons.more_vert,
+              color: ThemeColors.getNavBarIconColor(context),
+            ),
             onPressed: () => _showMoreOptions(context),
           ),
         ],
@@ -82,9 +85,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
-                        hintStyle: TextThemes.getBodyMediumStyle(context).copyWith(
-                          color: ThemeColors.getSecondaryTextColor(context),
-                        ),
+                        hintStyle: TextThemes.getBodyMediumStyle(context)
+                            .copyWith(
+                              color: ThemeColors.getSecondaryTextColor(context),
+                            ),
                       ),
                       onChanged: (value) {
                         setState(() {
@@ -123,22 +127,24 @@ class _ChatPageState extends ConsumerState<ChatPage> {
               child: chats.isEmpty
                   ? _buildEmptyState()
                   : filteredChats.isEmpty
-                      ? _buildNoResultsState()
-                      : ListView.separated(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          itemCount: filteredChats.length,
-                          separatorBuilder: (context, index) => Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Divider(
-                              height: 1,
-                              color: ThemeColors.getSecondaryTextColor(context).withOpacity(0.1),
-                            ),
-                          ),
-                          itemBuilder: (context, index) {
-                            final chat = filteredChats[index];
-                            return _buildChatTile(chat);
-                          },
+                  ? _buildNoResultsState()
+                  : ListView.separated(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      itemCount: filteredChats.length,
+                      separatorBuilder: (context, index) => Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Divider(
+                          height: 1,
+                          color: ThemeColors.getSecondaryTextColor(
+                            context,
+                          ).withOpacity(0.1),
                         ),
+                      ),
+                      itemBuilder: (context, index) {
+                        final chat = filteredChats[index];
+                        return _buildChatTile(chat);
+                      },
+                    ),
             ),
           ),
         ],
@@ -201,7 +207,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                 ],
               ),
               const SizedBox(width: 16),
-              
+
               // Chat info
               Expanded(
                 child: Column(
@@ -212,19 +218,20 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                         Expanded(
                           child: Text(
                             chat.name,
-                            style: TextThemes.getBodyMediumStyle(context).copyWith(
-                              fontWeight: chat.unreadCount > 0 
-                                  ? FontWeight.w600 
-                                  : FontWeight.normal,
-                            ),
+                            style: TextThemes.getBodyMediumStyle(context)
+                                .copyWith(
+                                  fontWeight: chat.unreadCount > 0
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         Text(
                           _formatTimestamp(chat.lastActivity),
                           style: TextThemes.getBodySmallStyle(context).copyWith(
-                            color: chat.unreadCount > 0 
-                                ? ThemeColors.primaryColor 
+                            color: chat.unreadCount > 0
+                                ? ThemeColors.primaryColor
                                 : ThemeColors.getSecondaryTextColor(context),
                             fontSize: 12,
                           ),
@@ -248,23 +255,26 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                                   : ThemeColors.getSecondaryTextColor(context),
                             ),
                           ),
-                        
+
                         // Last message preview
                         Expanded(
                           child: Text(
                             _getLastMessagePreview(chat),
-                            style: TextThemes.getBodySmallStyle(context).copyWith(
-                              color: chat.unreadCount > 0 
-                                  ? ThemeColors.getTextColor(context)
-                                  : ThemeColors.getSecondaryTextColor(context),
-                              fontWeight: chat.unreadCount > 0 
-                                  ? FontWeight.w500 
-                                  : FontWeight.normal,
-                            ),
+                            style: TextThemes.getBodySmallStyle(context)
+                                .copyWith(
+                                  color: chat.unreadCount > 0
+                                      ? ThemeColors.getTextColor(context)
+                                      : ThemeColors.getSecondaryTextColor(
+                                          context,
+                                        ),
+                                  fontWeight: chat.unreadCount > 0
+                                      ? FontWeight.w500
+                                      : FontWeight.normal,
+                                ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        
+
                         // Unread count badge
                         if (chat.unreadCount > 0)
                           Container(
@@ -281,7 +291,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: ThemeColors.primaryColor.withOpacity(0.3),
+                                  color: ThemeColors.primaryColor.withOpacity(
+                                    0.3,
+                                  ),
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 ),
@@ -289,16 +301,19 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                             ),
                             child: Center(
                               child: Text(
-                                chat.unreadCount > 99 ? '99+' : '${chat.unreadCount}',
-                                style: TextThemes.getBodySmallStyle(context).copyWith(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                chat.unreadCount > 99
+                                    ? '99+'
+                                    : '${chat.unreadCount}',
+                                style: TextThemes.getBodySmallStyle(context)
+                                    .copyWith(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                               ),
                             ),
                           ),
-                        
+
                         // Muted indicator
                         if (chat.isMuted)
                           Padding(
@@ -343,9 +358,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           const SizedBox(height: 8),
           Text(
             'Try searching with different keywords',
-            style: TextThemes.getBodySmallStyle(context).copyWith(
-              color: ThemeColors.getSecondaryTextColor(context),
-            ),
+            style: TextThemes.getBodySmallStyle(
+              context,
+            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
           ),
         ],
       ),
@@ -382,9 +397,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           const SizedBox(height: 8),
           Text(
             'Start a conversation with someone!',
-            style: TextThemes.getBodyMediumStyle(context).copyWith(
-              color: ThemeColors.getSecondaryTextColor(context),
-            ),
+            style: TextThemes.getBodyMediumStyle(
+              context,
+            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
           ),
           const SizedBox(height: 32),
           ElevatedButton.icon(
@@ -412,12 +427,13 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   /// Filter chats based on search query
   List<Chat> _filterChats(List<Chat> chats) {
     if (_searchQuery.isEmpty) return chats;
-    
+
     return chats.where((chat) {
       return chat.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-             (chat.lastMessage?.content
-                 .toLowerCase()
-                 .contains(_searchQuery.toLowerCase()) ?? false);
+          (chat.lastMessage?.content.toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              ) ??
+              false);
     }).toList();
   }
 
@@ -431,7 +447,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   String _formatTimestamp(DateTime timestamp) {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
-    
+
     if (difference.inDays > 0) {
       if (difference.inDays == 1) return 'Yesterday';
       if (difference.inDays < 7) return '${difference.inDays}d';
@@ -448,7 +464,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   /// Get last message preview text
   String _getLastMessagePreview(Chat chat) {
     if (chat.lastMessage == null) return 'No messages yet';
-    
+
     final message = chat.lastMessage!;
     switch (message.type) {
       case MessageType.text:
@@ -464,12 +480,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   void _openChatDetail(Chat chat) {
     // Mark chat as read when opening
     ref.read(chatsProvider.notifier).markChatAsRead(chat.id);
-    
+
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => ChatDetailPage(chat: chat),
-      ),
+      MaterialPageRoute(builder: (context) => ChatDetailPage(chat: chat)),
     );
   }
 
@@ -490,7 +504,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: ThemeColors.getSecondaryTextColor(context).withOpacity(0.3),
+                color: ThemeColors.getSecondaryTextColor(
+                  context,
+                ).withOpacity(0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -507,7 +523,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             ),
             ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete Chat', style: TextStyle(color: Colors.red)),
+              title: const Text(
+                'Delete Chat',
+                style: TextStyle(color: Colors.red),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 // TODO: Implement delete chat
@@ -536,7 +555,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: ThemeColors.getSecondaryTextColor(context).withOpacity(0.3),
+                color: ThemeColors.getSecondaryTextColor(
+                  context,
+                ).withOpacity(0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -588,7 +609,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: ThemeColors.getSecondaryTextColor(context).withOpacity(0.3),
+                color: ThemeColors.getSecondaryTextColor(
+                  context,
+                ).withOpacity(0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -609,7 +632,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.qr_code_scanner, color: ThemeColors.primaryColor),
+              leading: Icon(
+                Icons.qr_code_scanner,
+                color: ThemeColors.primaryColor,
+              ),
               title: const Text('Scan QR Code'),
               onTap: () {
                 Navigator.pop(context);

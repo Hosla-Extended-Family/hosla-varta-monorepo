@@ -50,10 +50,9 @@ class _EventsPageState extends ConsumerState<EventsPage> {
         elevation: 0,
         title: Text(
           'Events',
-          style: TextThemes.getTitleStyle(context).copyWith(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextThemes.getTitleStyle(
+            context,
+          ).copyWith(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
@@ -205,7 +204,9 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                 side: BorderSide(
                   color: isSelected
                       ? ThemeColors.primaryColor
-                      : ThemeColors.getSecondaryTextColor(context).withOpacity(0.2),
+                      : ThemeColors.getSecondaryTextColor(
+                          context,
+                        ).withOpacity(0.2),
                   width: 1.5,
                 ),
               ),
@@ -299,10 +300,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                     event.title,
                     style: TextThemes.getBodyLargeStyle(
                       context,
-                    ).copyWith(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
+                    ).copyWith(fontWeight: FontWeight.bold, fontSize: 18),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -311,7 +309,10 @@ class _EventsPageState extends ConsumerState<EventsPage> {
 
                   // Date and time
                   Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: ThemeColors.primaryColor.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(12),
@@ -327,10 +328,11 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                         Expanded(
                           child: Text(
                             '${event.formattedDate} • ${event.formattedTime}',
-                            style: TextThemes.getBodySmallStyle(context).copyWith(
-                              color: ThemeColors.primaryColor,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: TextThemes.getBodySmallStyle(context)
+                                .copyWith(
+                                  color: ThemeColors.primaryColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
                           ),
                         ),
                       ],
@@ -416,9 +418,14 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: ThemeColors.getSuccessColor(context).withOpacity(0.1),
+                          color: ThemeColors.getSuccessColor(
+                            context,
+                          ).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -432,19 +439,25 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                             const SizedBox(width: 4),
                             Text(
                               '${event.goingUserIds.length}',
-                              style: TextThemes.getBodySmallStyle(context).copyWith(
-                                color: ThemeColors.getSuccessColor(context),
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: TextThemes.getBodySmallStyle(context)
+                                  .copyWith(
+                                    color: ThemeColors.getSuccessColor(context),
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: ThemeColors.getWarningColor(context).withOpacity(0.1),
+                          color: ThemeColors.getWarningColor(
+                            context,
+                          ).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -458,10 +471,11 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                             const SizedBox(width: 4),
                             Text(
                               '${event.interestedUserIds.length}',
-                              style: TextThemes.getBodySmallStyle(context).copyWith(
-                                color: ThemeColors.getWarningColor(context),
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: TextThemes.getBodySmallStyle(context)
+                                  .copyWith(
+                                    color: ThemeColors.getWarningColor(context),
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
                           ],
                         ),
@@ -621,9 +635,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
           const SizedBox(height: 24),
           Text(
             'No events available',
-            style: TextThemes.getBodyLargeStyle(
-              context,
-            ).copyWith(
+            style: TextThemes.getBodyLargeStyle(context).copyWith(
               color: ThemeColors.getTextColor(context),
               fontWeight: FontWeight.bold,
               fontSize: 20,
@@ -662,9 +674,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
           const SizedBox(height: 24),
           Text(
             'No events found',
-            style: TextThemes.getBodyLargeStyle(
-              context,
-            ).copyWith(
+            style: TextThemes.getBodyLargeStyle(context).copyWith(
               color: ThemeColors.getTextColor(context),
               fontWeight: FontWeight.bold,
               fontSize: 20,
@@ -745,7 +755,9 @@ class _EventsPageState extends ConsumerState<EventsPage> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: ThemeColors.getSecondaryTextColor(context).withOpacity(0.3),
+                color: ThemeColors.getSecondaryTextColor(
+                  context,
+                ).withOpacity(0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -753,10 +765,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
               'Filter Events',
               style: TextThemes.getBodyLargeStyle(
                 context,
-              ).copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
+              ).copyWith(fontWeight: FontWeight.bold, fontSize: 20),
             ),
             const SizedBox(height: 16),
             const Divider(),
