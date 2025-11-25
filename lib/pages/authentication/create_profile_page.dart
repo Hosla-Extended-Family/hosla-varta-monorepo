@@ -114,8 +114,26 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
               controller: _nameController,
               decoration: InputDecoration(
                 labelText: 'Name',
+                filled: true,
+                fillColor: ThemeColors.getSurfaceColor(context),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide(
+                    color: ThemeColors.primaryColor,
+                    width: 2.0,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20.0,
+                  vertical: 16.0,
                 ),
               ),
             ),
@@ -125,14 +143,12 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
               onTap: _selectDate,
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
+                  horizontal: 20,
                   vertical: 16,
                 ),
                 decoration: BoxDecoration(
-                  border: Border.all(
-                    color: ThemeColors.getBorderColor(context),
-                  ),
-                  borderRadius: BorderRadius.circular(8.0),
+                  color: ThemeColors.getSurfaceColor(context),
+                  borderRadius: BorderRadius.circular(16.0),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -162,8 +178,26 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
               keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
                 labelText: 'Email (Optional)',
+                filled: true,
+                fillColor: ThemeColors.getSurfaceColor(context),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide(
+                    color: ThemeColors.primaryColor,
+                    width: 2.0,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20.0,
+                  vertical: 16.0,
                 ),
               ),
             ),
@@ -173,11 +207,25 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
               value: _selectedGender,
               decoration: InputDecoration(
                 labelText: 'Gender',
+                filled: true,
+                fillColor: ThemeColors.getSurfaceColor(context),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide(
+                    color: ThemeColors.primaryColor,
+                    width: 2.0,
+                  ),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12.0,
+                  horizontal: 20.0,
                   vertical: 16.0,
                 ),
               ),
@@ -202,10 +250,28 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
               decoration: InputDecoration(
                 labelText: 'Bio',
                 hintText: 'Tell us about yourself...',
+                filled: true,
+                fillColor: ThemeColors.getSurfaceColor(context),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide(
+                    color: ThemeColors.primaryColor,
+                    width: 2.0,
+                  ),
                 ),
                 alignLabelWithHint: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20.0,
+                  vertical: 16.0,
+                ),
               ),
             ),
             const SizedBox(height: 24),

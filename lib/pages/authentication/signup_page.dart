@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
+import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/widgets/button.dart';
 import 'package:http/http.dart' as http;
 
@@ -35,9 +36,9 @@ class _SignupPageState extends State<SignupPage> {
     super.dispose();
   }
 
-  Future<String> _handleSignup() async{
+  Future<String> _handleSignup() async {
     final phoneNumber = _emailController.text;
-    final password =  _passwordController.text;
+    final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
     if (phoneNumber.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
@@ -67,6 +68,7 @@ class _SignupPageState extends State<SignupPage> {
       return "Signup failed. Please try again.";
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -102,8 +104,22 @@ class _SignupPageState extends State<SignupPage> {
                     onChanged: (_) {},
                     decoration: InputDecoration(
                       labelText: 'Code',
+                      filled: true,
+                      fillColor: ThemeColors.getSurfaceColor(context),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+                        borderRadius: BorderRadius.circular(16.0),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.0),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.0),
+                        borderSide: BorderSide(
+                          color: ThemeColors.primaryColor,
+                          width: 2.0,
+                        ),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12.0,
@@ -120,8 +136,26 @@ class _SignupPageState extends State<SignupPage> {
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: InputDecoration(
                       labelText: 'Phone Number',
+                      filled: true,
+                      fillColor: ThemeColors.getSurfaceColor(context),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+                        borderRadius: BorderRadius.circular(16.0),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.0),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.0),
+                        borderSide: BorderSide(
+                          color: ThemeColors.primaryColor,
+                          width: 2.0,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20.0,
+                        vertical: 16.0,
                       ),
                     ),
                   ),
@@ -134,8 +168,26 @@ class _SignupPageState extends State<SignupPage> {
               obscureText: _isNewPasswordVisible,
               decoration: InputDecoration(
                 labelText: 'Password',
+                filled: true,
+                fillColor: ThemeColors.getSurfaceColor(context),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide(
+                    color: ThemeColors.primaryColor,
+                    width: 2.0,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20.0,
+                  vertical: 16.0,
                 ),
                 suffixIcon: IconButton(
                   icon: Icon(
@@ -158,8 +210,40 @@ class _SignupPageState extends State<SignupPage> {
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 labelText: 'Confirm Password',
+                filled: true,
+                fillColor: ThemeColors.getSurfaceColor(context),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide(
+                    color: ThemeColors.primaryColor,
+                    width: 2.0,
+                  ),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide(
+                    color: ThemeColors.errorColor,
+                    width: 2.0,
+                  ),
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide(
+                    color: ThemeColors.errorColor,
+                    width: 2.0,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20.0,
+                  vertical: 16.0,
                 ),
                 suffixIcon: IconButton(
                   icon: Icon(

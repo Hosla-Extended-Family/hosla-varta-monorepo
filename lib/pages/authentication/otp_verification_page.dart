@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hosla/core/navigation/route_observer.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
+import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/widgets/button.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
 import 'package:http/http.dart' as http;
@@ -89,6 +90,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
       return "OTP verification failed. Please try again.";
     }
   }
+
   Future<void> _handleResendOtp() async {
     if (!_canResend) return;
     // TODO: Integrate your resend OTP API call here.
@@ -146,10 +148,28 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
               controller: _otpController,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
                 labelText: 'Enter OTP',
+                filled: true,
+                fillColor: ThemeColors.getSurfaceColor(context),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide(
+                    color: ThemeColors.primaryColor,
+                    width: 2.0,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20.0,
+                  vertical: 16.0,
+                ),
               ),
             ),
             Row(

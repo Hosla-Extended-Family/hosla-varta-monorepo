@@ -9,14 +9,23 @@ class Button extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: ThemeColors.primaryColor,
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: TextButton(
+      height: 56,
+      child: ElevatedButton(
         onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: ThemeColors.primaryColor,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: ThemeColors.primaryColor.withOpacity(0.5),
+          disabledForegroundColor: Colors.white.withOpacity(0.7),
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+        ),
         child: Text(text, style: TextThemes.getButtonStyle(context)),
       ),
     );

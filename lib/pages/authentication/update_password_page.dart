@@ -63,8 +63,26 @@ class _UpdatePasswordPageState extends State<UpdatePasswordPage> {
               obscureText: !_isNewPasswordVisible,
               decoration: InputDecoration(
                 labelText: 'New Password',
+                filled: true,
+                fillColor: ThemeColors.getSurfaceColor(context),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide(
+                    color: ThemeColors.primaryColor,
+                    width: 2.0,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20.0,
+                  vertical: 16.0,
                 ),
                 suffixIcon: IconButton(
                   icon: Icon(
@@ -88,8 +106,26 @@ class _UpdatePasswordPageState extends State<UpdatePasswordPage> {
               obscureText: !_isConfirmPasswordVisible,
               decoration: InputDecoration(
                 labelText: 'Confirm New Password',
+                filled: true,
+                fillColor: ThemeColors.getSurfaceColor(context),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                  borderSide: BorderSide(
+                    color: ThemeColors.primaryColor,
+                    width: 2.0,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20.0,
+                  vertical: 16.0,
                 ),
                 suffixIcon: IconButton(
                   icon: Icon(
