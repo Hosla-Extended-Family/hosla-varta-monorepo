@@ -43,7 +43,7 @@ class MainApp extends ConsumerWidget {
         '/new-password': (context) => NewPasswordPage(),
         '/update-password': (context) => UpdatePasswordPage(),
       },
-      home: Homepage(),
+      home: LoginPage(),
     );
   }
 }

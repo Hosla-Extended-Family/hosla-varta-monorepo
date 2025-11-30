@@ -27,14 +27,14 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     try {
-      final request = http.Request('POST', Uri.parse('/api/auth/login'))
+      final request = http.Request('POST', Uri.parse('/api/auth/register'))
         ..headers['Content-Type'] = 'application/json'
         ..body = '{"phone": "$phoneNumber", "password": "$password"}';
 
       final response = await http.Client().send(request);
       final responseBody = await response.stream.bytesToString();
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
         // Parse response if needed
         return "Login successful!";
       } else {
@@ -214,7 +214,9 @@ class _LoginPageState extends State<LoginPage> {
                   style: TextThemes.getBodySmallStyle(context),
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/signup');
+                  },
                   child: Text(
                     'Sign Up',
                     style: TextThemes.getBodySmallStyle(context),

@@ -97,7 +97,7 @@ class _SignupPageState extends State<SignupPage> {
                   width: 100,
                   child: DropdownButtonFormField<String>(
                     borderRadius: BorderRadius.circular(16),
-                    value: '+91',
+                    initialValue: '+91',
                     items: const [
                       DropdownMenuItem(value: '+91', child: Text('+91')),
                     ],
@@ -273,6 +273,8 @@ class _SignupPageState extends State<SignupPage> {
                       _confirmPasswordController.text.isNotEmpty
                   ? () {
                       // TODO: Handle sign up logic
+                      _handleSignup();
+                      Navigator.pushNamed(context, '/create-profile');
                     }
                   : null,
             ),
@@ -282,27 +284,3 @@ class _SignupPageState extends State<SignupPage> {
     );
   }
 }
-
-
-// TextField(
-//               controller: _confirmPasswordController,
-//               obscureText: !_isConfirmPasswordVisible,
-//               decoration: InputDecoration(
-//                 labelText: 'Confirm New Password',
-//                 border: OutlineInputBorder(
-//                   borderRadius: BorderRadius.circular(8.0),
-//                 ),
-//                 suffixIcon: IconButton(
-//                   icon: Icon(
-//                     _isConfirmPasswordVisible
-//                         ? Icons.visibility
-//                         : Icons.visibility_off,
-//                   ),
-//                   onPressed: () {
-//                     setState(() {
-//                       _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
-//                     });
-//                   },
-//                 ),
-//               ),
-//             ),
