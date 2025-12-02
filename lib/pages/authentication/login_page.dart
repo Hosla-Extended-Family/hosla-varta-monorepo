@@ -34,7 +34,7 @@ class _LoginPageState extends State<LoginPage> {
       final response = await http.Client().send(request);
       final responseBody = await response.stream.bytesToString();
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 200) {
         // Parse response if needed
         return "Login successful!";
       } else {
@@ -84,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
                   width: 100,
                   child: DropdownButtonFormField<String>(
                     borderRadius: BorderRadius.circular(16),
-                    value: '+91',
+                    initialValue: '+91',
                     items: const [
                       DropdownMenuItem(value: '+91', child: Text('+91')),
                     ],
