@@ -5,6 +5,10 @@ import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/widgets/button.dart';
 import 'package:http/http.dart' as http;
+import 'package:hosla/models/user_model.dart';
+import 'package:hosla/services/database_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -35,13 +39,86 @@ class _LoginPageState extends State<LoginPage> {
       final responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 200) {
-        // Parse response if needed
+        // Parse response and extract user data
+        final responseData = json.decode(responseBody);
+
+        // Save user data to local database
+        await _saveUserToDatabase(responseData);
+
+        // Save authentication token and user ID to SharedPreferences
+        await _saveAuthData(responseData);
+
         return "Login successful!";
       } else {
         return "Login failed: $responseBody";
       }
     } catch (e) {
       return "Login failed. Please try again.";
+    }
+  }
+
+  /// Save user data to local SQLite database
+  Future<void> _saveUserToDatabase(Map<String, dynamic> responseData) async {
+    try {
+      // Extract user data from response
+      final userData = responseData['user'] ?? responseData;
+
+      // Create User object from response
+      final user = User(
+        id:
+            userData['id']?.toString() ??
+            userData['userId']?.toString() ??
+            'current_user',
+        name:
+            userData['name']?.toString() ??
+            userData['username']?.toString() ??
+            '',
+        email: userData['email']?.toString(),
+        avatarUrl:
+            userData['avatarUrl']?.toString() ?? userData['avatar']?.toString(),
+        bio: userData['bio']?.toString(),
+        isOnline: true,
+      );
+
+      // Save to local database
+      final dbHelper = DatabaseHelper.instance;
+      await dbHelper.upsertUser(user);
+
+      print('User saved to local database: ${user.id}');
+    } catch (e) {
+      print('Error saving user to database: $e');
+      rethrow;
+    }
+  }
+
+  /// Save authentication data to SharedPreferences
+  Future<void> _saveAuthData(Map<String, dynamic> responseData) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Save authentication token if available
+      if (responseData.containsKey('token')) {
+        await prefs.setString('auth_token', responseData['token'].toString());
+      }
+
+      // Save user ID
+      final userData = responseData['user'] ?? responseData;
+      final userId =
+          userData['id']?.toString() ??
+          userData['userId']?.toString() ??
+          'current_user';
+      await prefs.setString('user_id', userId);
+
+      // Save login status
+      await prefs.setBool('is_logged_in', true);
+
+      // Save login timestamp
+      await prefs.setString('login_time', DateTime.now().toIso8601String());
+
+      print('Auth data saved to SharedPreferences');
+    } catch (e) {
+      print('Error saving auth data: $e');
+      rethrow;
     }
   }
 
@@ -179,9 +256,9 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 // TODO: Handle forgot password logic here
-                Navigator.pushNamed(context, '/forget-password');
+                //Navigator.pushNamed(context, '/forget-password');
               },
               child: Text(
                 'Forgot Password?',
