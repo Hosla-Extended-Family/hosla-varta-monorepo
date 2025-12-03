@@ -10,9 +10,14 @@ import 'package:hosla/widgets/snack_bar_widget.dart';
 import 'package:http/http.dart' as http;
 
 class OtpVerificationPage extends StatefulWidget {
-  OtpVerificationPage({super.key, required this.endRoute});
+  OtpVerificationPage({
+    super.key,
+    required this.endRoute,
+    required this.phoneNumber,
+  });
 
   final String endRoute;
+  final String phoneNumber;
 
   @override
   State<OtpVerificationPage> createState() => _OtpVerificationPageState();
@@ -195,7 +200,11 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                 // TODO: Handle OTP verification logic here
                 _handleVerifyOtp().then((result) {
                   if (result == "OTP verified successfully!") {
-                    Navigator.pushReplacementNamed(context, widget.endRoute);
+                    Navigator.pushReplacementNamed(
+                      context,
+                      widget.endRoute,
+                      arguments: widget.phoneNumber,
+                    );
                   } else {
                     SnackBarWidget.show(context, result);
                   }

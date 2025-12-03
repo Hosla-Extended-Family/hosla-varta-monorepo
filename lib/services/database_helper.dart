@@ -41,6 +41,7 @@ class DatabaseHelper {
         avatarUrl TEXT,
         bio TEXT,
         email TEXT,
+        phone TEXT,
         isOnline INTEGER NOT NULL DEFAULT 0,
         lastSeen TEXT,
         syncedAt TEXT NOT NULL
@@ -104,6 +105,7 @@ class DatabaseHelper {
       'avatarUrl': user.avatarUrl,
       'bio': user.bio,
       'email': user.email,
+      'phone': user.phone,
       'isOnline': user.isOnline ? 1 : 0,
       'lastSeen': user.lastSeen?.toIso8601String(),
       'syncedAt': DateTime.now().toIso8601String(),
@@ -122,6 +124,7 @@ class DatabaseHelper {
         'avatarUrl': user.avatarUrl,
         'bio': user.bio,
         'email': user.email,
+        'phone': user.phone,
         'isOnline': user.isOnline ? 1 : 0,
         'lastSeen': user.lastSeen?.toIso8601String(),
         'syncedAt': DateTime.now().toIso8601String(),
@@ -374,6 +377,7 @@ class DatabaseHelper {
       avatarUrl: map['avatarUrl'] as String?,
       bio: map['bio'] as String?,
       email: map['email'] as String?,
+      phone: map['phone'] as String?,
       isOnline: (map['isOnline'] as int) == 1,
       lastSeen: map['lastSeen'] != null
           ? DateTime.parse(map['lastSeen'] as String)

@@ -1,18 +1,23 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
-import 'package:hosla/core/constants/text_theme.dart';
+import 'package:http/http.dart' as http;
+
 import 'package:hosla/core/constants/constants.dart';
+import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/widgets/button.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
 
-class NewPasswordPage extends StatefulWidget {
-  const NewPasswordPage({super.key});
+class ResetPassword extends StatefulWidget {
+  ResetPassword({Key? key, required this.phoneNumber}) : super(key: key);
+
+  late final String phoneNumber;
 
   @override
-  State<NewPasswordPage> createState() => _NewPasswordPageState();
+  State<ResetPassword> createState() => _ResetPasswordState();
 }
 
-class _NewPasswordPageState extends State<NewPasswordPage> {
+class _ResetPasswordState extends State<ResetPassword> {
   late final TextEditingController _newPasswordController;
   late final TextEditingController _confirmPasswordController;
   bool _isNewPasswordVisible = false;
@@ -39,6 +44,25 @@ class _NewPasswordPageState extends State<NewPasswordPage> {
 
   bool _doPasswordsMatch() {
     return _newPasswordController.text == _confirmPasswordController.text;
+  }
+
+
+  Future<String> _handleResetPassword() async {
+    // Implement your password reset logic here
+    final newPassword = _newPasswordController.text;
+    try {
+      final request = http.Request('POST', Uri.parse('/auth/reset-password'))
+        ..headers['Content-Type'] = 'application/json'
+        ..body = '{"phoneNumber": "${widget.phoneNumber}", "newPassword": "$newPassword"}';
+      final response = await http.Client().send(request);
+      if (response.statusCode == 200) {
+        return "Password reset successfully";
+      } else {
+        return "Failed to reset password";
+      }
+    } catch (e) {
+      return "Failed to reset password. Please try again.";
+    }
   }
 
   @override
@@ -205,14 +229,19 @@ class _NewPasswordPageState extends State<NewPasswordPage> {
                 }
 
                 // Show success message and navigate to login
-                SnackBarWidget.show(context, 'Password reset successfully!');
-
-                // Navigate to login page after successful password reset
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/login',
-                  (route) => false,
-                );
+                _handleResetPassword().then((result) {
+                  if (result == "Password reset successfully") {
+                    SnackBarWidget.show(context, result);
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/login',
+                      (route) => false,
+                    );
+                  } else {
+                    SnackBarWidget.show(context, result);
+                  }
+                  // Navigate to login page after successful password reset
+                });
               },
             ),
           ],

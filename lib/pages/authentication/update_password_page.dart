@@ -4,9 +4,12 @@ import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/widgets/button.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
+import 'package:http/http.dart' as http;
 
 class UpdatePasswordPage extends StatefulWidget {
-  const UpdatePasswordPage({super.key});
+  const UpdatePasswordPage({super.key, required this.phoneNumber});
+
+  final String phoneNumber;
 
   @override
   State<UpdatePasswordPage> createState() => _UpdatePasswordPageState();
@@ -39,6 +42,25 @@ class _UpdatePasswordPageState extends State<UpdatePasswordPage> {
 
   bool _doPasswordsMatch() {
     return _newPasswordController.text == _confirmPasswordController.text;
+  }
+
+  Future<String> _handleResetPassword() async {
+    // TODO: check the api endpoint
+    final newPassword = _newPasswordController.text;
+    try {
+      final request = http.Request('POST', Uri.parse('/auth/reset-password'))
+        ..headers['Content-Type'] = 'application/json'
+        ..body =
+            '{"phoneNumber": "${widget.phoneNumber}", "newPassword": "$newPassword"}';
+      final response = await http.Client().send(request);
+      if (response.statusCode == 200) {
+        return "Password reset successfully";
+      } else {
+        return "Failed to reset password";
+      }
+    } catch (e) {
+      return "Failed to reset password. Please try again.";
+    }
   }
 
   @override
@@ -202,14 +224,19 @@ class _UpdatePasswordPageState extends State<UpdatePasswordPage> {
                   SnackBarWidget.show(context, 'Passwords do not match!');
                   return;
                 }
-                SnackBarWidget.show(context, 'Password updated successfully!');
-
-                // TODO: Implement the actual password update logic here
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/home',
-                  (route) => false,
-                );
+                _handleResetPassword().then((result) {
+                  if (result == "Password reset successfully") {
+                    SnackBarWidget.show(context, result);
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/home',
+                      (route) => false,
+                    );
+                  } else {
+                    SnackBarWidget.show(context, result);
+                  }
+                  // Navigate to login page after successful password reset
+                });
               },
             ),
           ],

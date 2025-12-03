@@ -19,6 +19,7 @@ class UserService {
         'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
     bio: 'Software developer passionate about mobile apps and user experience.',
     email: 'john.doe@example.com',
+    phone: '+919876543210',
     isOnline: true,
   );
 

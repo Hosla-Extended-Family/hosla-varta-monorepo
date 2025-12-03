@@ -5,6 +5,7 @@ import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/pages/authentication/update_password_page.dart';
 import 'package:hosla/pages/home/edit_profile_page.dart';
+import 'package:hosla/pages/home/verify_email_page.dart';
 import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/providers/theme_provider.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
@@ -74,14 +75,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 subtitle: 'Update your password',
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => UpdatePasswordPage()),
+                  MaterialPageRoute(
+                    builder: (context) => UpdatePasswordPage(
+                      phoneNumber: currentUser?.phone ?? '',
+                    ),
+                  ),
                 ),
               ),
               _buildSettingsTile(
                 icon: Icons.email_outlined,
-                title: 'Email Settings',
-                subtitle: 'Manage email preferences',
-                onTap: () => _showEmailSettings(),
+                title: 'Verify Email',
+                subtitle: 'Add or verify your email address',
+                onTap: () => _navigateToVerifyEmail(),
               ),
             ]),
 
@@ -680,10 +685,29 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              ref.read(currentUserProfileProvider.notifier).logout();
-              Navigator.pop(context);
-              // TODO: Navigate to login screen
+            onPressed: () async {
+              Navigator.pop(context); // Close dialog first
+
+              try {
+                // Call logout which clears local database and SharedPreferences
+
+                await ref.read(currentUserProfileProvider.notifier).logout();
+
+                // Navigate to login screen and clear navigation stack
+                if (mounted) {
+                  Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/login', (route) => false);
+                }
+              } catch (e) {
+                // Show error if logout fails
+                if (mounted) {
+                  SnackBarWidget.show(
+                    context,
+                    'Logout failed. Please try again.',
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: ThemeColors.getErrorColor(context),
@@ -743,7 +767,20 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   // Placeholder methods for additional functionality
-  void _showEmailSettings() => _showComingSoon();
+  void _navigateToVerifyEmail() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const VerifyEmailPage()),
+    );
+
+    // If email was verified successfully, show a success message
+    if (result == true && mounted) {
+      SnackBarWidget.show(context, 'Email verified successfully!');
+      // Refresh the settings page to show updated email
+      setState(() {});
+    }
+  }
+
   void _showNotificationPreferences() => _showComingSoon();
   void _showPrivacySettings() => _showComingSoon();
   void _showBlockedUsers() => _showComingSoon();

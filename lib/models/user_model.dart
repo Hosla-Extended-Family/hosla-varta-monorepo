@@ -5,6 +5,7 @@ class User {
   final String? avatarUrl;
   final String? bio;
   final String? email;
+  final String? phone;
   final bool isOnline;
   final DateTime? lastSeen;
 
@@ -14,6 +15,7 @@ class User {
     this.avatarUrl,
     this.bio,
     this.email,
+    this.phone,
     this.isOnline = false,
     this.lastSeen,
   });
@@ -26,9 +28,10 @@ class User {
       avatarUrl: json['avatarUrl'],
       bio: json['bio'],
       email: json['email'],
+      phone: json['phone'],
       isOnline: json['isOnline'] ?? false,
-      lastSeen: json['lastSeen'] != null 
-          ? DateTime.parse(json['lastSeen']) 
+      lastSeen: json['lastSeen'] != null
+          ? DateTime.parse(json['lastSeen'])
           : null,
     );
   }
@@ -41,6 +44,7 @@ class User {
       'avatarUrl': avatarUrl,
       'bio': bio,
       'email': email,
+      'phone': phone,
       'isOnline': isOnline,
       'lastSeen': lastSeen?.toIso8601String(),
     };
@@ -53,6 +57,7 @@ class User {
     String? avatarUrl,
     String? bio,
     String? email,
+    String? phone,
     bool? isOnline,
     DateTime? lastSeen,
   }) {
@@ -62,6 +67,7 @@ class User {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       bio: bio ?? this.bio,
       email: email ?? this.email,
+      phone: phone ?? this.phone,
       isOnline: isOnline ?? this.isOnline,
       lastSeen: lastSeen ?? this.lastSeen,
     );

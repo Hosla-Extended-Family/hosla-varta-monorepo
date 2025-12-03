@@ -5,6 +5,7 @@ import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/widgets/button.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
+import 'package:http/http.dart' as http;
 
 class ForgetPasswordPage extends StatefulWidget {
   const ForgetPasswordPage({super.key});
@@ -26,6 +27,30 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
   void dispose() {
     _phoneController.dispose();
     super.dispose();
+  }
+
+  Future<String> _handleForgetPassword() async {
+    final phoneNumber = _phoneController.text.trim();
+    if (phoneNumber.isEmpty) {
+      return "Please enter your phone number.";
+    }
+    try {
+      final request =
+          http.Request('POST', Uri.parse('/auth/forgot-password-otp'))
+            ..headers['Content-Type'] = 'application/json'
+            ..body = '{"phone": "$phoneNumber"}';
+
+      final response = await http.Client().send(request);
+      final responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 200) {
+        return "OTP sent to your phone";
+      } else {
+        return "Failed to send OTP: $responseBody";
+      }
+    } catch (e) {
+      return "Failed to send OTP. Please try again.";
+    }
   }
 
   @override
@@ -144,13 +169,22 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
                   );
                   return;
                 }
+                _handleForgetPassword().then((result) {
+                  if (result == "OTP sent to your phone") {
+                    SnackBarWidget.show(context, result);
+                  } else {
+                    SnackBarWidget.show(context, result);
+                  }
+                });
 
                 // Navigate to OTP verification page
                 Navigator.pushNamed(
                   context,
                   '/otp-verification',
-                  arguments:
-                      '/new-password', // 👈 tell it where to go after OTP
+                  arguments: {
+                    '/reset-password', // tell it where to go after OTP
+                    _phoneController.text,
+                  },
                 );
               },
             ),

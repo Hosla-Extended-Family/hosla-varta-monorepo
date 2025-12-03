@@ -5,7 +5,7 @@ import 'package:hosla/core/navigation/route_observer.dart';
 import 'package:hosla/pages/authentication/create_profile_page.dart';
 import 'package:hosla/pages/authentication/forget_password_page.dart';
 import 'package:hosla/pages/authentication/login_page.dart';
-import 'package:hosla/pages/authentication/new_password.dart';
+import 'package:hosla/pages/authentication/reset_password.dart';
 import 'package:hosla/pages/authentication/otp_verification_page.dart';
 import 'package:hosla/pages/authentication/signup_page.dart';
 import 'package:hosla/pages/authentication/update_password_page.dart';
@@ -35,15 +35,21 @@ class MainApp extends ConsumerWidget {
         '/signup': (context) => const SignupPage(),
         '/otp-verification': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as String;
-          return OtpVerificationPage(endRoute: args);
+          return OtpVerificationPage(endRoute: args, phoneNumber: args);
         },
         '/forget-password': (context) => const ForgetPasswordPage(),
         '/create-profile': (context) => const CreateProfilePage(),
         '/home': (context) => Homepage(),
-        '/new-password': (context) => NewPasswordPage(),
-        '/update-password': (context) => UpdatePasswordPage(),
+        '/reset-password': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as String;
+          return ResetPassword(phoneNumber: args);
+        },
+        '/update-password': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as String;
+          return UpdatePasswordPage(phoneNumber: args);
+        },
       },
-      home: LoginPage(),
+      home: Homepage(),
     );
   }
 }

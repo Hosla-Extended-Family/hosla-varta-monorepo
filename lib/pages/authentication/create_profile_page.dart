@@ -5,6 +5,9 @@ import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/widgets/button.dart';
 import 'package:hosla/widgets/profile_pic.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
+import 'package:hosla/models/user_model.dart';
+import 'package:hosla/services/database_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CreateProfilePage extends StatefulWidget {
   const CreateProfilePage({super.key});
@@ -62,6 +65,62 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  /// Save profile data to local database and SharedPreferences
+  Future<void> _saveProfileData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Get user ID from SharedPreferences
+      final userId =
+          prefs.getString('user_id') ??
+          'user_${DateTime.now().millisecondsSinceEpoch}';
+      final phoneNumber = prefs.getString('phone_number') ?? '';
+
+      // Create User object with all profile data
+      final user = User(
+        id: userId,
+        name: _nameController.text,
+        email: _emailController.text.isNotEmpty ? _emailController.text : null,
+        phone: phoneNumber,
+        avatarUrl: _profileImageUrl,
+        bio: _bioController.text.isNotEmpty ? _bioController.text : null,
+        isOnline: true,
+      );
+
+      // Save to local database
+      final dbHelper = DatabaseHelper.instance;
+      await dbHelper.upsertUser(user);
+
+      // Save profile data to SharedPreferences
+      await prefs.setString('user_name', _nameController.text);
+      if (_emailController.text.isNotEmpty) {
+        await prefs.setString('user_email', _emailController.text);
+      }
+      if (_bioController.text.isNotEmpty) {
+        await prefs.setString('user_bio', _bioController.text);
+      }
+      if (_profileImageUrl != null) {
+        await prefs.setString('user_avatar', _profileImageUrl!);
+      }
+      if (_selectedGender != null) {
+        await prefs.setString('user_gender', _selectedGender!);
+      }
+      if (_selectedDate != null) {
+        await prefs.setString('user_dob', _selectedDate!.toIso8601String());
+      }
+
+      // Mark profile as completed
+      await prefs.setBool('profile_completed', true);
+
+      print(
+        'Profile saved successfully - User ID: $userId, Name: ${_nameController.text}',
+      );
+    } catch (e) {
+      print('Error saving profile data: $e');
+      rethrow;
+    }
   }
 
   @override
@@ -279,8 +338,8 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
             // Create Profile Button
             Button(
               text: 'Create Profile',
-              onPressed: () {
-                // TODO: Handle profile creation logic
+              onPressed: () async {
+                // Validate required fields
                 if (_nameController.text.isEmpty) {
                   SnackBarWidget.show(context, 'Please enter your name');
                   return;
@@ -297,10 +356,22 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
                   return;
                 }
 
-                // TODO: Save profile data to backend or local storage
+                // Save profile data to backend or local storage
+                try {
+                  await _saveProfileData();
+                  SnackBarWidget.show(context, 'Profile created successfully!');
 
-                // Navigate to home page after successful profile creation
-                Navigator.pushReplacementNamed(context, '/home');
+                  // Navigate to home page after successful profile creation
+                  if (mounted) {
+                    Navigator.pushReplacementNamed(context, '/home');
+                  }
+                } catch (e) {
+                  SnackBarWidget.show(
+                    context,
+                    'Failed to create profile. Please try again.',
+                  );
+                  print('Error creating profile: $e');
+                }
               },
             ),
           ],

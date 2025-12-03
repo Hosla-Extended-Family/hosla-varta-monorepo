@@ -4,6 +4,7 @@ import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/widgets/button.dart';
+import 'package:hosla/widgets/snack_bar_widget.dart';
 import 'package:http/http.dart' as http;
 import 'package:hosla/models/user_model.dart';
 import 'package:hosla/services/database_helper.dart';
@@ -31,7 +32,7 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     try {
-      final request = http.Request('POST', Uri.parse('/api/auth/register'))
+      final request = http.Request('POST', Uri.parse('/api/auth/login'))
         ..headers['Content-Type'] = 'application/json'
         ..body = '{"phone": "$phoneNumber", "password": "$password"}';
 
@@ -49,6 +50,10 @@ class _LoginPageState extends State<LoginPage> {
         await _saveAuthData(responseData);
 
         return "Login successful!";
+      } else if (response.statusCode == 404) {
+        return "Invalid phone number or password.";
+      } else if (response.statusCode == 401) {
+        return "Wrong password. Please try again.";
       } else {
         return "Login failed: $responseBody";
       }
@@ -63,6 +68,9 @@ class _LoginPageState extends State<LoginPage> {
       // Extract user data from response
       final userData = responseData['user'] ?? responseData;
 
+      // Get phone number from controller as fallback
+      final phoneNumber = _phoneNumberController.text;
+
       // Create User object from response
       final user = User(
         id:
@@ -74,6 +82,7 @@ class _LoginPageState extends State<LoginPage> {
             userData['username']?.toString() ??
             '',
         email: userData['email']?.toString(),
+        phone: userData['phone']?.toString() ?? phoneNumber,
         avatarUrl:
             userData['avatarUrl']?.toString() ?? userData['avatar']?.toString(),
         bio: userData['bio']?.toString(),
@@ -108,6 +117,11 @@ class _LoginPageState extends State<LoginPage> {
           userData['userId']?.toString() ??
           'current_user';
       await prefs.setString('user_id', userId);
+
+      // Save phone number
+      final phoneNumber = _phoneNumberController.text;
+      final userPhone = userData['phone']?.toString() ?? phoneNumber;
+      await prefs.setString('phone_number', userPhone);
 
       // Save login status
       await prefs.setBool('is_logged_in', true);
@@ -258,7 +272,7 @@ class _LoginPageState extends State<LoginPage> {
             TextButton(
               onPressed: () async {
                 // TODO: Handle forgot password logic here
-                //Navigator.pushNamed(context, '/forget-password');
+                Navigator.pushNamed(context, '/forget-password');
               },
               child: Text(
                 'Forgot Password?',
@@ -271,15 +285,14 @@ class _LoginPageState extends State<LoginPage> {
               onPressed: () async {
                 final result = await _handleLogin();
                 if (result == "Login successful!") {
+                  SnackBarWidget.show(context, result);
                   Navigator.pushNamed(
                     context,
                     '/otp-verification',
                     arguments: '/home',
                   );
                 } else {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(result)));
+                  SnackBarWidget.show(context, result);
                 }
               },
             ),
