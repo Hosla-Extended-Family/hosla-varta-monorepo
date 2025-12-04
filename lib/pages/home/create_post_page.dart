@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:pro_image_editor/pro_image_editor.dart';
 
 class CreatePostPage extends StatefulWidget {
   const CreatePostPage({super.key});
@@ -85,9 +87,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
         );
 
         if (image != null) {
-          setState(() {
-            _selectedImage = image;
-          });
+          // Open image editor
+          await _openImageEditor(image);
         }
       }
     } catch (e) {
@@ -96,6 +97,59 @@ class _CreatePostPageState extends State<CreatePostPage> {
           SnackBar(
             content: Text(
               'Failed to pick image: $e',
+              style: const TextStyle(fontFamily: 'Quicksand'),
+            ),
+            backgroundColor: ThemeColors.errorColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _openImageEditor(XFile imageFile) async {
+    try {
+      final bytes = await imageFile.readAsBytes();
+
+      if (!mounted) return;
+
+      final BuildContext currentContext = context;
+
+      final editedImage = await Navigator.push<Uint8List>(
+        currentContext,
+        MaterialPageRoute(
+          builder: (context) => ProImageEditor.memory(
+            bytes,
+            callbacks: ProImageEditorCallbacks(
+              onImageEditingComplete: (Uint8List bytes) async {
+                Navigator.pop(context, bytes);
+              },
+            ),
+          ),
+        ),
+      );
+
+      if (editedImage != null && mounted) {
+        // Save the edited image to a temporary file
+        final tempDir = Directory.systemTemp;
+        final tempFile = File(
+          '${tempDir.path}/edited_image_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        );
+        await tempFile.writeAsBytes(editedImage);
+
+        setState(() {
+          _selectedImage = XFile(tempFile.path);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to edit image: $e',
               style: const TextStyle(fontFamily: 'Quicksand'),
             ),
             backgroundColor: ThemeColors.errorColor,
@@ -261,8 +315,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
                                       color: Colors.white,
                                       size: 20,
                                     ),
-                                    onPressed: _pickImage,
-                                    tooltip: 'Change Image',
+                                    onPressed: () =>
+                                        _openImageEditor(_selectedImage!),
+                                    tooltip: 'Edit Image',
                                   ),
                                   IconButton(
                                     icon: const Icon(
