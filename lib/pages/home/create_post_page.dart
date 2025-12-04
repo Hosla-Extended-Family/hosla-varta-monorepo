@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CreatePostPage extends StatefulWidget {
   const CreatePostPage({super.key});
@@ -10,7 +12,9 @@ class CreatePostPage extends StatefulWidget {
 
 class _CreatePostPageState extends State<CreatePostPage> {
   final TextEditingController _captionController = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
+  XFile? _selectedImage;
 
   @override
   void dispose() {
@@ -18,52 +22,99 @@ class _CreatePostPageState extends State<CreatePostPage> {
     super.dispose();
   }
 
-  void _pickImage() {
-    // TODO: Implement image picker
-    // For now, showing a coming soon dialog
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: ThemeColors.getSurfaceColor(context),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'Coming Soon',
-          style: TextStyle(
-            fontFamily: 'Quicksand',
-            fontWeight: FontWeight.bold,
-            color: ThemeColors.getTextColor(context),
+  Future<void> _pickImage() async {
+    try {
+      // Show option to pick from gallery or camera
+      final ImageSource? source = await showDialog<ImageSource>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: ThemeColors.getSurfaceColor(context),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-        ),
-        content: Text(
-          'Image picker feature will be available soon!',
-          style: TextStyle(
-            fontFamily: 'Quicksand',
-            color: ThemeColors.getSecondaryTextColor(context),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'OK',
-              style: TextStyle(
-                fontFamily: 'Quicksand',
-                color: ThemeColors.primaryColor,
-                fontWeight: FontWeight.w600,
-              ),
+          title: Text(
+            'Choose Image Source',
+            style: TextStyle(
+              fontFamily: 'Quicksand',
+              fontWeight: FontWeight.bold,
+              color: ThemeColors.getTextColor(context),
             ),
           ),
-        ],
-      ),
-    );
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(
+                  Icons.camera_alt,
+                  color: ThemeColors.primaryColor,
+                ),
+                title: Text(
+                  'Camera',
+                  style: TextStyle(
+                    fontFamily: 'Quicksand',
+                    color: ThemeColors.getTextColor(context),
+                  ),
+                ),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+              ListTile(
+                leading: Icon(
+                  Icons.photo_library,
+                  color: ThemeColors.primaryColor,
+                ),
+                title: Text(
+                  'Gallery',
+                  style: TextStyle(
+                    fontFamily: 'Quicksand',
+                    color: ThemeColors.getTextColor(context),
+                  ),
+                ),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      if (source != null) {
+        final XFile? image = await _picker.pickImage(
+          source: source,
+          maxWidth: 1920,
+          maxHeight: 1920,
+          imageQuality: 85,
+        );
+
+        if (image != null) {
+          setState(() {
+            _selectedImage = image;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to pick image: $e',
+              style: const TextStyle(fontFamily: 'Quicksand'),
+            ),
+            backgroundColor: ThemeColors.errorColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    }
   }
 
   void _createPost() {
-    if (_captionController.text.trim().isEmpty) {
+    if (_selectedImage == null && _captionController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text(
-            'Please add a caption',
+            'Please add an image or caption',
             style: TextStyle(fontFamily: 'Quicksand'),
           ),
           backgroundColor: ThemeColors.errorColor,
@@ -181,42 +232,93 @@ class _CreatePostPageState extends State<CreatePostPage> {
                     style: BorderStyle.solid,
                   ),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: ThemeColors.primaryColor.withOpacity(0.1),
-                        shape: BoxShape.circle,
+                child: _selectedImage != null
+                    ? Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: Image.file(
+                              File(_selectedImage!.path),
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black54,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.edit,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                    onPressed: _pickImage,
+                                    tooltip: 'Change Image',
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _selectedImage = null;
+                                      });
+                                    },
+                                    tooltip: 'Remove Image',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: ThemeColors.primaryColor.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.add_photo_alternate_outlined,
+                              size: 64,
+                              color: ThemeColors.primaryColor,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Add Photo',
+                            style: TextStyle(
+                              fontFamily: 'Quicksand',
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: ThemeColors.getTextColor(context),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Tap to select from camera or gallery',
+                            style: TextStyle(
+                              fontFamily: 'Quicksand',
+                              fontSize: 14,
+                              color: ThemeColors.getSecondaryTextColor(context),
+                            ),
+                          ),
+                        ],
                       ),
-                      child: Icon(
-                        Icons.add_photo_alternate_outlined,
-                        size: 64,
-                        color: ThemeColors.primaryColor,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Add Photo',
-                      style: TextStyle(
-                        fontFamily: 'Quicksand',
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: ThemeColors.getTextColor(context),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Tap to select from gallery',
-                      style: TextStyle(
-                        fontFamily: 'Quicksand',
-                        fontSize: 14,
-                        color: ThemeColors.getSecondaryTextColor(context),
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ),
 
