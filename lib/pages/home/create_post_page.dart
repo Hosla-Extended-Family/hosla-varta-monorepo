@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pro_image_editor/pro_image_editor.dart';
+import 'package:hosla/services/post_service.dart';
+import 'package:hosla/services/database_helper.dart';
+import 'package:hosla/models/post_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CreatePostPage extends StatefulWidget {
   const CreatePostPage({super.key});
@@ -14,14 +18,85 @@ class CreatePostPage extends StatefulWidget {
 
 class _CreatePostPageState extends State<CreatePostPage> {
   final TextEditingController _captionController = TextEditingController();
+  final TextEditingController _tagController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
+  final PostService _postService = PostService();
   bool _isLoading = false;
   XFile? _selectedImage;
+  List<String> _tags = [];
 
   @override
   void dispose() {
     _captionController.dispose();
+    _tagController.dispose();
+    _postService.dispose();
     super.dispose();
+  }
+
+  Future<String> _handleCreatePost() async {
+    final caption = _captionController.text.trim();
+    if (_selectedImage == null && caption.isEmpty) {
+      return "Please add an image or caption.";
+    }
+
+    try {
+      // Get user data from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id') ?? '';
+      final userName = prefs.getString('user_name') ?? 'Anonymous';
+      final userAvatarUrl = prefs.getString('user_avatar');
+
+      if (userId.isEmpty) {
+        return "User not authenticated. Please login again.";
+      }
+
+      // Upload image if selected
+      String? imageUrl;
+      if (_selectedImage != null) {
+        imageUrl = await _postService.uploadImage(_selectedImage!.path);
+        if (imageUrl == null) {
+          // If upload fails, use local path as fallback
+          imageUrl = _selectedImage!.path;
+        }
+      }
+
+      // Create post via API
+      final result = await _postService.createPost(
+        userId: userId,
+        userName: userName,
+        userAvatarUrl: userAvatarUrl,
+        content: caption,
+        imageUrl: imageUrl,
+        tags: _tags,
+      );
+
+      if (result['success'] == true) {
+        // Save post to local database
+        final postData = result['data'] as Map<String, dynamic>?;
+        if (postData != null) {
+          final post = Post.fromJson(postData);
+          await DatabaseHelper.instance.upsertPost(post);
+        } else {
+          // Create a local post object if server doesn't return full data
+          final localPost = Post(
+            id: 'local_${DateTime.now().millisecondsSinceEpoch}',
+            userId: userId,
+            userName: userName,
+            userAvatarUrl: userAvatarUrl,
+            content: caption,
+            imageUrl: imageUrl,
+            tags: _tags,
+            createdAt: DateTime.now(),
+          );
+          await DatabaseHelper.instance.upsertPost(localPost);
+        }
+        return result['message'] ?? "Post created successfully!";
+      } else {
+        return result['message'] ?? "Failed to create post.";
+      }
+    } catch (e) {
+      return "Failed to create post: ${e.toString()}";
+    }
   }
 
   Future<void> _pickImage() async {
@@ -163,7 +238,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
     }
   }
 
-  void _createPost() {
+  void _createPost() async {
     if (_selectedImage == null && _captionController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -183,26 +258,53 @@ class _CreatePostPageState extends State<CreatePostPage> {
       _isLoading = true;
     });
 
-    // TODO: Implement post creation logic
-    Future.delayed(const Duration(seconds: 2), () {
+    try {
+      final message = await _handleCreatePost();
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      final isSuccess = message.contains('success');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: const TextStyle(fontFamily: 'Quicksand'),
+          ),
+          backgroundColor: isSuccess
+              ? ThemeColors.successColor
+              : ThemeColors.errorColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+
+      if (isSuccess) {
+        Navigator.pop(context, true); // Return true to indicate success
+      }
+    } catch (e) {
+      if (!mounted) return;
+
       setState(() {
         _isLoading = false;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text(
-            'Post created successfully!',
-            style: TextStyle(fontFamily: 'Quicksand'),
+          content: Text(
+            'Error: ${e.toString()}',
+            style: const TextStyle(fontFamily: 'Quicksand'),
           ),
-          backgroundColor: ThemeColors.successColor,
+          backgroundColor: ThemeColors.errorColor,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
-
-      Navigator.pop(context);
-    });
+    }
   }
 
   @override
@@ -425,7 +527,108 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
             const SizedBox(height: 24),
 
-            // Additional Options
+            // Tags Section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                'Tags',
+                style: TextStyle(
+                  fontFamily: 'Quicksand',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: ThemeColors.getTextColor(context),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: ThemeColors.getSurfaceColor(context),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: ThemeColors.getBorderColor(context)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: _tagController,
+                    style: TextStyle(
+                      fontFamily: 'Quicksand',
+                      fontSize: 15,
+                      color: ThemeColors.getTextColor(context),
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Add a tag (e.g., fun, mood)',
+                      hintStyle: TextStyle(
+                        fontFamily: 'Quicksand',
+                        color: ThemeColors.getSecondaryTextColor(context),
+                      ),
+                      border: InputBorder.none,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          Icons.add_circle,
+                          color: ThemeColors.primaryColor,
+                        ),
+                        onPressed: () {
+                          final tag = _tagController.text.trim();
+                          if (tag.isNotEmpty && !_tags.contains(tag)) {
+                            setState(() {
+                              _tags.add(tag);
+                              _tagController.clear();
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                    onSubmitted: (value) {
+                      final tag = value.trim();
+                      if (tag.isNotEmpty && !_tags.contains(tag)) {
+                        setState(() {
+                          _tags.add(tag);
+                          _tagController.clear();
+                        });
+                      }
+                    },
+                  ),
+                  if (_tags.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _tags.map((tag) {
+                        return Chip(
+                          label: Text(
+                            tag,
+                            style: const TextStyle(
+                              fontFamily: 'Quicksand',
+                              fontSize: 13,
+                              color: Colors.white,
+                            ),
+                          ),
+                          backgroundColor: ThemeColors.primaryColor,
+                          deleteIcon: const Icon(
+                            Icons.close,
+                            size: 18,
+                            color: Colors.white,
+                          ),
+                          onDeleted: () {
+                            setState(() {
+                              _tags.remove(tag);
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            /* // Additional Options
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
@@ -438,9 +641,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 12), */
 
-            _buildOptionTile(
+            /*             _buildOptionTile(
               context: context,
               icon: Icons.location_on_outlined,
               title: 'Add Location',
@@ -475,16 +678,15 @@ class _CreatePostPageState extends State<CreatePostPage> {
               onTap: () {
                 // TODO: Add music
               },
-            ),
-
+            ),*/
             const SizedBox(height: 32),
           ],
         ),
       ),
     );
   }
-
-  Widget _buildOptionTile({
+}
+/*   Widget _buildOptionTile({
     required BuildContext context,
     required IconData icon,
     required String title,
@@ -523,4 +725,5 @@ class _CreatePostPageState extends State<CreatePostPage> {
       ),
     );
   }
-}
+
+ */

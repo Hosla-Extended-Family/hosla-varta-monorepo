@@ -176,6 +176,21 @@ class CreatePostRequest {
   }
 }
 
+/// Sync status enum for offline support
+enum SyncStatus {
+  synced,
+  pending,
+  failed;
+
+  String toJson() => name;
+  static SyncStatus fromJson(String value) {
+    return SyncStatus.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => SyncStatus.pending,
+    );
+  }
+}
+
 /// Model for comment on a post
 class Comment {
   final String id;
@@ -187,6 +202,7 @@ class Comment {
   final int likeCount;
   final bool isLiked;
   final DateTime createdAt;
+  final SyncStatus syncStatus;
 
   const Comment({
     required this.id,
@@ -198,6 +214,7 @@ class Comment {
     this.likeCount = 0,
     this.isLiked = false,
     required this.createdAt,
+    this.syncStatus = SyncStatus.synced,
   });
 
   factory Comment.fromJson(Map<String, dynamic> json) {
@@ -213,6 +230,9 @@ class Comment {
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
+      syncStatus: json['syncStatus'] != null
+          ? SyncStatus.fromJson(json['syncStatus'])
+          : SyncStatus.synced,
     );
   }
 
@@ -227,6 +247,133 @@ class Comment {
       'likeCount': likeCount,
       'isLiked': isLiked,
       'createdAt': createdAt.toIso8601String(),
+      'syncStatus': syncStatus.toJson(),
     };
+  }
+
+  Comment copyWith({
+    String? id,
+    String? postId,
+    String? userId,
+    String? userName,
+    String? userAvatarUrl,
+    String? content,
+    int? likeCount,
+    bool? isLiked,
+    DateTime? createdAt,
+    SyncStatus? syncStatus,
+  }) {
+    return Comment(
+      id: id ?? this.id,
+      postId: postId ?? this.postId,
+      userId: userId ?? this.userId,
+      userName: userName ?? this.userName,
+      userAvatarUrl: userAvatarUrl ?? this.userAvatarUrl,
+      content: content ?? this.content,
+      likeCount: likeCount ?? this.likeCount,
+      isLiked: isLiked ?? this.isLiked,
+      createdAt: createdAt ?? this.createdAt,
+      syncStatus: syncStatus ?? this.syncStatus,
+    );
+  }
+}
+
+/// Model for saved posts
+class SavedPost {
+  final String postId;
+  final DateTime savedAt;
+
+  const SavedPost({required this.postId, required this.savedAt});
+
+  factory SavedPost.fromJson(Map<String, dynamic> json) {
+    return SavedPost(
+      postId: json['postId'] ?? '',
+      savedAt: json['savedAt'] != null
+          ? DateTime.parse(json['savedAt'])
+          : DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'postId': postId, 'savedAt': savedAt.toIso8601String()};
+  }
+}
+
+/// Action types for offline queue
+enum ActionType {
+  like,
+  unlike,
+  save,
+  unsave,
+  edit,
+  delete,
+  comment;
+
+  String toJson() => name;
+  static ActionType fromJson(String value) {
+    return ActionType.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => ActionType.like,
+    );
+  }
+}
+
+/// Model for action queue (offline sync)
+class ActionQueue {
+  final String id;
+  final ActionType type;
+  final Map<String, dynamic> payload;
+  final DateTime createdAt;
+  final int attempts;
+
+  const ActionQueue({
+    required this.id,
+    required this.type,
+    required this.payload,
+    required this.createdAt,
+    this.attempts = 0,
+  });
+
+  factory ActionQueue.fromJson(Map<String, dynamic> json) {
+    return ActionQueue(
+      id: json['id'] ?? '',
+      type: ActionType.fromJson(json['type'] ?? 'like'),
+      payload: json['payload'] is String
+          ? Map<String, dynamic>.from(
+              // Handle JSON string payload
+              (json['payload'] as String).isNotEmpty ? {} : {},
+            )
+          : Map<String, dynamic>.from(json['payload'] ?? {}),
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.now(),
+      attempts: json['attempts'] ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'type': type.toJson(),
+      'payload': payload,
+      'createdAt': createdAt.toIso8601String(),
+      'attempts': attempts,
+    };
+  }
+
+  ActionQueue copyWith({
+    String? id,
+    ActionType? type,
+    Map<String, dynamic>? payload,
+    DateTime? createdAt,
+    int? attempts,
+  }) {
+    return ActionQueue(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      payload: payload ?? this.payload,
+      createdAt: createdAt ?? this.createdAt,
+      attempts: attempts ?? this.attempts,
+    );
   }
 }

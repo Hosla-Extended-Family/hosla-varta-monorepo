@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:hosla/models/user_model.dart';
 import 'package:hosla/models/chat_model.dart';
+import 'package:hosla/models/post_model.dart';
 
 /// Database helper class for local data storage
 /// Manages SQLite database for caching users and chat messages
@@ -25,7 +26,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -44,6 +45,28 @@ class DatabaseHelper {
         phone TEXT,
         isOnline INTEGER NOT NULL DEFAULT 0,
         lastSeen TEXT,
+        syncedAt TEXT NOT NULL
+      )
+    ''');
+
+    // Posts table
+    await db.execute('''
+      CREATE TABLE posts(
+        id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
+        userName TEXT NOT NULL,
+        userAvatarUrl TEXT,
+        content TEXT NOT NULL,
+        imageUrl TEXT,
+        tags TEXT,
+        likeCount INTEGER NOT NULL DEFAULT 0,
+        commentCount INTEGER NOT NULL DEFAULT 0,
+        shareCount INTEGER NOT NULL DEFAULT 0,
+        isLiked INTEGER NOT NULL DEFAULT 0,
+        isSaved INTEGER NOT NULL DEFAULT 0,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT,
+        fetchedAt TEXT NOT NULL,
         syncedAt TEXT NOT NULL
       )
     ''');
@@ -79,7 +102,62 @@ class DatabaseHelper {
       )
     ''');
 
+    // Comments table
+    await db.execute('''
+      CREATE TABLE comments(
+        id TEXT PRIMARY KEY,
+        postId TEXT NOT NULL,
+        userId TEXT NOT NULL,
+        userName TEXT NOT NULL,
+        userAvatarUrl TEXT,
+        content TEXT NOT NULL,
+        likeCount INTEGER NOT NULL DEFAULT 0,
+        isLiked INTEGER NOT NULL DEFAULT 0,
+        createdAt TEXT NOT NULL,
+        syncStatus TEXT NOT NULL DEFAULT 'synced',
+        FOREIGN KEY(postId) REFERENCES posts(id) ON DELETE CASCADE
+      )
+    ''');
+
+    // Saved posts table
+    await db.execute('''
+      CREATE TABLE saved_posts(
+        postId TEXT PRIMARY KEY,
+        savedAt TEXT NOT NULL,
+        FOREIGN KEY(postId) REFERENCES posts(id) ON DELETE CASCADE
+      )
+    ''');
+
+    // Action queue table for offline sync
+    await db.execute('''
+      CREATE TABLE action_queue(
+        id TEXT PRIMARY KEY,
+        type TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        createdAt TEXT NOT NULL,
+        attempts INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+
     // Create indexes for faster queries
+    await db.execute('CREATE INDEX idx_posts_userId ON posts(userId)');
+    await db.execute('CREATE INDEX idx_posts_createdAt ON posts(createdAt)');
+    await db.execute('CREATE INDEX idx_posts_isSaved ON posts(isSaved)');
+    await db.execute('CREATE INDEX idx_posts_fetchedAt ON posts(fetchedAt)');
+    await db.execute('CREATE INDEX idx_comments_postId ON comments(postId)');
+    await db.execute('CREATE INDEX idx_comments_userId ON comments(userId)');
+    await db.execute(
+      'CREATE INDEX idx_comments_syncStatus ON comments(syncStatus)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_saved_posts_savedAt ON saved_posts(savedAt)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_action_queue_type ON action_queue(type)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_action_queue_createdAt ON action_queue(createdAt)',
+    );
     await db.execute('CREATE INDEX idx_messages_chatId ON messages(chatId)');
     await db.execute(
       'CREATE INDEX idx_messages_timestamp ON messages(timestamp)',
@@ -91,7 +169,75 @@ class DatabaseHelper {
 
   /// Handle database upgrades
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Handle future schema changes
+    if (oldVersion < 2) {
+      // Add fetchedAt column to posts table
+      await db.execute(
+        'ALTER TABLE posts ADD COLUMN fetchedAt TEXT NOT NULL DEFAULT ""',
+      );
+
+      // Create comments table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS comments(
+          id TEXT PRIMARY KEY,
+          postId TEXT NOT NULL,
+          userId TEXT NOT NULL,
+          userName TEXT NOT NULL,
+          userAvatarUrl TEXT,
+          content TEXT NOT NULL,
+          likeCount INTEGER NOT NULL DEFAULT 0,
+          isLiked INTEGER NOT NULL DEFAULT 0,
+          createdAt TEXT NOT NULL,
+          syncStatus TEXT NOT NULL DEFAULT 'synced',
+          FOREIGN KEY(postId) REFERENCES posts(id) ON DELETE CASCADE
+        )
+      ''');
+
+      // Create saved_posts table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS saved_posts(
+          postId TEXT PRIMARY KEY,
+          savedAt TEXT NOT NULL,
+          FOREIGN KEY(postId) REFERENCES posts(id) ON DELETE CASCADE
+        )
+      ''');
+
+      // Create action_queue table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS action_queue(
+          id TEXT PRIMARY KEY,
+          type TEXT NOT NULL,
+          payload TEXT NOT NULL,
+          createdAt TEXT NOT NULL,
+          attempts INTEGER NOT NULL DEFAULT 0
+        )
+      ''');
+
+      // Create new indexes
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_posts_isSaved ON posts(isSaved)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_posts_fetchedAt ON posts(fetchedAt)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_comments_postId ON comments(postId)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_comments_userId ON comments(userId)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_comments_syncStatus ON comments(syncStatus)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_saved_posts_savedAt ON saved_posts(savedAt)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_action_queue_type ON action_queue(type)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_action_queue_createdAt ON action_queue(createdAt)',
+      );
+    }
   }
 
   // ============== USER OPERATIONS ==============
@@ -435,6 +581,384 @@ class DatabaseHelper {
       lastActivity: DateTime.parse(map['lastActivity'] as String),
       unreadCount: map['unreadCount'] as int,
       isMuted: (map['isMuted'] as int) == 1,
+    );
+  }
+
+  // ============== POST OPERATIONS ==============
+
+  /// Insert or update post
+  Future<void> upsertPost(Post post) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+    await db.insert('posts', {
+      'id': post.id,
+      'userId': post.userId,
+      'userName': post.userName,
+      'userAvatarUrl': post.userAvatarUrl,
+      'content': post.content,
+      'imageUrl': post.imageUrl,
+      'tags': post.tags.join(','),
+      'likeCount': post.likeCount,
+      'commentCount': post.commentCount,
+      'shareCount': post.shareCount,
+      'isLiked': post.isLiked ? 1 : 0,
+      'isSaved': post.isSaved ? 1 : 0,
+      'createdAt': post.createdAt.toIso8601String(),
+      'updatedAt': post.updatedAt?.toIso8601String(),
+      'fetchedAt': now,
+      'syncedAt': now,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  /// Insert or update multiple posts
+  Future<void> upsertPosts(List<Post> posts) async {
+    final db = await database;
+    final batch = db.batch();
+    final now = DateTime.now().toIso8601String();
+
+    for (final post in posts) {
+      batch.insert('posts', {
+        'id': post.id,
+        'userId': post.userId,
+        'userName': post.userName,
+        'userAvatarUrl': post.userAvatarUrl,
+        'content': post.content,
+        'imageUrl': post.imageUrl,
+        'tags': post.tags.join(','),
+        'likeCount': post.likeCount,
+        'commentCount': post.commentCount,
+        'shareCount': post.shareCount,
+        'isLiked': post.isLiked ? 1 : 0,
+        'isSaved': post.isSaved ? 1 : 0,
+        'createdAt': post.createdAt.toIso8601String(),
+        'updatedAt': post.updatedAt?.toIso8601String(),
+        'fetchedAt': now,
+        'syncedAt': now,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+
+    await batch.commit(noResult: true);
+  }
+
+  /// Get post by ID
+  Future<Post?> getPostById(String id) async {
+    final db = await database;
+    final results = await db.query('posts', where: 'id = ?', whereArgs: [id]);
+
+    if (results.isEmpty) return null;
+    return _postFromMap(results.first);
+  }
+
+  /// Get all posts
+  Future<List<Post>> getAllPosts() async {
+    final db = await database;
+    final results = await db.query('posts', orderBy: 'createdAt DESC');
+    return results.map((map) => _postFromMap(map)).toList();
+  }
+
+  /// Delete post
+  Future<void> deletePost(String id) async {
+    final db = await database;
+    await db.delete('posts', where: 'id = ?', whereArgs: [id]);
+  }
+
+  /// Convert database map to Post object
+  Post _postFromMap(Map<String, dynamic> map) {
+    return Post(
+      id: map['id'] as String,
+      userId: map['userId'] as String,
+      userName: map['userName'] as String,
+      userAvatarUrl: map['userAvatarUrl'] as String?,
+      content: map['content'] as String,
+      imageUrl: map['imageUrl'] as String?,
+      tags:
+          (map['tags'] as String?)
+              ?.split(',')
+              .where((t) => t.isNotEmpty)
+              .toList() ??
+          [],
+      likeCount: map['likeCount'] as int,
+      commentCount: map['commentCount'] as int,
+      shareCount: map['shareCount'] as int,
+      isLiked: (map['isLiked'] as int) == 1,
+      isSaved: (map['isSaved'] as int) == 1,
+      createdAt: DateTime.parse(map['createdAt'] as String),
+      updatedAt: map['updatedAt'] != null
+          ? DateTime.parse(map['updatedAt'] as String)
+          : null,
+    );
+  }
+
+  /// Get posts by user ID
+  Future<List<Post>> getPostsByUserId(String userId) async {
+    final db = await database;
+    final results = await db.query(
+      'posts',
+      where: 'userId = ?',
+      whereArgs: [userId],
+      orderBy: 'createdAt DESC',
+    );
+    return results.map((map) => _postFromMap(map)).toList();
+  }
+
+  /// Get saved posts
+  Future<List<Post>> getSavedPosts() async {
+    final db = await database;
+    final results = await db.rawQuery('''
+      SELECT p.* FROM posts p
+      INNER JOIN saved_posts sp ON p.id = sp.postId
+      ORDER BY sp.savedAt DESC
+    ''');
+    return results.map((map) => _postFromMap(map)).toList();
+  }
+
+  /// Update post (for edits)
+  Future<void> updatePost({
+    required String postId,
+    required String content,
+    String? imageUrl,
+    required List<String> tags,
+  }) async {
+    final db = await database;
+    await db.update(
+      'posts',
+      {
+        'content': content,
+        'imageUrl': imageUrl,
+        'tags': tags.join(','),
+        'updatedAt': DateTime.now().toIso8601String(),
+        'syncedAt': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [postId],
+    );
+  }
+
+  /// Update post like status
+  Future<void> updatePostLike(
+    String postId,
+    bool isLiked,
+    int likeCount,
+  ) async {
+    final db = await database;
+    await db.update(
+      'posts',
+      {
+        'isLiked': isLiked ? 1 : 0,
+        'likeCount': likeCount,
+        'syncedAt': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [postId],
+    );
+  }
+
+  /// Update post save status
+  Future<void> updatePostSave(String postId, bool isSaved) async {
+    final db = await database;
+    await db.update(
+      'posts',
+      {
+        'isSaved': isSaved ? 1 : 0,
+        'syncedAt': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [postId],
+    );
+  }
+
+  /// Delete old posts (retention policy)
+  Future<void> deleteOldPosts({int retentionDays = 90}) async {
+    final db = await database;
+    final cutoffDate = DateTime.now()
+        .subtract(Duration(days: retentionDays))
+        .toIso8601String();
+
+    // Delete posts that are not saved and older than retention period
+    await db.delete(
+      'posts',
+      where: 'isSaved = 0 AND fetchedAt < ?',
+      whereArgs: [cutoffDate],
+    );
+  }
+
+  // ============== SAVED POSTS OPERATIONS ==============
+
+  /// Save a post
+  Future<void> savePost(String postId) async {
+    final db = await database;
+    await db.insert('saved_posts', {
+      'postId': postId,
+      'savedAt': DateTime.now().toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+    // Update isSaved flag in posts table
+    await updatePostSave(postId, true);
+  }
+
+  /// Unsave a post
+  Future<void> unsavePost(String postId) async {
+    final db = await database;
+    await db.delete('saved_posts', where: 'postId = ?', whereArgs: [postId]);
+
+    // Update isSaved flag in posts table
+    await updatePostSave(postId, false);
+  }
+
+  /// Check if post is saved
+  Future<bool> isPostSaved(String postId) async {
+    final db = await database;
+    final results = await db.query(
+      'saved_posts',
+      where: 'postId = ?',
+      whereArgs: [postId],
+    );
+    return results.isNotEmpty;
+  }
+
+  // ============== COMMENT OPERATIONS ==============
+
+  /// Insert or update comment
+  Future<void> upsertComment(Comment comment) async {
+    final db = await database;
+    await db.insert('comments', {
+      'id': comment.id,
+      'postId': comment.postId,
+      'userId': comment.userId,
+      'userName': comment.userName,
+      'userAvatarUrl': comment.userAvatarUrl,
+      'content': comment.content,
+      'likeCount': comment.likeCount,
+      'isLiked': comment.isLiked ? 1 : 0,
+      'createdAt': comment.createdAt.toIso8601String(),
+      'syncStatus': comment.syncStatus.toJson(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  /// Get comments for a post
+  Future<List<Comment>> getCommentsByPostId(String postId) async {
+    final db = await database;
+    final results = await db.query(
+      'comments',
+      where: 'postId = ?',
+      whereArgs: [postId],
+      orderBy: 'createdAt ASC',
+    );
+    return results.map((map) => _commentFromMap(map)).toList();
+  }
+
+  /// Get pending comments (not synced)
+  Future<List<Comment>> getPendingComments() async {
+    final db = await database;
+    final results = await db.query(
+      'comments',
+      where: 'syncStatus = ?',
+      whereArgs: ['pending'],
+      orderBy: 'createdAt ASC',
+    );
+    return results.map((map) => _commentFromMap(map)).toList();
+  }
+
+  /// Update comment sync status
+  Future<void> updateCommentSyncStatus(
+    String commentId,
+    SyncStatus status,
+  ) async {
+    final db = await database;
+    await db.update(
+      'comments',
+      {'syncStatus': status.toJson()},
+      where: 'id = ?',
+      whereArgs: [commentId],
+    );
+  }
+
+  /// Delete comment
+  Future<void> deleteComment(String id) async {
+    final db = await database;
+    await db.delete('comments', where: 'id = ?', whereArgs: [id]);
+  }
+
+  /// Convert database map to Comment object
+  Comment _commentFromMap(Map<String, dynamic> map) {
+    return Comment(
+      id: map['id'] as String,
+      postId: map['postId'] as String,
+      userId: map['userId'] as String,
+      userName: map['userName'] as String,
+      userAvatarUrl: map['userAvatarUrl'] as String?,
+      content: map['content'] as String,
+      likeCount: map['likeCount'] as int,
+      isLiked: (map['isLiked'] as int) == 1,
+      createdAt: DateTime.parse(map['createdAt'] as String),
+      syncStatus: SyncStatus.fromJson(map['syncStatus'] as String),
+    );
+  }
+
+  // ============== ACTION QUEUE OPERATIONS ==============
+
+  /// Add action to queue
+  Future<void> enqueueAction(ActionQueue action) async {
+    final db = await database;
+    await db.insert('action_queue', {
+      'id': action.id,
+      'type': action.type.toJson(),
+      'payload': action.payload.toString(),
+      'createdAt': action.createdAt.toIso8601String(),
+      'attempts': action.attempts,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  /// Get all queued actions
+  Future<List<ActionQueue>> getQueuedActions() async {
+    final db = await database;
+    final results = await db.query('action_queue', orderBy: 'createdAt ASC');
+    return results.map((map) => _actionQueueFromMap(map)).toList();
+  }
+
+  /// Get queued actions by type
+  Future<List<ActionQueue>> getQueuedActionsByType(ActionType type) async {
+    final db = await database;
+    final results = await db.query(
+      'action_queue',
+      where: 'type = ?',
+      whereArgs: [type.toJson()],
+      orderBy: 'createdAt ASC',
+    );
+    return results.map((map) => _actionQueueFromMap(map)).toList();
+  }
+
+  /// Update action queue attempts
+  Future<void> updateActionAttempts(String actionId, int attempts) async {
+    final db = await database;
+    await db.update(
+      'action_queue',
+      {'attempts': attempts},
+      where: 'id = ?',
+      whereArgs: [actionId],
+    );
+  }
+
+  /// Remove action from queue
+  Future<void> dequeueAction(String actionId) async {
+    final db = await database;
+    await db.delete('action_queue', where: 'id = ?', whereArgs: [actionId]);
+  }
+
+  /// Clear all queued actions
+  Future<void> clearActionQueue() async {
+    final db = await database;
+    await db.delete('action_queue');
+  }
+
+  /// Convert database map to ActionQueue object
+  ActionQueue _actionQueueFromMap(Map<String, dynamic> map) {
+    return ActionQueue(
+      id: map['id'] as String,
+      type: ActionType.fromJson(map['type'] as String),
+      payload: Map<String, dynamic>.from({}), // Simplified for now
+      createdAt: DateTime.parse(map['createdAt'] as String),
+      attempts: map['attempts'] as int,
     );
   }
 }

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/pages/home/edit_profile_page.dart';
+import 'package:hosla/pages/home/user_posts_page.dart';
+import 'package:hosla/pages/home/saved_posts_page.dart';
 import 'package:hosla/providers/theme_provider.dart';
 import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/widgets/profile_pic.dart';
@@ -14,7 +16,22 @@ class ProfilePage extends ConsumerStatefulWidget {
   ConsumerState<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends ConsumerState<ProfilePage> {
+class _ProfilePageState extends ConsumerState<ProfilePage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -123,131 +140,249 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             child: Column(
               children: [
                 const SizedBox(height: 8),
-                // Account Section
-                _buildSectionHeader(context, 'Account'),
-                _buildProfileTile(
-                  context: context,
-                  icon: Icons.phone,
-                  title: 'Phone',
-                  subtitle: '+91 98765 43210',
-                  onTap: () {},
-                ),
-                _buildProfileTile(
-                  context: context,
-                  icon: Icons.info_outline,
-                  title: 'About',
-                  subtitle: 'Available',
-                  onTap: () {},
-                ),
-                if (currentUser?.email != null &&
-                    currentUser!.email!.isNotEmpty)
-                  _buildProfileTile(
-                    context: context,
-                    icon: Icons.email_outlined,
-                    title: 'Email',
-                    subtitle: currentUser.email!,
-                    onTap: () {},
+                // Tab Bar for Posts/Saved/Settings
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: ThemeColors.getSurfaceColor(context),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                const SizedBox(height: 16),
-                // Settings Section
-                _buildSectionHeader(context, 'Settings'),
-                _buildProfileTile(
-                  context: context,
-                  icon: Icons.notifications_outlined,
-                  title: 'Notifications',
-                  trailing: Switch(
-                    value: true,
-                    onChanged: (value) {
-                      // TODO: Handle notification toggle
-                    },
-                    activeColor: ThemeColors.primaryColor,
+                  child: TabBar(
+                    controller: _tabController,
+                    indicator: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: ThemeColors.primaryColor,
+                    ),
+                    labelColor: Colors.white,
+                    unselectedLabelColor: ThemeColors.getTextColor(context),
+                    tabs: const [
+                      Tab(text: 'Posts'),
+                      Tab(text: 'Saved'),
+                      Tab(text: 'Settings'),
+                    ],
                   ),
-                  onTap: null,
-                ),
-                _buildProfileTile(
-                  context: context,
-                  icon: isDark ? Icons.light_mode : Icons.dark_mode,
-                  title: 'Theme',
-                  subtitle: isDark ? 'Dark Mode' : 'Light Mode',
-                  trailing: Switch(
-                    value: isDark,
-                    onChanged: (value) {
-                      themeNotifier.toggleTheme();
-                    },
-                    activeColor: ThemeColors.primaryColor,
-                  ),
-                  onTap: null,
-                ),
-                _buildProfileTile(
-                  context: context,
-                  icon: Icons.lock_outline,
-                  title: 'Privacy',
-                  trailing: Icon(
-                    Icons.chevron_right,
-                    color: ThemeColors.getSecondaryTextColor(context),
-                  ),
-                  onTap: () {},
-                ),
-                _buildProfileTile(
-                  context: context,
-                  icon: Icons.security_outlined,
-                  title: 'Security',
-                  trailing: Icon(
-                    Icons.chevron_right,
-                    color: ThemeColors.getSecondaryTextColor(context),
-                  ),
-                  onTap: () {},
                 ),
                 const SizedBox(height: 16),
-                // Additional Section
-                _buildSectionHeader(context, 'More'),
-                _buildProfileTile(
-                  context: context,
-                  icon: Icons.share_outlined,
-                  title: 'Share App',
-                  trailing: Icon(
-                    Icons.chevron_right,
-                    color: ThemeColors.getSecondaryTextColor(context),
-                  ),
-                  onTap: () {},
-                ),
-                _buildProfileTile(
-                  context: context,
-                  icon: Icons.help_outline,
-                  title: 'Help & Support',
-                  trailing: Icon(
-                    Icons.chevron_right,
-                    color: ThemeColors.getSecondaryTextColor(context),
-                  ),
-                  onTap: () {},
-                ),
-                _buildProfileTile(
-                  context: context,
-                  icon: Icons.logout,
-                  title: 'Logout',
-                  titleColor: ThemeColors.errorColor,
-                  trailing: Icon(
-                    Icons.chevron_right,
-                    color: ThemeColors.errorColor,
-                  ),
-                  onTap: () {
-                    _showLogoutDialog(context);
-                  },
-                ),
-                const SizedBox(height: 32),
-                // App Version
-                Text(
-                  'Hosla Varta v1.0.0',
-                  style: TextStyle(
-                    fontFamily: 'Quicksand',
-                    fontSize: 12,
-                    color: ThemeColors.getSecondaryTextColor(context),
+                // Tab View Content
+                SizedBox(
+                  height: 600, // Fixed height for tab content
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      // Posts Tab
+                      _buildPostsTab(context, currentUser),
+                      // Saved Tab
+                      _buildSavedTab(context),
+                      // Settings Tab
+                      _buildSettingsTab(
+                        context,
+                        isDark,
+                        themeNotifier,
+                        currentUser,
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 32),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  // Posts Tab Content
+  Widget _buildPostsTab(BuildContext context, currentUser) {
+    return Column(
+      children: [
+        ListTile(
+          leading: Icon(Icons.article, color: ThemeColors.primaryColor),
+          title: const Text('View All Posts'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => UserPostsPage(
+                  userId: currentUser?.id ?? '',
+                  userName: currentUser?.name ?? 'User',
+                ),
+              ),
+            );
+          },
+        ),
+        const Divider(),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text(
+            'Your posts will appear here',
+            style: TextThemes.getBodyMediumStyle(
+              context,
+            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Saved Tab Content
+  Widget _buildSavedTab(BuildContext context) {
+    return Column(
+      children: [
+        ListTile(
+          leading: Icon(Icons.bookmark, color: ThemeColors.primaryColor),
+          title: const Text('View All Saved Posts'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SavedPostsPage()),
+            );
+          },
+        ),
+        const Divider(),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text(
+            'Your saved posts will appear here',
+            style: TextThemes.getBodyMediumStyle(
+              context,
+            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Settings Tab Content
+  Widget _buildSettingsTab(
+    BuildContext context,
+    bool isDark,
+    themeNotifier,
+    currentUser,
+  ) {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          const SizedBox(height: 8),
+          // Account Section
+          _buildSectionHeader(context, 'Account'),
+          _buildProfileTile(
+            context: context,
+            icon: Icons.phone,
+            title: 'Phone',
+            subtitle: '+91 98765 43210',
+            onTap: () {},
+          ),
+          _buildProfileTile(
+            context: context,
+            icon: Icons.info_outline,
+            title: 'About',
+            subtitle: 'Available',
+            onTap: () {},
+          ),
+          if (currentUser?.email != null && currentUser!.email!.isNotEmpty)
+            _buildProfileTile(
+              context: context,
+              icon: Icons.email_outlined,
+              title: 'Email',
+              subtitle: currentUser.email!,
+              onTap: () {},
+            ),
+          const SizedBox(height: 16),
+          // Settings Section
+          _buildSectionHeader(context, 'Settings'),
+          _buildProfileTile(
+            context: context,
+            icon: Icons.notifications_outlined,
+            title: 'Notifications',
+            trailing: Switch(
+              value: true,
+              onChanged: (value) {
+                // TODO: Handle notification toggle
+              },
+              activeColor: ThemeColors.primaryColor,
+            ),
+            onTap: null,
+          ),
+          _buildProfileTile(
+            context: context,
+            icon: isDark ? Icons.light_mode : Icons.dark_mode,
+            title: 'Theme',
+            subtitle: isDark ? 'Dark Mode' : 'Light Mode',
+            trailing: Switch(
+              value: isDark,
+              onChanged: (value) {
+                themeNotifier.toggleTheme();
+              },
+              activeColor: ThemeColors.primaryColor,
+            ),
+            onTap: null,
+          ),
+          _buildProfileTile(
+            context: context,
+            icon: Icons.lock_outline,
+            title: 'Privacy',
+            trailing: Icon(
+              Icons.chevron_right,
+              color: ThemeColors.getSecondaryTextColor(context),
+            ),
+            onTap: () {},
+          ),
+          _buildProfileTile(
+            context: context,
+            icon: Icons.security_outlined,
+            title: 'Security',
+            trailing: Icon(
+              Icons.chevron_right,
+              color: ThemeColors.getSecondaryTextColor(context),
+            ),
+            onTap: () {},
+          ),
+          const SizedBox(height: 16),
+          // Additional Section
+          _buildSectionHeader(context, 'More'),
+          _buildProfileTile(
+            context: context,
+            icon: Icons.share_outlined,
+            title: 'Share App',
+            trailing: Icon(
+              Icons.chevron_right,
+              color: ThemeColors.getSecondaryTextColor(context),
+            ),
+            onTap: () {},
+          ),
+          _buildProfileTile(
+            context: context,
+            icon: Icons.help_outline,
+            title: 'Help & Support',
+            trailing: Icon(
+              Icons.chevron_right,
+              color: ThemeColors.getSecondaryTextColor(context),
+            ),
+            onTap: () {},
+          ),
+          _buildProfileTile(
+            context: context,
+            icon: Icons.logout,
+            title: 'Logout',
+            titleColor: ThemeColors.errorColor,
+            trailing: Icon(Icons.chevron_right, color: ThemeColors.errorColor),
+            onTap: () {
+              _showLogoutDialog(context);
+            },
+          ),
+          const SizedBox(height: 32),
+          // App Version
+          Text(
+            'Hosla Varta v1.0.0',
+            style: TextStyle(
+              fontFamily: 'Quicksand',
+              fontSize: 12,
+              color: ThemeColors.getSecondaryTextColor(context),
+            ),
+          ),
+          const SizedBox(height: 32),
         ],
       ),
     );
