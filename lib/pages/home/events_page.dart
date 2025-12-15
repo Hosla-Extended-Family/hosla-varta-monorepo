@@ -57,13 +57,6 @@ class _EventsPageState extends ConsumerState<EventsPage> {
         actions: [
           IconButton(
             icon: Icon(
-              Icons.search,
-              color: ThemeColors.getNavBarIconColor(context),
-            ),
-            onPressed: () => _toggleSearch(),
-          ),
-          IconButton(
-            icon: Icon(
               Icons.filter_list,
               color: ThemeColors.getNavBarIconColor(context),
             ),
@@ -77,9 +70,8 @@ class _EventsPageState extends ConsumerState<EventsPage> {
         },
         child: Column(
           children: [
-            // Search bar
-            if (_searchQuery.isNotEmpty || _searchController.text.isNotEmpty)
-              _buildSearchBar(),
+            // Search bar - matching chat page style
+            _buildSearchBar(),
 
             // Category filter
             _buildCategoryFilter(),
@@ -111,54 +103,66 @@ class _EventsPageState extends ConsumerState<EventsPage> {
     );
   }
 
-  /// Build search bar
+  /// Build search bar - matching chat page style
   Widget _buildSearchBar() {
-    return Container(
-      margin: const EdgeInsets.all(16).copyWith(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        color: ThemeColors.getCardColor(context),
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: ThemeColors.primaryColor.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.search, color: ThemeColors.getSecondaryTextColor(context)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              decoration: const InputDecoration(
-                hintText: 'Search events...',
-                border: InputBorder.none,
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: Container(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        decoration: BoxDecoration(
+          color: ThemeColors.getSurfaceColor(context),
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.search,
+              color: ThemeColors.getSecondaryTextColor(context),
+              size: 22,
             ),
-          ),
-          if (_searchQuery.isNotEmpty)
-            GestureDetector(
-              onTap: () {
-                _searchController.clear();
-                setState(() {
-                  _searchQuery = '';
-                });
-              },
-              child: Icon(
-                Icons.clear,
-                color: ThemeColors.getSecondaryTextColor(context),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextField(
+                controller: _searchController,
+                style: TextThemes.getBodyMediumStyle(context),
+                decoration: InputDecoration(
+                  hintText: 'Search events...',
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  hintStyle: TextThemes.getBodyMediumStyle(
+                    context,
+                  ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
+                onTapOutside: (event) {
+                  FocusScope.of(context).unfocus();
+                },
               ),
             ),
-        ],
+            if (_searchQuery.isNotEmpty)
+              GestureDetector(
+                onTap: () {
+                  _searchController.clear();
+                  setState(() {
+                    _searchQuery = '';
+                  });
+                },
+                child: Icon(
+                  Icons.clear,
+                  color: ThemeColors.getSecondaryTextColor(context),
+                  size: 20,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -723,18 +727,6 @@ class _EventsPageState extends ConsumerState<EventsPage> {
     filtered.sort((a, b) => a.startTime.compareTo(b.startTime));
 
     return filtered;
-  }
-
-  /// Toggle search bar
-  void _toggleSearch() {
-    setState(() {
-      if (_searchQuery.isEmpty && _searchController.text.isEmpty) {
-        _searchQuery = ' '; // Trigger search bar visibility
-      } else {
-        _searchController.clear();
-        _searchQuery = '';
-      }
-    });
   }
 
   /// Show filter options

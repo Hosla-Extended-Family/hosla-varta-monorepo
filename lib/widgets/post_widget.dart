@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
-import 'package:hosla/widgets/comments_bottom_sheet.dart';
+import 'package:hosla/models/post_model.dart';
 
 class PostWidget extends StatefulWidget {
-  const PostWidget({super.key});
+  final Post? post;
+
+  const PostWidget({super.key, this.post});
 
   @override
   State<PostWidget> createState() => _PostWidgetState();
@@ -146,7 +148,7 @@ class _PostWidgetState extends State<PostWidget>
                   ),
                 ),
                 IconButton(
-                  onPressed: () {},
+                  onPressed: () => _showPostOptions(context),
                   icon: Icon(
                     Icons.more_horiz_rounded,
                     color: ThemeColors.getSecondaryTextColor(context),
@@ -355,7 +357,7 @@ class _PostWidgetState extends State<PostWidget>
                   icon: Icons.mode_comment_outlined,
                   label: 'Comment',
                   onTap: () {
-                    // TODO: Handle comment action
+                    _showCommentsBottomSheet(context);
                   },
                 ),
                 _buildActionButton(
@@ -405,6 +407,308 @@ class _PostWidgetState extends State<PostWidget>
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showPostOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: ThemeColors.getSurfaceColor(context),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 20),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: ThemeColors.getSecondaryTextColor(
+                  context,
+                ).withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            _buildOptionTile(
+              context,
+              icon: Icons.bookmark_border_rounded,
+              title: 'Save Post',
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text(
+                      'Post saved successfully',
+                      style: TextStyle(fontFamily: 'Quicksand'),
+                    ),
+                    backgroundColor: ThemeColors.successColor,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                );
+              },
+            ),
+            _buildOptionTile(
+              context,
+              icon: Icons.link_rounded,
+              title: 'Copy Link',
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text(
+                      'Link copied to clipboard',
+                      style: TextStyle(fontFamily: 'Quicksand'),
+                    ),
+                    backgroundColor: ThemeColors.successColor,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                );
+              },
+            ),
+            _buildOptionTile(
+              context,
+              icon: Icons.person_off_outlined,
+              title: 'Not Interested',
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            _buildOptionTile(
+              context,
+              icon: Icons.report_outlined,
+              title: 'Report',
+              onTap: () {
+                Navigator.pop(context);
+              },
+              isDestructive: true,
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOptionTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    bool isDestructive = false,
+  }) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: isDestructive
+            ? ThemeColors.errorColor
+            : ThemeColors.getTextColor(context),
+      ),
+      title: Text(
+        title,
+        style: TextThemes.getBodyMediumStyle(context).copyWith(
+          color: isDestructive
+              ? ThemeColors.errorColor
+              : ThemeColors.getTextColor(context),
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      onTap: onTap,
+    );
+  }
+
+  void _showCommentsBottomSheet(BuildContext context) {
+    // Create a mock post if none is provided
+    final postData =
+        widget.post ??
+        Post(
+          id: 'mock_post_1',
+          userId: 'user_1',
+          userName: 'Hosla',
+          content: 'This is a sample post content.',
+          createdAt: DateTime.now(),
+          tags: ['#Event', '#Community', '#Support'],
+          likeCount: _likeCount,
+          commentCount: _commentCount,
+        );
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: ThemeColors.getSurfaceColor(context),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Column(
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Text(
+                      'Comments ($_commentCount)',
+                      style: TextThemes.getTitleStyle(
+                        context,
+                      ).copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+
+              // Comments List
+              Expanded(
+                child: _commentCount == 0
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.comment_outlined,
+                              size: 64,
+                              color: ThemeColors.getSecondaryTextColor(context),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No comments yet',
+                              style: TextThemes.getBodyMediumStyle(context)
+                                  .copyWith(
+                                    color: ThemeColors.getSecondaryTextColor(
+                                      context,
+                                    ),
+                                  ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Be the first to comment!',
+                              style: TextThemes.getBodySmallStyle(context)
+                                  .copyWith(
+                                    color: ThemeColors.getSecondaryTextColor(
+                                      context,
+                                    ),
+                                  ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: scrollController,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: _commentCount,
+                        itemBuilder: (context, index) {
+                          // Mock comments for now
+                          return ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: ThemeColors.primaryColor
+                                  .withOpacity(0.2),
+                              child: Icon(
+                                Icons.person,
+                                color: ThemeColors.primaryColor,
+                              ),
+                            ),
+                            title: Text(
+                              'User ${index + 1}',
+                              style: TextThemes.getBodyMediumStyle(
+                                context,
+                              ).copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            subtitle: Text(
+                              'This is a sample comment.',
+                              style: TextThemes.getBodySmallStyle(context),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+
+              const Divider(height: 1),
+
+              // Input Field
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Add a comment...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                        ),
+                        maxLines: null,
+                        textInputAction: TextInputAction.send,
+                        onSubmitted: (value) {
+                          if (value.trim().isNotEmpty) {
+                            setState(() {
+                              _commentCount++;
+                            });
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text(
+                                  'Comment added',
+                                  style: TextStyle(fontFamily: 'Quicksand'),
+                                ),
+                                backgroundColor: ThemeColors.successColor,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: Icon(
+                        Icons.send_rounded,
+                        color: ThemeColors.primaryColor,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _commentCount++;
+                        });
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

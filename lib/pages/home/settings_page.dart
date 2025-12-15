@@ -6,6 +6,7 @@ import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/pages/authentication/update_password_page.dart';
 import 'package:hosla/pages/home/edit_profile_page.dart';
 import 'package:hosla/pages/home/verify_email_page.dart';
+import 'package:hosla/pages/home/blocked_users_page.dart';
 import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/providers/theme_provider.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
@@ -418,24 +419,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               ],
             ),
           ),
-
-          // Edit button with gradient
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [
-                  ThemeColors.primaryColor.withOpacity(0.2),
-                  ThemeColors.primaryColor.withOpacity(0.1),
-                ],
-              ),
-            ),
-            child: IconButton(
-              onPressed: () => _showEditProfileDialog(currentUser),
-              icon: const Icon(Icons.edit_rounded),
-              color: ThemeColors.primaryColor,
-            ),
-          ),
         ],
       ),
     );
@@ -783,7 +766,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   void _showNotificationPreferences() => _showComingSoon();
   void _showPrivacySettings() => _showComingSoon();
-  void _showBlockedUsers() => _showComingSoon();
+  void _showBlockedUsers() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const BlockedUsersPage()),
+    );
+  }
+
   void _showLanguageOptions() => _showComingSoon();
   void _showStorageSettings() => _showComingSoon();
   void _showHelpSupport() => _showComingSoon();

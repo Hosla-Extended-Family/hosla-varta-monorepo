@@ -65,131 +65,259 @@ class _UpdatePasswordPageState extends State<UpdatePasswordPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: ThemeColors.getBackgroundColor(context),
       appBar: AppBar(
-        leading: BackButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
+        backgroundColor: ThemeColors.getNavBarColor(context),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
         ),
-        title: Text('New Password', style: TextThemes.getTitleStyle(context)),
+        title: ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [
+              ThemeColors.primaryColor,
+              ThemeColors.primaryColor.withBlue(200),
+            ],
+          ).createShader(bounds),
+          child: Text(
+            'New Password',
+            style: TextThemes.getTitleStyle(context).copyWith(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: Constants.defaultPadding,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height: 24),
+
+            // Header Section
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      ThemeColors.primaryColor.withOpacity(0.15),
+                      ThemeColors.primaryColor.withOpacity(0.08),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.lock_reset_rounded,
+                  size: 80,
+                  color: ThemeColors.primaryColor,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            Center(
+              child: Text(
+                'Create New Password',
+                style: TextThemes.getBodyLargeStyle(
+                  context,
+                ).copyWith(fontWeight: FontWeight.bold, fontSize: 24),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            Center(
+              child: Text(
+                'Your new password must be different from your previous password',
+                style: TextThemes.getBodyMediumStyle(
+                  context,
+                ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
+                textAlign: TextAlign.center,
+              ),
+            ),
+
+            const SizedBox(height: 32),
+
             // New Password Field
-            TextField(
-              controller: _newPasswordController,
-              obscureText: !_isNewPasswordVisible,
-              decoration: InputDecoration(
-                labelText: 'New Password',
-                filled: true,
-                fillColor: ThemeColors.getSurfaceColor(context),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide.none,
+            Container(
+              decoration: BoxDecoration(
+                color: ThemeColors.getCardColor(context),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: ThemeColors.getBorderColor(context).withOpacity(0.1),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide(
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withOpacity(0.3)
+                        : ThemeColors.getOverlayColor(context, opacity: 0.08),
+                    blurRadius: 20,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _newPasswordController,
+                obscureText: !_isNewPasswordVisible,
+                decoration: InputDecoration(
+                  labelText: 'New Password',
+                  hintText: 'Enter your new password',
+                  prefixIcon: Icon(
+                    Icons.lock_outline_rounded,
                     color: ThemeColors.primaryColor,
-                    width: 2.0,
                   ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20.0,
-                  vertical: 16.0,
-                ),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _isNewPasswordVisible
-                        ? Icons.visibility
-                        : Icons.visibility_off,
+                  filled: false,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16.0),
+                    borderSide: BorderSide.none,
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _isNewPasswordVisible = !_isNewPasswordVisible;
-                    });
-                  },
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16.0),
+                    borderSide: BorderSide(
+                      color: ThemeColors.primaryColor,
+                      width: 2.0,
+                    ),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20.0,
+                    vertical: 16.0,
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isNewPasswordVisible
+                          ? Icons.visibility_rounded
+                          : Icons.visibility_off_rounded,
+                      color: ThemeColors.getSecondaryTextColor(context),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isNewPasswordVisible = !_isNewPasswordVisible;
+                      });
+                    },
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: 16),
 
             // Confirm Password Field
-            TextField(
-              controller: _confirmPasswordController,
-              obscureText: !_isConfirmPasswordVisible,
-              decoration: InputDecoration(
-                labelText: 'Confirm New Password',
-                filled: true,
-                fillColor: ThemeColors.getSurfaceColor(context),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide.none,
+            Container(
+              decoration: BoxDecoration(
+                color: ThemeColors.getCardColor(context),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: ThemeColors.getBorderColor(context).withOpacity(0.1),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide(
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withOpacity(0.3)
+                        : ThemeColors.getOverlayColor(context, opacity: 0.08),
+                    blurRadius: 20,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _confirmPasswordController,
+                obscureText: !_isConfirmPasswordVisible,
+                decoration: InputDecoration(
+                  labelText: 'Confirm New Password',
+                  hintText: 'Re-enter your new password',
+                  prefixIcon: Icon(
+                    Icons.lock_outline_rounded,
                     color: ThemeColors.primaryColor,
-                    width: 2.0,
                   ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20.0,
-                  vertical: 16.0,
-                ),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _isConfirmPasswordVisible
-                        ? Icons.visibility
-                        : Icons.visibility_off,
+                  filled: false,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16.0),
+                    borderSide: BorderSide.none,
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
-                    });
-                  },
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16.0),
+                    borderSide: BorderSide(
+                      color: ThemeColors.primaryColor,
+                      width: 2.0,
+                    ),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20.0,
+                    vertical: 16.0,
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isConfirmPasswordVisible
+                          ? Icons.visibility_rounded
+                          : Icons.visibility_off_rounded,
+                      color: ThemeColors.getSecondaryTextColor(context),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                      });
+                    },
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 20),
 
             // Password Requirements
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: ThemeColors.getSurfaceColor(context),
-                borderRadius: BorderRadius.circular(8.0),
+                gradient: LinearGradient(
+                  colors: [
+                    ThemeColors.primaryColor.withOpacity(0.08),
+                    ThemeColors.primaryColor.withOpacity(0.04),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: ThemeColors.primaryColor.withOpacity(0.2),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Password Requirements:',
-                    style: TextThemes.getBodySmallStyle(
-                      context,
-                    ).copyWith(fontWeight: FontWeight.w600),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        size: 20,
+                        color: ThemeColors.primaryColor,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Password Requirements',
+                        style: TextThemes.getBodyMediumStyle(context).copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: ThemeColors.primaryColor,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '• At least 6 characters long',
-                    style: TextThemes.getBodySmallStyle(context),
-                  ),
-                  Text(
-                    '• Must be different from previous password',
-                    style: TextThemes.getBodySmallStyle(context),
-                  ),
+                  const SizedBox(height: 12),
+                  _buildRequirement('At least 6 characters long'),
+                  const SizedBox(height: 6),
+                  _buildRequirement('Must be different from previous password'),
                 ],
               ),
             ),
@@ -242,6 +370,27 @@ class _UpdatePasswordPageState extends State<UpdatePasswordPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildRequirement(String text) {
+    return Row(
+      children: [
+        Icon(
+          Icons.check_circle_outline_rounded,
+          size: 16,
+          color: ThemeColors.primaryColor.withOpacity(0.7),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: TextThemes.getBodySmallStyle(
+              context,
+            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
+          ),
+        ),
+      ],
     );
   }
 }

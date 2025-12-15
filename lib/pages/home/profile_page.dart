@@ -32,6 +32,24 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
     super.dispose();
   }
 
+  Widget _buildStatColumn(String count, String label) {
+    return Column(
+      children: [
+        Text(
+          count,
+          style: TextThemes.getBodyMediumStyle(
+            context,
+          ).copyWith(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextThemes.getBodySmallStyle(context).copyWith(fontSize: 13),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -40,99 +58,160 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
 
     return Scaffold(
       backgroundColor: ThemeColors.getBackgroundColor(context),
+      appBar: AppBar(
+        backgroundColor: ThemeColors.getNavBarColor(context),
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back,
+            color: ThemeColors.getNavBarIconColor(context),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          currentUser?.name ?? 'User',
+          style: TextThemes.getTitleStyle(
+            context,
+          ).copyWith(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        centerTitle: false,
+      ),
       body: CustomScrollView(
         slivers: [
-          // WhatsApp-style header
-          SliverAppBar(
-            expandedHeight: 280,
-            pinned: true,
-            backgroundColor: ThemeColors.getSurfaceColor(context),
-            elevation: 0,
-            leading: IconButton(
-              icon: Icon(
-                Icons.arrow_back,
-                color: ThemeColors.getTextColor(context),
-              ),
-              onPressed: () => Navigator.pop(context),
-            ),
-            actions: [
-              IconButton(
-                icon: Icon(Icons.edit, color: ThemeColors.primaryColor),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const EditProfilePage(),
-                    ),
-                  );
-                },
-              ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                color: ThemeColors.getSurfaceColor(context),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 60),
-                    // Profile Picture
-                    Stack(
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            // TODO: View full image
-                          },
-                          child: Hero(
-                            tag: 'profile_pic',
-                            child: ProfilePic(
-                              radius: 70,
-                              imageUrl: currentUser?.avatarUrl ?? '',
+          // Instagram-style profile header
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                const SizedBox(height: 16),
+                // Profile info row with picture and stats
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      // Profile Picture
+                      GestureDetector(
+                        onTap: () {
+                          // TODO: View full image
+                        },
+                        child: Container(
+                          width: 90,
+                          height: 90,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: ThemeColors.getBorderColor(
+                                context,
+                              ).withOpacity(0.3),
+                              width: 1,
                             ),
                           ),
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: ThemeColors.primaryColor,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: ThemeColors.getSurfaceColor(context),
-                                width: 3,
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.camera_alt,
-                              size: 20,
-                              color: Colors.white,
-                            ),
+                          child: ClipOval(
+                            child:
+                                currentUser?.avatarUrl != null &&
+                                    currentUser!.avatarUrl!.isNotEmpty
+                                ? Image.network(
+                                    currentUser.avatarUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: ThemeColors.getSurfaceColor(
+                                          context,
+                                        ),
+                                        child: Icon(
+                                          Icons.person,
+                                          size: 40,
+                                          color:
+                                              ThemeColors.getSecondaryTextColor(
+                                                context,
+                                              ),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Container(
+                                    color: ThemeColors.getSurfaceColor(context),
+                                    child: Icon(
+                                      Icons.person,
+                                      size: 40,
+                                      color: ThemeColors.getSecondaryTextColor(
+                                        context,
+                                      ),
+                                    ),
+                                  ),
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Name
-                    Text(
-                      currentUser?.name ?? 'User',
-                      style: TextThemes.getTitleStyle(
-                        context,
-                      ).copyWith(fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    // Bio
-                    Text(
-                      currentUser?.bio ?? 'Hey there! I am using Hosla Varta',
-                      style: TextThemes.getBodyMediumStyle(context).copyWith(
-                        fontSize: 14,
-                        color: ThemeColors.getSecondaryTextColor(context),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                      const SizedBox(width: 24),
+                      // Stats
+                      Expanded(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [_buildStatColumn('42', 'Posts')],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                const SizedBox(height: 12),
+                // Name and Bio
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        currentUser?.name ?? 'User',
+                        style: TextThemes.getBodyMediumStyle(
+                          context,
+                        ).copyWith(fontWeight: FontWeight.w600, fontSize: 14),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        currentUser?.bio ?? 'Hey there! I am using Hosla Varta',
+                        style: TextThemes.getBodySmallStyle(
+                          context,
+                        ).copyWith(fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Edit Profile Button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const EditProfilePage(),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          color: ThemeColors.getBorderColor(
+                            context,
+                          ).withOpacity(0.3),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                      ),
+                      child: Text(
+                        'Edit Profile',
+                        style: TextThemes.getBodyMediumStyle(
+                          context,
+                        ).copyWith(fontWeight: FontWeight.w600, fontSize: 14),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
             ),
           ),
           // Profile Options
@@ -140,29 +219,38 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
             child: Column(
               children: [
                 const SizedBox(height: 8),
-                // Tab Bar for Posts/Saved/Settings
+                // Instagram-style Icon Navigation
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: ThemeColors.getSurfaceColor(context),
-                    borderRadius: BorderRadius.circular(12),
+                    border: Border(
+                      top: BorderSide(
+                        color: ThemeColors.getBorderColor(
+                          context,
+                        ).withOpacity(0.2),
+                        width: 0.5,
+                      ),
+                    ),
                   ),
                   child: TabBar(
                     controller: _tabController,
-                    indicator: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: ThemeColors.primaryColor,
+                    indicator: UnderlineTabIndicator(
+                      borderSide: BorderSide(
+                        color: ThemeColors.getTextColor(context),
+                        width: 1,
+                      ),
                     ),
-                    labelColor: Colors.white,
-                    unselectedLabelColor: ThemeColors.getTextColor(context),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    labelColor: ThemeColors.getTextColor(context),
+                    unselectedLabelColor: ThemeColors.getSecondaryTextColor(
+                      context,
+                    ),
                     tabs: const [
-                      Tab(text: 'Posts'),
-                      Tab(text: 'Saved'),
-                      Tab(text: 'Settings'),
+                      Tab(icon: Icon(Icons.grid_on, size: 26)),
+                      Tab(icon: Icon(Icons.bookmark_border, size: 26)),
+                      Tab(icon: Icon(Icons.settings_outlined, size: 26)),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
                 // Tab View Content
                 SizedBox(
                   height: 600, // Fixed height for tab content
@@ -191,15 +279,22 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
     );
   }
 
-  // Posts Tab Content
+  // Posts Tab Content - Instagram Grid Style
   Widget _buildPostsTab(BuildContext context, currentUser) {
-    return Column(
-      children: [
-        ListTile(
-          leading: Icon(Icons.article, color: ThemeColors.primaryColor),
-          title: const Text('View All Posts'),
-          trailing: const Icon(Icons.chevron_right),
+    // Placeholder posts grid (3 columns)
+    return GridView.builder(
+      padding: const EdgeInsets.all(2),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 2,
+        mainAxisSpacing: 2,
+        childAspectRatio: 1,
+      ),
+      itemCount: 12, // Show 12 placeholder squares
+      itemBuilder: (context, index) {
+        return GestureDetector(
           onTap: () {
+            // Navigate to posts page on tap
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -210,47 +305,85 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
               ),
             );
           },
-        ),
-        const Divider(),
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(
-            'Your posts will appear here',
-            style: TextThemes.getBodyMediumStyle(
-              context,
-            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
+          child: Container(
+            decoration: BoxDecoration(
+              color: ThemeColors.getSurfaceColor(context).withOpacity(0.3),
+              border: Border.all(
+                color: ThemeColors.getBorderColor(context).withOpacity(0.1),
+                width: 0.5,
+              ),
+            ),
+            child: Center(
+              child: Icon(
+                Icons.image_outlined,
+                size: 40,
+                color: ThemeColors.getSecondaryTextColor(
+                  context,
+                ).withOpacity(0.3),
+              ),
+            ),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
-  // Saved Tab Content
+  // Saved Tab Content - Instagram Grid Style
   Widget _buildSavedTab(BuildContext context) {
-    return Column(
-      children: [
-        ListTile(
-          leading: Icon(Icons.bookmark, color: ThemeColors.primaryColor),
-          title: const Text('View All Saved Posts'),
-          trailing: const Icon(Icons.chevron_right),
+    // Placeholder saved posts grid (3 columns)
+    return GridView.builder(
+      padding: const EdgeInsets.all(2),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 2,
+        mainAxisSpacing: 2,
+        childAspectRatio: 1,
+      ),
+      itemCount: 9, // Show 9 placeholder squares
+      itemBuilder: (context, index) {
+        return GestureDetector(
           onTap: () {
+            // Navigate to saved posts page on tap
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const SavedPostsPage()),
             );
           },
-        ),
-        const Divider(),
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(
-            'Your saved posts will appear here',
-            style: TextThemes.getBodyMediumStyle(
-              context,
-            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
+          child: Container(
+            decoration: BoxDecoration(
+              color: ThemeColors.getSurfaceColor(context).withOpacity(0.3),
+              border: Border.all(
+                color: ThemeColors.getBorderColor(context).withOpacity(0.1),
+                width: 0.5,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Center(
+                  child: Icon(
+                    Icons.image_outlined,
+                    size: 40,
+                    color: ThemeColors.getSecondaryTextColor(
+                      context,
+                    ).withOpacity(0.3),
+                  ),
+                ),
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Icon(
+                    Icons.bookmark,
+                    size: 16,
+                    color: ThemeColors.getSecondaryTextColor(
+                      context,
+                    ).withOpacity(0.5),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
