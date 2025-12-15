@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
@@ -7,7 +8,9 @@ import 'package:hosla/widgets/profile_pic.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
 import 'package:hosla/models/user_model.dart';
 import 'package:hosla/services/database_helper.dart';
+import 'package:hosla/services/user_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CreateProfilePage extends StatefulWidget {
   const CreateProfilePage({super.key});
@@ -20,10 +23,13 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
   late final TextEditingController _bioController;
+  final ImagePicker _picker = ImagePicker();
+  final UserService _userService = UserService();
 
   String? _selectedGender;
   DateTime? _selectedDate;
   String? _profileImageUrl;
+  XFile? _selectedImage;
 
   @override
   void initState() {
@@ -41,6 +47,16 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
     super.dispose();
   }
 
+  int _calculateAge(DateTime dob) {
+    final now = DateTime.now();
+    int age = now.year - dob.year;
+    if (now.month < dob.month ||
+        (now.month == dob.month && now.day < dob.day)) {
+      age--;
+    }
+    return age;
+  }
+
   void _selectDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -55,12 +71,54 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
     }
   }
 
-  void _selectProfileImage() {
-    // TODO: Implement image picker functionality
-    setState(() {
-      _profileImageUrl =
-          'https://static.vecteezy.com/system/resources/thumbnails/004/511/281/small/default-avatar-photo-placeholder-profile-picture-vector.jpg';
-    });
+  Future<void> _selectProfileImage() async {
+    try {
+      // Show options to select from gallery or camera
+      final XFile? image = await showDialog<XFile?>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Select Profile Picture'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text('Choose from Gallery'),
+                  onTap: () async {
+                    Navigator.pop(
+                      context,
+                      await _picker.pickImage(source: ImageSource.gallery),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.camera_alt),
+                  title: const Text('Take a Photo'),
+                  onTap: () async {
+                    Navigator.pop(
+                      context,
+                      await _picker.pickImage(source: ImageSource.camera),
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      );
+
+      if (image != null) {
+        setState(() {
+          _selectedImage = image;
+          _profileImageUrl = image.path;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        SnackBarWidget.show(context, 'Failed to select image: $e');
+      }
+    }
   }
 
   String _formatDate(DateTime date) {
@@ -68,7 +126,7 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
   }
 
   /// Save profile data to local database and SharedPreferences
-  Future<void> _saveProfileData() async {
+  Future<void> _saveProfileData({bool isSkip = false}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
 
@@ -78,45 +136,77 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
           'user_${DateTime.now().millisecondsSinceEpoch}';
       final phoneNumber = prefs.getString('phone_number') ?? '';
 
+      // Handle default values when skipping
+      final userName = isSkip ? 'User' : _nameController.text;
+      final userEmail = isSkip
+          ? null
+          : (_emailController.text.isNotEmpty ? _emailController.text : null);
+      final userBio = isSkip
+          ? null
+          : (_bioController.text.isNotEmpty ? _bioController.text : null);
+      final userGender = isSkip ? null : _selectedGender;
+      final userDob = isSkip ? null : _selectedDate;
+      String? avatarUrl = _profileImageUrl;
+
+      // Upload image if selected and not skipping
+      if (!isSkip && _selectedImage != null) {
+        try {
+          avatarUrl = await _userService.updateUserAvatar(_selectedImage!.path);
+        } catch (e) {
+          print('Error uploading avatar: $e');
+          // Use local path as fallback
+          avatarUrl = _selectedImage!.path;
+        }
+      }
+
       // Create User object with all profile data
       final user = User(
         id: userId,
-        name: _nameController.text,
-        email: _emailController.text.isNotEmpty ? _emailController.text : null,
+        name: userName,
+        email: userEmail,
         phone: phoneNumber,
-        avatarUrl: _profileImageUrl,
-        bio: _bioController.text.isNotEmpty ? _bioController.text : null,
+        avatarUrl: avatarUrl,
+        bio: userBio,
         isOnline: true,
       );
+
+      // Make API call to create/update profile
+      if (!isSkip) {
+        try {
+          await _userService.updateUserProfile(user);
+          print('Profile synced with server successfully');
+        } catch (e) {
+          print('Error syncing profile with server: $e');
+          // Continue with local save even if API fails
+        }
+      }
 
       // Save to local database
       final dbHelper = DatabaseHelper.instance;
       await dbHelper.upsertUser(user);
 
       // Save profile data to SharedPreferences
-      await prefs.setString('user_name', _nameController.text);
-      if (_emailController.text.isNotEmpty) {
-        await prefs.setString('user_email', _emailController.text);
+      await prefs.setString('user_name', userName);
+      if (userEmail != null) {
+        await prefs.setString('user_email', userEmail);
       }
-      if (_bioController.text.isNotEmpty) {
-        await prefs.setString('user_bio', _bioController.text);
+      if (userBio != null) {
+        await prefs.setString('user_bio', userBio);
       }
-      if (_profileImageUrl != null) {
-        await prefs.setString('user_avatar', _profileImageUrl!);
+      if (avatarUrl != null) {
+        await prefs.setString('user_avatar', avatarUrl);
       }
-      if (_selectedGender != null) {
-        await prefs.setString('user_gender', _selectedGender!);
+      if (userGender != null) {
+        await prefs.setString('user_gender', userGender);
       }
-      if (_selectedDate != null) {
-        await prefs.setString('user_dob', _selectedDate!.toIso8601String());
+      if (userDob != null) {
+        await prefs.setString('user_dob', userDob.toIso8601String());
       }
 
       // Mark profile as completed
       await prefs.setBool('profile_completed', true);
 
-      print(
-        'Profile saved successfully - User ID: $userId, Name: ${_nameController.text}',
-      );
+      print('Profile saved successfully - User ID: $userId, Name: $userName');
     } catch (e) {
       print('Error saving profile data: $e');
       rethrow;
@@ -134,6 +224,38 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
         ),
         title: Text('Create Profile', style: TextThemes.getTitleStyle(context)),
         centerTitle: true,
+        actions: [
+          TextButton(
+            onPressed: () async {
+              // Skip profile creation with default values
+              try {
+                await _saveProfileData(isSkip: true);
+                if (mounted) {
+                  SnackBarWidget.show(
+                    context,
+                    'Profile skipped. You can complete it later!',
+                  );
+                  Navigator.pushReplacementNamed(context, '/home');
+                }
+              } catch (e) {
+                if (mounted) {
+                  SnackBarWidget.show(
+                    context,
+                    'Failed to skip profile. Please try again.',
+                  );
+                }
+                print('Error skipping profile: $e');
+              }
+            },
+            child: Text(
+              'Skip',
+              style: TextStyle(
+                color: ThemeColors.getSecondaryTextColor(context),
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: Constants.defaultPadding,
@@ -149,19 +271,25 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
             const SizedBox(height: 24),
 
             // Profile Picture Section
-            ProfilePic(
-              imageUrl:
-                  _profileImageUrl ??
-                  'https://static.vecteezy.com/system/resources/thumbnails/004/511/281/small/default-avatar-photo-placeholder-profile-picture-vector.jpg',
-            ),
+            _selectedImage != null
+                ? ClipOval(
+                    child: Image.file(
+                      File(_selectedImage!.path),
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : ProfilePic(
+                    imageUrl:
+                        _profileImageUrl ??
+                        'https://static.vecteezy.com/system/resources/thumbnails/004/511/281/small/default-avatar-photo-placeholder-profile-picture-vector.jpg',
+                  ),
             const SizedBox(height: 16),
 
             // Upload Picture Button
             TextButton.icon(
-              onPressed: () {
-                // TODO: Implement image picker functionality
-                _selectProfileImage();
-              },
+              onPressed: _selectProfileImage,
               icon: const Icon(Icons.camera_alt),
               label: const Text('Upload Picture'),
               style: TextButton.styleFrom(
@@ -229,6 +357,40 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
                   ],
                 ),
               ),
+            ),
+            const SizedBox(height: 8),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: _selectedDate == null
+                  ? const SizedBox.shrink()
+                  : Row(
+                      key: const ValueKey('age_row'),
+                      children: [
+                        Icon(
+                          Icons.cake_outlined,
+                          size: 20,
+                          color: ThemeColors.getSecondaryTextColor(context),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Age',
+                          style: TextThemes.getBodyMediumStyle(context),
+                        ),
+                        const Spacer(),
+                        Chip(
+                          label: Text('${_calculateAge(_selectedDate!)} years'),
+                          backgroundColor: ThemeColors.getSuccessSurface(
+                            context,
+                          ),
+                          side: BorderSide(
+                            color: ThemeColors.getBorderColor(context),
+                          ),
+                          labelStyle: TextThemes.getBodySmallStyle(
+                            context,
+                          ).copyWith(color: ThemeColors.getTextColor(context)),
+                        ),
+                      ],
+                    ),
             ),
             const SizedBox(height: 16),
             // Email Field (Optional)
@@ -344,32 +506,26 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
                   SnackBarWidget.show(context, 'Please enter your name');
                   return;
                 }
-                if (_selectedDate == null) {
-                  SnackBarWidget.show(
-                    context,
-                    'Please select your date of birth',
-                  );
-                  return;
-                }
-                if (_selectedGender == null) {
-                  SnackBarWidget.show(context, 'Please select your gender');
-                  return;
-                }
 
                 // Save profile data to backend or local storage
                 try {
-                  await _saveProfileData();
-                  SnackBarWidget.show(context, 'Profile created successfully!');
-
-                  // Navigate to home page after successful profile creation
+                  await _saveProfileData(isSkip: false);
                   if (mounted) {
+                    SnackBarWidget.show(
+                      context,
+                      'Profile created successfully!',
+                    );
+
+                    // Navigate to home page after successful profile creation
                     Navigator.pushReplacementNamed(context, '/home');
                   }
                 } catch (e) {
-                  SnackBarWidget.show(
-                    context,
-                    'Failed to create profile. Please try again.',
-                  );
+                  if (mounted) {
+                    SnackBarWidget.show(
+                      context,
+                      'Failed to create profile. Please try again.',
+                    );
+                  }
                   print('Error creating profile: $e');
                 }
               },

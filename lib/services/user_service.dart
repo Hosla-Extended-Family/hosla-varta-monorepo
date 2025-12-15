@@ -1,8 +1,10 @@
 import 'package:hosla/models/user_model.dart';
 import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/services/database_helper.dart';
+import 'package:http/http.dart' as _httpClient;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import './../core/constants/api_constants.dart'; 
 
 /// Service class for handling user-related API calls and settings management
 /// Implements offline-first approach with local database and SharedPreferences caching
@@ -78,24 +80,22 @@ class UserService {
       await _dbHelper.upsertUser(user);
 
       // TODO: Replace with actual HTTP request
-      // try {
-      //   final response = await _httpClient.put(
-      //     Uri.parse('$baseUrl/user/profile'),
-      //     headers: {'Content-Type': 'application/json'},
-      //     body: json.encode(user.toJson()),
-      //   );
-      //   if (response.statusCode == 200) {
-      //     final serverUser = User.fromJson(json.decode(response.body));
-      //     // Update local database with server response
-      //     await _dbHelper.upsertUser(serverUser);
-      //     return serverUser;
-      //   }
-      // } catch (e) {
-      //   // Network error - already updated locally
-      //   print('Network error updating profile, saved locally: $e');
-      // }
-
-      // Simulate network delay
+      try {
+        final response = await _httpClient.put(
+          Uri.parse('${ApiConstants.baseUrl}/auth/create-profile'),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(user.toJson()),
+        );
+        if (response.statusCode == 200) {
+          final serverUser = User.fromJson(json.decode(response.body));
+          //Update local database with server response
+          await _dbHelper.upsertUser(serverUser);
+          return serverUser;
+        }
+      } catch (e) {
+        //Network error - already updated locally
+        print('Network error updating profile, saved locally: $e');
+      }
       await Future.delayed(const Duration(milliseconds: 400));
       return user;
     } catch (e) {
