@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
+import 'package:hosla/core/constants/api_constants.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
@@ -20,25 +22,51 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   late final TextEditingController _phoneNumberController;
-  late final TextEditingController _passwordController;
+
+  String _getClientPlatform() {
+    if (kIsWeb) return 'web';
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return 'android';
+      case TargetPlatform.iOS:
+        return 'ios';
+      case TargetPlatform.macOS:
+        return 'macos';
+      case TargetPlatform.windows:
+        return 'windows';
+      case TargetPlatform.linux:
+        return 'linux';
+      case TargetPlatform.fuchsia:
+        return 'fuchsia';
+    }
+  }
 
   Future<String> _handleLogin() async {
     final phoneNumber = _phoneNumberController.text;
-    final password = _passwordController.text;
 
-    if (phoneNumber.isEmpty || password.isEmpty) {
+    if (phoneNumber.isEmpty) {
       // Show error message
-      return "Please enter both phone number and password.";
+      return "Please enter your phone number.";
     }
 
     try {
-      final request = http.Request('POST', Uri.parse('/api/auth/login'))
+      /* final request = http.Request('POST', Uri.parse('https://comm-involve-drive-sin.trycloudflare.com/api/auth/request-otp/'))
         ..headers['Content-Type'] = 'application/json'
-        ..body = '{"phone": "$phoneNumber", "password": "$password"}';
-
+        ..body = '{"phone": "$phoneNumber"}';
+      print(request.body);
       final response = await http.Client().send(request);
+      print(response.toString());
       final responseBody = await response.stream.bytesToString();
-
+ */
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/api/auth/request-otp'),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Client-Platform': _getClientPlatform(),
+        },
+        body: jsonEncode({'phone': phoneNumber}),
+      );
+      final responseBody = response.body;
       if (response.statusCode == 200) {
         // Parse response and extract user data
         final responseData = json.decode(responseBody);
@@ -51,9 +79,7 @@ class _LoginPageState extends State<LoginPage> {
 
         return "Login successful!";
       } else if (response.statusCode == 404) {
-        return "Invalid phone number or password.";
-      } else if (response.statusCode == 401) {
-        return "Wrong password. Please try again.";
+        return "Invalid phone number ";
       } else {
         return "Login failed: $responseBody";
       }
@@ -139,14 +165,12 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     _phoneNumberController = TextEditingController();
-    _passwordController = TextEditingController();
     super.initState();
   }
 
   @override
   void dispose() {
     _phoneNumberController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
@@ -241,7 +265,7 @@ class _LoginPageState extends State<LoginPage> {
               ],
             ),
             SizedBox(height: 16),
-            TextField(
+            /* TextField(
               controller: _passwordController,
               obscureText: true,
               decoration: InputDecoration(
@@ -268,8 +292,8 @@ class _LoginPageState extends State<LoginPage> {
                   vertical: 16.0,
                 ),
               ),
-            ),
-            TextButton(
+            ), */
+            /* TextButton(
               onPressed: () async {
                 // TODO: Handle forgot password logic here
                 Navigator.pushNamed(context, '/forget-password');
@@ -278,7 +302,7 @@ class _LoginPageState extends State<LoginPage> {
                 'Forgot Password?',
                 style: TextThemes.getBodySmallStyle(context),
               ),
-            ),
+            ), */
             SizedBox(height: 16),
             Button(
               text: 'Login',
@@ -289,7 +313,10 @@ class _LoginPageState extends State<LoginPage> {
                   Navigator.pushNamed(
                     context,
                     '/otp-verification',
-                    arguments: '/home',
+                    arguments: {
+                      'phoneNumber': _phoneNumberController.text,
+                      'endRoute': '/home',
+                    },
                   );
                 } else {
                   SnackBarWidget.show(context, result);

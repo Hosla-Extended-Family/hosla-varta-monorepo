@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
@@ -16,6 +17,24 @@ class ForgetPasswordPage extends StatefulWidget {
 
 class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
   late final TextEditingController _phoneController;
+
+  String _getClientPlatform() {
+    if (kIsWeb) return 'web';
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return 'android';
+      case TargetPlatform.iOS:
+        return 'ios';
+      case TargetPlatform.macOS:
+        return 'macos';
+      case TargetPlatform.windows:
+        return 'windows';
+      case TargetPlatform.linux:
+        return 'linux';
+      case TargetPlatform.fuchsia:
+        return 'fuchsia';
+    }
+  }
 
   @override
   void initState() {
@@ -38,6 +57,7 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
       final request =
           http.Request('POST', Uri.parse('/auth/forgot-password-otp'))
             ..headers['Content-Type'] = 'application/json'
+            ..headers['X-Client-Platform'] = _getClientPlatform()
             ..body = '{"phone": "$phoneNumber"}';
 
       final response = await http.Client().send(request);
@@ -182,8 +202,8 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
                   context,
                   '/otp-verification',
                   arguments: {
-                    '/reset-password', // tell it where to go after OTP
-                    _phoneController.text,
+                    'endRoute': '/reset-password', // where to go after OTP
+                    'phoneNumber': _phoneController.text,
                   },
                 );
               },

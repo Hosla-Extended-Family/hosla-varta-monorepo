@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:hosla/core/constants/api_constants.dart';
 import 'package:hosla/core/navigation/route_observer.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
@@ -73,17 +74,19 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
   }
 
   Future<String> _handleVerifyOtp() async {
-    final otp = _otpController.text;
+    final otp = _otpController.text.trim();
 
     if (otp.isEmpty) {
       return "Please enter the OTP.";
     }
 
+    print(widget.phoneNumber);
+    print(otp);
     try {
       final response = await http.post(
-        Uri.parse('/api/auth/verify-otp'),
+        Uri.parse('${ApiConstants.baseUrl}/api/auth/verify-otp'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'otp': otp}),
+        body: jsonEncode({'phone':'${widget.phoneNumber}','otp': otp}),
       );
 
       if (response.statusCode == 200) {

@@ -2,7 +2,8 @@
 class ApiConstants {
   // Base URL for API endpoints
   // TODO: Replace with your actual API base URL
-  static const String baseUrl = 'https://your-api-url.com/api';
+  static const String baseUrl =
+      'https://coleman-jonathan-military-color.trycloudflare.com';
 
   // API Endpoints
   static const String postsEndpoint = '/posts';

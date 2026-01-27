@@ -34,8 +34,22 @@ class MainApp extends ConsumerWidget {
         '/login': (context) => const LoginPage(),
         '/signup': (context) => const SignupPage(),
         '/otp-verification': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as String;
-          return OtpVerificationPage(endRoute: args, phoneNumber: args);
+          final args = ModalRoute.of(context)!.settings.arguments;
+          String phoneNumber = '';
+          String endRoute = '/home';
+
+          if (args is Map) {
+            phoneNumber = args['phoneNumber']?.toString() ?? '';
+            endRoute = args['endRoute']?.toString() ?? '/home';
+          } else if (args is String) {
+            // Backward compatibility: treat as phone number
+            phoneNumber = args;
+          }
+
+          return OtpVerificationPage(
+            endRoute: endRoute,
+            phoneNumber: phoneNumber,
+          );
         },
         '/forget-password': (context) => const ForgetPasswordPage(),
         '/create-profile': (context) => const CreateProfilePage(),
@@ -49,7 +63,7 @@ class MainApp extends ConsumerWidget {
           return UpdatePasswordPage(phoneNumber: args);
         },
       },
-      home: Homepage(),
+      home: LoginPage(),
     );
   }
 }

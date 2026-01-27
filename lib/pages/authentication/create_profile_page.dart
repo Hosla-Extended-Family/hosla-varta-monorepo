@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:hosla/core/constants/api_constants.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
@@ -9,6 +12,7 @@ import 'package:hosla/widgets/snack_bar_widget.dart';
 import 'package:hosla/models/user_model.dart';
 import 'package:hosla/services/database_helper.dart';
 import 'package:hosla/services/user_service.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -45,6 +49,48 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
     _emailController.dispose();
     _bioController.dispose();
     super.dispose();
+  }
+
+  String _getClientPlatform() {
+    if (kIsWeb) return 'web';
+    if (Platform.isAndroid) return 'android';
+    if (Platform.isIOS) return 'ios';
+    if (Platform.isMacOS) return 'macos';
+    if (Platform.isWindows) return 'windows';
+    if (Platform.isLinux) return 'linux';
+    return 'unknown';
+  }
+
+  Future<String> _createProfile() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      return "Please enter your name.";
+    }
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/api/auth/request-otp'),
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'X-Client-Platform': _getClientPlatform(),
+        },
+        body: jsonEncode({
+          'name': name,
+          'dateOfBirth': _selectedDate?.toIso8601String(),
+          'gender': _selectedGender,
+          'email': _emailController.text.trim(),
+          'bio': _bioController.text.trim(),
+          'avatarUrl': _profileImageUrl,
+        }),
+      );
+      final responseBody = response.body;
+      if (response.statusCode == 200) {
+        return "Profile created successfully!";
+      } else {
+        return "Failed to create profile: $responseBody";
+      }
+    } catch (e) {
+      return "Failed to create profile. Please try again.";
+    }
   }
 
   int _calculateAge(DateTime dob) {
@@ -509,8 +555,8 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
 
                 // Save profile data to backend or local storage
                 try {
-                  await _saveProfileData(isSkip: false);
-                  if (mounted) {
+                  if (_createProfile() == "Profile created successfully!") {
+                    await _saveProfileData(isSkip: false);
                     SnackBarWidget.show(
                       context,
                       'Profile created successfully!',

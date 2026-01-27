@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
+import 'package:hosla/core/constants/api_constants.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
@@ -18,50 +20,56 @@ class SignupPage extends StatefulWidget {
 
 class _SignupPageState extends State<SignupPage> {
   late final TextEditingController _emailController;
-  late final TextEditingController _passwordController;
-  late final TextEditingController _confirmPasswordController;
-  bool _isNewPasswordVisible = true;
-  bool _isConfirmPasswordVisible = true;
+
+  String _getClientPlatform() {
+    if (kIsWeb) return 'web';
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return 'android';
+      case TargetPlatform.iOS:
+        return 'ios';
+      case TargetPlatform.macOS:
+        return 'macos';
+      case TargetPlatform.windows:
+        return 'windows';
+      case TargetPlatform.linux:
+        return 'linux';
+      case TargetPlatform.fuchsia:
+        return 'fuchsia';
+    }
+  }
 
   @override
   void initState() {
     _emailController = TextEditingController();
-    _passwordController = TextEditingController();
-    _confirmPasswordController = TextEditingController();
     super.initState();
   }
 
   @override
   void dispose() {
     _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   Future<String> _handleSignup() async {
     final phoneNumber = _emailController.text;
-    final password = _passwordController.text;
-    final confirmPassword = _confirmPasswordController.text;
 
-    if (phoneNumber.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+    if (phoneNumber.isEmpty ) {
       // Show error message
-      return "Please enter all fields.";
-    }
-
-    if (password != confirmPassword) {
-      return "Passwords do not match.";
+      return "Please enter your phone number.";
     }
 
     try {
-      final request = http.Request('POST', Uri.parse('/api/auth/register'))
-        ..headers['Content-Type'] = 'application/json'
-        ..body = '{"phone": "$phoneNumber", "password": "$password"}';
-
-      final response = await http.Client().send(request);
-      final responseBody = await response.stream.bytesToString();
-
-      if (response.statusCode == 201) {
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/api/auth/request-otp'),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Client-Platform': _getClientPlatform(),
+        },
+        body: jsonEncode({'phone': phoneNumber}),
+      );
+      final responseBody = response.body;
+      if (response.statusCode == 200) {
         // Parse response and save only phone number and user ID
         final responseData = json.decode(responseBody);
 
@@ -210,7 +218,7 @@ class _SignupPageState extends State<SignupPage> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            /* SizedBox(height: 16),
             TextField(
               controller: _passwordController,
               obscureText: _isNewPasswordVisible,
@@ -312,24 +320,26 @@ class _SignupPageState extends State<SignupPage> {
                           ? null
                           : 'Passwords do not match'),
               ),
-            ),
+            ), */
             SizedBox(height: 24),
             Button(
               text: 'Next',
               onPressed:
-                  _confirmPasswordController.text == _passwordController.text &&
-                      _confirmPasswordController.text.isNotEmpty
-                  ? () {
+                   () {
                       _handleSignup().then((result) {
                         if (result == "Signup successful!") {
                           SnackBarWidget.show(context, result);
-                          Navigator.pushNamed(context, '/create-profile');
+                          Navigator.pushNamed(context, '/otp-verification',
+                          arguments: {
+                            'phoneNumber': _emailController.text,
+                            'endRoute': '/create-profile',
+                          },
+                          );
                         } else {
                           SnackBarWidget.show(context, result);
                         }
                       });
-                    }
-                  : null,
+                    },
             ),
           ],
         ),
