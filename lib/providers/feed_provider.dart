@@ -44,7 +44,7 @@ final userPostsProvider = FutureProvider.family<List<Post>, String>((
 /// Notifier for managing feed posts
 class FeedPostsNotifier extends StateNotifier<AsyncValue<List<Post>>> {
   final FeedService _feedService;
-  int _currentPage = 1;
+  String? _nextCursor;
   bool _hasMore = true;
 
   FeedPostsNotifier(this._feedService) : super(const AsyncValue.loading()) {
@@ -55,10 +55,10 @@ class FeedPostsNotifier extends StateNotifier<AsyncValue<List<Post>>> {
   Future<void> loadPosts() async {
     state = const AsyncValue.loading();
     try {
-      final posts = await _feedService.getFeedPosts(page: 1);
-      _currentPage = 1;
-      _hasMore = posts.isNotEmpty;
-      state = AsyncValue.data(posts);
+      final result = await _feedService.getFeed(limit: 20);
+      _nextCursor = result.nextCursor;
+      _hasMore = result.posts.isNotEmpty && _nextCursor != null;
+      state = AsyncValue.data(result.posts);
     } catch (e, stackTrace) {
       state = AsyncValue.error(e, stackTrace);
     }
@@ -67,10 +67,10 @@ class FeedPostsNotifier extends StateNotifier<AsyncValue<List<Post>>> {
   /// Refresh posts
   Future<void> refreshPosts() async {
     try {
-      final posts = await _feedService.getFeedPosts(page: 1);
-      _currentPage = 1;
-      _hasMore = posts.isNotEmpty;
-      state = AsyncValue.data(posts);
+      final result = await _feedService.getFeed(limit: 20);
+      _nextCursor = result.nextCursor;
+      _hasMore = result.posts.isNotEmpty && _nextCursor != null;
+      state = AsyncValue.data(result.posts);
     } catch (e, stackTrace) {
       state = AsyncValue.error(e, stackTrace);
     }
@@ -82,14 +82,14 @@ class FeedPostsNotifier extends StateNotifier<AsyncValue<List<Post>>> {
 
     state.whenData((currentPosts) async {
       try {
-        final newPosts = await _feedService.getFeedPosts(
-          page: _currentPage + 1,
+        final result = await _feedService.getFeed(
+          limit: 20,
+          cursor: _nextCursor,
         );
-
-        if (newPosts.isEmpty) {
-          _hasMore = false;
-        } else {
-          _currentPage++;
+        final newPosts = result.posts;
+        _nextCursor = result.nextCursor;
+        _hasMore = _nextCursor != null && newPosts.isNotEmpty;
+        if (newPosts.isNotEmpty) {
           state = AsyncValue.data([...currentPosts, ...newPosts]);
         }
       } catch (e, stackTrace) {

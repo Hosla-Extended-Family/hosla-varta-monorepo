@@ -1,14 +1,13 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:hosla/core/constants/api_constants.dart';
 import 'package:hosla/core/navigation/route_observer.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/widgets/button.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
-import 'package:http/http.dart' as http;
+// http not needed here; API handled by AuthService
+import 'package:hosla/services/auth_service.dart';
 
 class OtpVerificationPage extends StatefulWidget {
   OtpVerificationPage({
@@ -80,20 +79,20 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
       return "Please enter the OTP.";
     }
 
-    print(widget.phoneNumber);
-    print(otp);
     try {
-      final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/api/auth/verify-otp'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'phone':'${widget.phoneNumber}','otp': otp}),
+      final result = await AuthService.instance.verifyOtp(
+        phone: widget.phoneNumber,
+        otp: otp,
+        // Optionally pass FCM token/model if available
+        fcmToken: null,
+        deviceModel: null,
       );
 
-      if (response.statusCode == 200) {
+      final success = (result['success'] == true);
+      if (success) {
         return "OTP verified successfully!";
-      } else {
-        return "OTP verification failed.";
       }
+      return "OTP verification failed.";
     } catch (e) {
       return "OTP verification failed. Please try again.";
     }

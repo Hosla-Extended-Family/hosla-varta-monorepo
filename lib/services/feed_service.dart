@@ -1,9 +1,20 @@
+import 'dart:convert';
 import 'package:hosla/models/post_model.dart';
+import 'package:hosla/core/constants/api_constants.dart';
+import 'package:hosla/services/api_client.dart';
+
+/// Result model for feed API
+class FeedResult {
+  final List<Post> posts;
+  final String? nextCursor;
+  FeedResult({required this.posts, this.nextCursor});
+}
 
 /// Service class for handling feed-related API calls
 class FeedService {
   // TODO: Add HTTP client dependency injection
   // final http.Client _httpClient;
+  final ApiClient _api = ApiClient.instance;
 
   /// Dummy posts data for testing
   static final List<Post> _dummyPosts = [
@@ -98,22 +109,32 @@ class FeedService {
   /// Get feed posts with pagination
   /// TODO: Implement actual API call
   /// Example: GET /api/feed?page=1&limit=10
-  Future<List<Post>> getFeedPosts({int page = 1, int limit = 10}) async {
-    // TODO: Replace with actual HTTP request
-    // final response = await _httpClient.get(
-    //   Uri.parse('$baseUrl/feed?page=$page&limit=$limit'),
-    // );
-    // if (response.statusCode == 200) {
-    //   final List<dynamic> jsonList = json.decode(response.body)['posts'];
-    //   return jsonList.map((json) => Post.fromJson(json)).toList();
-    // }
-    // throw Exception('Failed to load feed posts');
-
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    // Return dummy data
-    return _dummyPosts;
+  Future<FeedResult> getFeed({
+    int limit = 20,
+    String? cursor,
+    bool includeHidden = false,
+  }) async {
+    final query = <String, String>{
+      'limit': limit.toString(),
+      if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+      if (includeHidden) 'includeHidden': 'true',
+    };
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/feed',
+    ).replace(queryParameters: query);
+    final response = await _api.get(uri);
+    if (response.statusCode == 200) {
+      final body = json.decode(response.body) as Map<String, dynamic>;
+      final data = body['data'] as Map<String, dynamic>? ?? {};
+      final postsJson = (data['posts'] as List?) ?? [];
+      final posts = postsJson
+          .map<Post>((j) => _mapBackendPost(j as Map<String, dynamic>))
+          .toList();
+      final nextCursor = data['nextCursor']?.toString();
+      return FeedResult(posts: posts, nextCursor: nextCursor);
+    }
+    // Fallback to dummy on non-200 for now
+    return FeedResult(posts: _dummyPosts, nextCursor: null);
   }
 
   /// Get a single post by ID
@@ -143,42 +164,74 @@ class FeedService {
   /// TODO: Implement actual API call
   /// Example: POST /api/posts
   Future<Post> createPost(CreatePostRequest request) async {
-    // TODO: Replace with actual HTTP request
-    // final response = await _httpClient.post(
-    //   Uri.parse('$baseUrl/posts'),
-    //   headers: {'Content-Type': 'application/json'},
-    //   body: json.encode(request.toJson()),
-    // );
-    // if (response.statusCode == 201) {
-    //   return Post.fromJson(json.decode(response.body));
-    // }
-    // throw Exception('Failed to create post');
-
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    // Create a new post
-    final newPost = Post(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      userId: 'current_user',
-      userName: 'John Doe',
-      userAvatarUrl:
-          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-      content: request.content,
-      imageUrl: request.imageUrl,
-      tags: request.tags,
-      likeCount: 0,
-      commentCount: 0,
-      shareCount: 0,
-      isLiked: false,
-      isSaved: false,
-      createdAt: DateTime.now(),
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}',
     );
+    final title = request.content.length > 60
+        ? request.content.substring(0, 60)
+        : request.content;
+    final body = json.encode({
+      'title': title.isNotEmpty ? title : null,
+      'body': request.content,
+      'mediaUrls': [if (request.imageUrl != null) request.imageUrl!],
+      'tags': request.tags,
+    });
+    final response = await _api.post(uri, body: body);
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      final res = json.decode(response.body) as Map<String, dynamic>;
+      final data = res['data'];
+      if (data is Map<String, dynamic>) {
+        return _mapBackendPost(data);
+      }
+      // If backend returns different shape, create local from request
+      return Post(
+        id:
+            res['id']?.toString() ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
+        userId: 'current_user',
+        userName: 'Anonymous',
+        content: request.content,
+        imageUrl: request.imageUrl,
+        tags: request.tags,
+        likeCount: 0,
+        commentCount: 0,
+        shareCount: 0,
+        isLiked: false,
+        isSaved: false,
+        createdAt: DateTime.now(),
+      );
+    }
+    throw Exception('Failed to create post: ${response.statusCode}');
+  }
 
-    // Add to dummy data
-    _dummyPosts.insert(0, newPost);
-
-    return newPost;
+  Post _mapBackendPost(Map<String, dynamic> j) {
+    final title = j['title']?.toString();
+    final body = j['body']?.toString();
+    final content = body ?? title ?? '';
+    final mediaUrls =
+        (j['mediaUrls'] as List?)?.map((e) => e.toString()).toList() ??
+        const [];
+    final imageUrl = mediaUrls.isNotEmpty ? mediaUrls.first : null;
+    return Post(
+      id: j['id']?.toString() ?? '',
+      userId: j['userId']?.toString() ?? '',
+      userName: j['userName']?.toString() ?? 'Unknown User',
+      userAvatarUrl: j['userAvatarUrl']?.toString(),
+      content: content,
+      imageUrl: imageUrl,
+      tags: (j['tags'] as List?)?.map((e) => e.toString()).toList() ?? const [],
+      likeCount: (j['likeCount'] as num?)?.toInt() ?? 0,
+      commentCount: (j['commentCount'] as num?)?.toInt() ?? 0,
+      shareCount: (j['shareCount'] as num?)?.toInt() ?? 0,
+      isLiked: j['isLikedByMe'] == true || j['isLiked'] == true,
+      isSaved: j['isSavedByMe'] == true || j['isSaved'] == true,
+      createdAt: j['createdAt'] != null
+          ? DateTime.tryParse(j['createdAt'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      updatedAt: j['updatedAt'] != null
+          ? DateTime.tryParse(j['updatedAt'].toString())
+          : null,
+    );
   }
 
   /// Update a post

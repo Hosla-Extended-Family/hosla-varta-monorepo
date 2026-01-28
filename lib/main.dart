@@ -3,16 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hosla/core/constants/app_theme.dart';
 import 'package:hosla/core/navigation/route_observer.dart';
 import 'package:hosla/pages/authentication/create_profile_page.dart';
-import 'package:hosla/pages/authentication/forget_password_page.dart';
 import 'package:hosla/pages/authentication/login_page.dart';
-import 'package:hosla/pages/authentication/reset_password.dart';
 import 'package:hosla/pages/authentication/otp_verification_page.dart';
 import 'package:hosla/pages/authentication/signup_page.dart';
-import 'package:hosla/pages/authentication/update_password_page.dart';
 import 'package:hosla/pages/homePage.dart';
 import 'package:hosla/providers/theme_provider.dart';
+import 'package:hosla/services/auth_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Eagerly refresh tokens if access is near expiry
+  await AuthService.instance.refreshIfExpiringSoon();
   runApp(const ProviderScope(child: MainApp()));
 }
 
@@ -51,17 +52,17 @@ class MainApp extends ConsumerWidget {
             phoneNumber: phoneNumber,
           );
         },
-        '/forget-password': (context) => const ForgetPasswordPage(),
+        /* '/forget-password': (context) => const ForgetPasswordPage(), */
         '/create-profile': (context) => const CreateProfilePage(),
         '/home': (context) => Homepage(),
-        '/reset-password': (context) {
+        /* '/reset-password': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as String;
           return ResetPassword(phoneNumber: args);
         },
         '/update-password': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as String;
           return UpdatePasswordPage(phoneNumber: args);
-        },
+        }, */
       },
       home: LoginPage(),
     );

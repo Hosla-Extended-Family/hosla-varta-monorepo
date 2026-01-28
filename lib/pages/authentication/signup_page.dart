@@ -54,7 +54,7 @@ class _SignupPageState extends State<SignupPage> {
   Future<String> _handleSignup() async {
     final phoneNumber = _emailController.text;
 
-    if (phoneNumber.isEmpty ) {
+    if (phoneNumber.isEmpty) {
       // Show error message
       return "Please enter your phone number.";
     }
@@ -324,22 +324,23 @@ class _SignupPageState extends State<SignupPage> {
             SizedBox(height: 24),
             Button(
               text: 'Next',
-              onPressed:
-                   () {
-                      _handleSignup().then((result) {
-                        if (result == "Signup successful!") {
-                          SnackBarWidget.show(context, result);
-                          Navigator.pushNamed(context, '/otp-verification',
-                          arguments: {
-                            'phoneNumber': _emailController.text,
-                            'endRoute': '/create-profile',
-                          },
-                          );
-                        } else {
-                          SnackBarWidget.show(context, result);
-                        }
-                      });
-                    },
+              onPressed: () {
+                _handleSignup().then((result) {
+                  if (result == "Signup successful!") {
+                    SnackBarWidget.show(context, result);
+                    Navigator.pushNamed(
+                      context,
+                      '/otp-verification',
+                      arguments: {
+                        'phoneNumber': _emailController.text,
+                        'endRoute': '/create-profile',
+                      },
+                    );
+                  } else {
+                    SnackBarWidget.show(context, result);
+                  }
+                });
+              },
             ),
           ],
         ),

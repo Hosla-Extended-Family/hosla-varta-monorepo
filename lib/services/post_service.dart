@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:hosla/core/constants/api_constants.dart';
+import 'package:hosla/services/api_client.dart';
 
 /// Service class for handling post-related API calls
 class PostService {
   final http.Client _httpClient;
+  final ApiClient _api = ApiClient.instance;
 
   PostService({http.Client? httpClient})
     : _httpClient = httpClient ?? http.Client();
@@ -26,24 +28,20 @@ class PostService {
         '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}',
       );
 
-      final requestBody = {
-        'userId': userId,
-        'userName': userName,
-        'userAvatarUrl': userAvatarUrl ?? '',
-        'content': content,
-        'imageUrl': imageUrl ?? '',
+      // Map to API spec: title/body/mediaUrls/tags
+      final title = content.length > 60 ? content.substring(0, 60) : content;
+      final requestBody = jsonEncode({
+        'title': title.isNotEmpty ? title : null,
+        'body': content,
+        'mediaUrls': [if (imageUrl != null && imageUrl.isNotEmpty) imageUrl],
         'tags': tags,
-      };
+      });
 
-      final response = await _httpClient
-          .post(
-            url,
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode(requestBody),
-          )
+      final response = await _api
+          .post(url, body: requestBody)
           .timeout(ApiConstants.timeout);
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 201 || response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         return {
           'success': true,

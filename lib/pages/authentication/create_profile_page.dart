@@ -67,9 +67,12 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
       return "Please enter your name.";
     }
     try {
-      final response = await http.post(
-        Uri.parse('${ApiConstants.baseUrl}/api/auth/request-otp'),
+      final prefs = await SharedPreferences.getInstance();
+      final fcmtoken = prefs.getString('access_token') ?? '';
+      final response = await http.put(
+        Uri.parse('${ApiConstants.baseUrl}/api/users/profile'),
         headers: {
+          'Authorization': 'Bearer $fcmtoken',
           'Content-Type': 'multipart/form-data',
           'X-Client-Platform': _getClientPlatform(),
         },

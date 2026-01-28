@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
-import 'package:hosla/pages/authentication/update_password_page.dart';
 import 'package:hosla/pages/home/edit_profile_page.dart';
 import 'package:hosla/pages/home/verify_email_page.dart';
 import 'package:hosla/pages/home/blocked_users_page.dart';
@@ -67,19 +66,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const EditProfilePage(),
-                  ),
-                ),
-              ),
-              _buildSettingsTile(
-                icon: Icons.lock_outline,
-                title: 'Change Password',
-                subtitle: 'Update your password',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => UpdatePasswordPage(
-                      phoneNumber: currentUser?.phone ?? '',
-                    ),
                   ),
                 ),
               ),
