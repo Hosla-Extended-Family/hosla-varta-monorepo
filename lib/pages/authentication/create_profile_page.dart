@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -66,30 +65,53 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
     if (name.isEmpty) {
       return "Please enter your name.";
     }
+    // Enforce mandatory fields at API-call level
+    if (_selectedDate == null) {
+      return "Please select your date of birth.";
+    }
+    if (_selectedGender == null || _selectedGender!.isEmpty) {
+      return "Please select your gender.";
+    }
     try {
       final prefs = await SharedPreferences.getInstance();
-      final fcmtoken = prefs.getString('access_token') ?? '';
-      final response = await http.put(
-        Uri.parse('${ApiConstants.baseUrl}/api/users/profile'),
-        headers: {
-          'Authorization': 'Bearer $fcmtoken',
-          'Content-Type': 'multipart/form-data',
-          'X-Client-Platform': _getClientPlatform(),
-        },
-        body: jsonEncode({
-          'name': name,
-          'dateOfBirth': _selectedDate?.toIso8601String(),
-          'gender': _selectedGender,
-          'email': _emailController.text.trim(),
-          'bio': _bioController.text.trim(),
-          'avatarUrl': _profileImageUrl,
-        }),
-      );
-      final responseBody = response.body;
+      final token = prefs.getString('access_token') ?? '';
+
+      final uri = Uri.parse('${ApiConstants.baseUrl}/api/users/profile');
+      final request = http.MultipartRequest('PUT', uri);
+
+      // Headers (don't set Content-Type manually; MultipartRequest handles boundary)
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['X-Client-Platform'] = _getClientPlatform();
+
+      // Text fields
+      request.fields['name'] = name;
+      final email = _emailController.text.trim();
+      final bio = _bioController.text.trim();
+      if (email.isNotEmpty) request.fields['email'] = email;
+      if (bio.isNotEmpty) request.fields['bio'] = bio;
+      // Required fields
+      request.fields['gender'] = _selectedGender!.toUpperCase();
+      request.fields['dateOfBirth'] = _formatDobForServer(_selectedDate!);
+
+      // File field (profile picture)
+      if (_selectedImage != null) {
+        final file = await http.MultipartFile.fromPath(
+          'profilePicture',
+          _selectedImage!.path,
+          filename: _selectedImage!.name,
+        );
+        request.files.add(file);
+      } else if (_profileImageUrl != null && _profileImageUrl!.isNotEmpty) {
+        // Fallback to sending URL if available
+        request.fields['profilePictureUrl'] = _profileImageUrl!;
+      }
+
+      final streamed = await request.send();
+      final response = await http.Response.fromStream(streamed);
       if (response.statusCode == 200) {
         return "Profile created successfully!";
       } else {
-        return "Failed to create profile: $responseBody";
+        return "Failed to create profile: ${response.body}";
       }
     } catch (e) {
       return "Failed to create profile. Please try again.";
@@ -172,6 +194,14 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  // Format DOB for server as DD-MM-YYYY
+  String _formatDobForServer(DateTime date) {
+    final dd = date.day.toString().padLeft(2, '0');
+    final mm = date.month.toString().padLeft(2, '0');
+    final yyyy = date.year.toString();
+    return '$dd-$mm-$yyyy';
   }
 
   /// Save profile data to local database and SharedPreferences
@@ -555,18 +585,31 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
                   SnackBarWidget.show(context, 'Please enter your name');
                   return;
                 }
+                if (_selectedDate == null) {
+                  SnackBarWidget.show(
+                    context,
+                    'Please select your date of birth',
+                  );
+                  return;
+                }
+                if (_selectedGender == null || _selectedGender!.isEmpty) {
+                  SnackBarWidget.show(context, 'Please select your gender');
+                  return;
+                }
 
                 // Save profile data to backend or local storage
                 try {
-                  if (_createProfile() == "Profile created successfully!") {
+                  final result = await _createProfile();
+                  if (result.startsWith('Profile created successfully')) {
                     await _saveProfileData(isSkip: false);
                     SnackBarWidget.show(
                       context,
                       'Profile created successfully!',
                     );
-
                     // Navigate to home page after successful profile creation
                     Navigator.pushReplacementNamed(context, '/home');
+                  } else {
+                    SnackBarWidget.show(context, result);
                   }
                 } catch (e) {
                   if (mounted) {

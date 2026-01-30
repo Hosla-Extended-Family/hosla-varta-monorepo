@@ -65,6 +65,51 @@ class PostService {
     }
   }
 
+  /// Fetch the main feed with optional pagination
+  ///
+  /// GET /posts/feed?limit=20&cursor=...&includeHidden=true
+  /// Authentication: Optional (handled by ApiClient)
+  Future<Map<String, dynamic>> getFeed({
+    int limit = 20,
+    String? cursor,
+    bool includeHidden = false,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'limit': limit.toString(),
+        if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+        if (includeHidden) 'includeHidden': 'true',
+      };
+
+      final url = Uri.parse(
+        '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/feed',
+      ).replace(queryParameters: queryParams);
+
+      final response = await _api.get(url).timeout(ApiConstants.timeout);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return {
+          'success': responseData['success'] == true,
+          'data': responseData['data'] ?? {},
+        };
+      } else {
+        final errorData = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': errorData['message'] ?? 'Failed to fetch feed',
+          'data': {},
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Network error: ${e.toString()}',
+        'data': {},
+      };
+    }
+  }
+
   /// Upload image to server
   ///
   /// Returns the URL of the uploaded image

@@ -5,7 +5,8 @@ import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/pages/home/create_post_page.dart';
 import 'package:hosla/pages/home/profile_page.dart';
 import 'package:hosla/providers/user_provider.dart';
-import 'package:hosla/widgets/post_widget.dart';
+import 'package:hosla/providers/feed_provider.dart';
+import 'package:hosla/widgets/post_card.dart';
 import 'dart:ui';
 
 class FeedPage extends ConsumerStatefulWidget {
@@ -59,6 +60,15 @@ class _FeedPageState extends ConsumerState<FeedPage>
     } else if (_scrollController.offset <= 100 && _showTitle) {
       setState(() => _showTitle = false);
     }
+
+    // Infinite scroll: load more when near bottom
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final notifier = ref.read(feedPostsProvider.notifier);
+      if (notifier.hasMore) {
+        notifier.loadMorePosts();
+      }
+    }
   }
 
   @override
@@ -68,8 +78,7 @@ class _FeedPageState extends ConsumerState<FeedPage>
   }
 
   Future<void> _handleRefresh() async {
-    await Future.delayed(const Duration(seconds: 2));
-    // TODO: Implement actual refresh logic
+    await ref.read(feedPostsProvider.notifier).refreshPosts();
   }
 
   @override
@@ -231,17 +240,54 @@ class _FeedPageState extends ConsumerState<FeedPage>
             //     ),
             //   ),
             // ),
-            // Posts Section
-            SliverPadding(
-              padding: const EdgeInsets.only(top: 8),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: PostWidget(),
-                  );
-                }, childCount: 5),
-              ),
+            // Posts Section (from network feed)
+            Consumer(
+              builder: (context, ref, _) {
+                final feed = ref.watch(feedPostsProvider);
+                return feed.when(
+                  data: (posts) {
+                    if (posts.isEmpty) {
+                      return SliverToBoxAdapter(
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 40),
+                            child: Text(
+                              'No posts yet',
+                              style: TextThemes.getBodyMediumStyle(context),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    return SliverPadding(
+                      padding: const EdgeInsets.only(top: 8),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final post = posts[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: PostCard(post: post),
+                          );
+                        }, childCount: posts.length),
+                      ),
+                    );
+                  },
+                  loading: () => const SliverToBoxAdapter(
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (e, _) => SliverToBoxAdapter(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 40),
+                        child: Text(
+                          'Failed to load feed',
+                          style: TextThemes.getBodyMediumStyle(context),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
             SliverToBoxAdapter(child: SizedBox(height: 80)),
           ],

@@ -34,6 +34,14 @@ class _PostCardState extends ConsumerState<PostCard>
   late AnimationController _likeController;
   late Animation<double> _scaleAnimation;
 
+  bool _hasValidImage(String? url) {
+    if (url == null) return false;
+    final u = url.trim();
+    if (u.isEmpty) return false;
+    final parsed = Uri.tryParse(u);
+    return parsed != null && parsed.hasScheme;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -140,33 +148,33 @@ class _PostCardState extends ConsumerState<PostCard>
   }
 
   void _showDeleteConfirmation() {
+    final parentContext = context;
     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
+      context: parentContext,
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Post'),
         content: const Text('Delete this post? This action cannot be undone.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               final postActions = ref.read(postActionsProvider);
+              final messenger = ScaffoldMessenger.of(parentContext);
               final success = await postActions.deletePost(widget.post);
-
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      success
-                          ? 'Post deleted successfully'
-                          : 'Post deleted locally, will sync when online',
-                    ),
+              if (!mounted) return;
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    success
+                        ? 'Post deleted successfully'
+                        : 'Post deleted locally, will sync when online',
                   ),
-                );
-              }
+                ),
+              );
               widget.onDelete?.call();
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
@@ -274,25 +282,22 @@ class _PostCardState extends ConsumerState<PostCard>
             ),
           ),
 
-          // Image Section
-          if (widget.post.imageUrl != null && widget.post.imageUrl!.isNotEmpty)
+          // Image Section: show only if URL is valid; collapse on error
+          if (_hasValidImage(widget.post.imageUrl))
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12.0),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  widget.post.imageUrl!,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 200,
-                      color: Colors.grey[300],
-                      child: const Center(
-                        child: Icon(Icons.broken_image, size: 50),
-                      ),
-                    );
-                  },
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Image.network(
+                    widget.post.imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      // If loading fails, render nothing
+                      return const SizedBox.shrink();
+                    },
+                  ),
                 ),
               ),
             ),

@@ -16,95 +16,9 @@ class FeedService {
   // final http.Client _httpClient;
   final ApiClient _api = ApiClient.instance;
 
-  /// Dummy posts data for testing
-  static final List<Post> _dummyPosts = [
-    Post(
-      id: '1',
-      userId: 'user1',
-      userName: 'Priya Sharma',
-      userAvatarUrl:
-          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face',
-      content:
-          'Just attended an amazing mental health awareness workshop! It\'s so important to prioritize our mental well-being. Remember, it\'s okay to ask for help. 💚',
-      imageUrl:
-          'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=400&fit=crop',
-      tags: ['#MentalHealth', '#Wellness', '#Community'],
-      likeCount: 124,
-      commentCount: 18,
-      shareCount: 7,
-      isLiked: false,
-      isSaved: false,
-      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-    ),
-    Post(
-      id: '2',
-      userId: 'user2',
-      userName: 'Rahul Kumar',
-      userAvatarUrl:
-          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-      content:
-          'Excited to announce our upcoming community yoga session this Saturday! Join us for a morning of relaxation and mindfulness. All levels welcome! 🧘‍♂️',
-      imageUrl:
-          'https://images.unsplash.com/photo-1588286840104-8957b019727f?w=600&h=400&fit=crop',
-      tags: ['#Yoga', '#Wellness', '#Event'],
-      likeCount: 89,
-      commentCount: 12,
-      shareCount: 15,
-      isLiked: true,
-      isSaved: true,
-      createdAt: DateTime.now().subtract(const Duration(hours: 5)),
-    ),
-    Post(
-      id: '3',
-      userId: 'user3',
-      userName: 'Anjali Patel',
-      userAvatarUrl:
-          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-      content:
-          'Small steps lead to big changes. Started my daily meditation practice and already feeling more centered and peaceful. What are your self-care routines? Share below! ✨',
-      tags: ['#SelfCare', '#Meditation', '#MindfulLiving'],
-      likeCount: 156,
-      commentCount: 23,
-      shareCount: 9,
-      isLiked: false,
-      isSaved: false,
-      createdAt: DateTime.now().subtract(const Duration(hours: 8)),
-    ),
-    Post(
-      id: '4',
-      userId: 'user4',
-      userName: 'Vikram Singh',
-      userAvatarUrl:
-          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
-      content:
-          'Thank you all for the overwhelming support during the peer support group yesterday. It means the world to connect with others who truly understand. Together we are stronger! 💪',
-      imageUrl:
-          'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&h=400&fit=crop',
-      tags: ['#Support', '#Community', '#MentalHealth'],
-      likeCount: 203,
-      commentCount: 34,
-      shareCount: 12,
-      isLiked: true,
-      isSaved: false,
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-    Post(
-      id: '5',
-      userId: 'user5',
-      userName: 'Sneha Reddy',
-      userAvatarUrl:
-          'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150&h=150&fit=crop&crop=face',
-      content:
-          'Reminder: Your mental health is just as important as your physical health. Don\'t hesitate to reach out if you need someone to talk to. We\'re all in this together! 🌟',
-      tags: ['#MentalHealthAwareness', '#Support'],
-      likeCount: 178,
-      commentCount: 15,
-      shareCount: 24,
-      isLiked: false,
-      isSaved: true,
-      createdAt: DateTime.now().subtract(const Duration(days: 2)),
-    ),
-  ];
+  // Dummy posts data was used for testing previously.
+  // Retained as an empty list to avoid compile issues.
+  static final List<Post> _dummyPosts = [];
 
   /// Get feed posts with pagination
   /// TODO: Implement actual API call
@@ -133,8 +47,8 @@ class FeedService {
       final nextCursor = data['nextCursor']?.toString();
       return FeedResult(posts: posts, nextCursor: nextCursor);
     }
-    // Fallback to dummy on non-200 for now
-    return FeedResult(posts: _dummyPosts, nextCursor: null);
+    // No dummy fallback; return empty on failure
+    return FeedResult(posts: const [], nextCursor: null);
   }
 
   /// Get a single post by ID
@@ -207,30 +121,50 @@ class FeedService {
   Post _mapBackendPost(Map<String, dynamic> j) {
     final title = j['title']?.toString();
     final body = j['body']?.toString();
-    final content = body ?? title ?? '';
+    final content = (title != null && title.isNotEmpty)
+        ? '$title\n\n${body ?? ''}'
+        : (body ?? '');
     final mediaUrls =
         (j['mediaUrls'] as List?)?.map((e) => e.toString()).toList() ??
         const [];
-    final imageUrl = mediaUrls.isNotEmpty ? mediaUrls.first : null;
+    // Filter out empty/invalid URLs
+    final validMediaUrls = mediaUrls
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    final imageUrl = validMediaUrls.isNotEmpty ? validMediaUrls.first : null;
+
+    // Parse createdAt in format "DD-MM-YYYYHH:MM:SS"
+    DateTime createdAt = DateTime.now();
+    final createdRaw = j['createdAt']?.toString();
+    if (createdRaw != null) {
+      final re = RegExp(r'^(\d{2})-(\d{2})-(\d{4})(\d{2}):(\d{2}):(\d{2})$');
+      final m = re.firstMatch(createdRaw);
+      if (m != null) {
+        final d = int.tryParse(m.group(1)!) ?? 1;
+        final mo = int.tryParse(m.group(2)!) ?? 1;
+        final y = int.tryParse(m.group(3)!) ?? 1970;
+        final h = int.tryParse(m.group(4)!) ?? 0;
+        final mi = int.tryParse(m.group(5)!) ?? 0;
+        final s = int.tryParse(m.group(6)!) ?? 0;
+        createdAt = DateTime(y, mo, d, h, mi, s);
+      }
+    }
+
     return Post(
       id: j['id']?.toString() ?? '',
-      userId: j['userId']?.toString() ?? '',
-      userName: j['userName']?.toString() ?? 'Unknown User',
-      userAvatarUrl: j['userAvatarUrl']?.toString(),
+      userId: j['authorId']?.toString() ?? '',
+      userName: j['authorName']?.toString() ?? 'Unknown User',
+      userAvatarUrl: j['authorProfilePicUrl']?.toString(),
       content: content,
       imageUrl: imageUrl,
       tags: (j['tags'] as List?)?.map((e) => e.toString()).toList() ?? const [],
       likeCount: (j['likeCount'] as num?)?.toInt() ?? 0,
       commentCount: (j['commentCount'] as num?)?.toInt() ?? 0,
       shareCount: (j['shareCount'] as num?)?.toInt() ?? 0,
-      isLiked: j['isLikedByMe'] == true || j['isLiked'] == true,
-      isSaved: j['isSavedByMe'] == true || j['isSaved'] == true,
-      createdAt: j['createdAt'] != null
-          ? DateTime.tryParse(j['createdAt'].toString()) ?? DateTime.now()
-          : DateTime.now(),
-      updatedAt: j['updatedAt'] != null
-          ? DateTime.tryParse(j['updatedAt'].toString())
-          : null,
+      isLiked: j['isLikedByMe'] == true,
+      isSaved: false,
+      createdAt: createdAt,
     );
   }
 
