@@ -252,7 +252,12 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
       // Make API call to create/update profile
       if (!isSkip) {
         try {
-          await _userService.updateUserProfile(user);
+          await _userService.updateUserProfile(
+            user,
+            gender: userGender,
+            dateOfBirth: userDob,
+            profileImagePath: _selectedImage?.path,
+          );
           print('Profile synced with server successfully');
         } catch (e) {
           print('Error syncing profile with server: $e');

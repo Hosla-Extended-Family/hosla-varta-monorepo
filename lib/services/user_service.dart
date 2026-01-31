@@ -1,10 +1,12 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:hosla/core/constants/api_constants.dart';
 import 'package:hosla/models/user_model.dart';
 import 'package:hosla/providers/user_provider.dart';
+import 'package:hosla/services/api_client.dart';
 import 'package:hosla/services/database_helper.dart';
 import 'package:http/http.dart' as _httpClient;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-import './../core/constants/api_constants.dart'; 
 
 /// Service class for handling user-related API calls and settings management
 /// Implements offline-first approach with local database and SharedPreferences caching
@@ -12,18 +14,7 @@ class UserService {
   // TODO: Add HTTP client dependency injection
   // final http.Client _httpClient;
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
-
-  /// Dummy current user data for testing
-  static final User _dummyCurrentUser = User(
-    id: 'current_user',
-    name: 'John Doe',
-    avatarUrl:
-        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-    bio: 'Software developer passionate about mobile apps and user experience.',
-    email: 'john.doe@example.com',
-    phone: '+919876543210',
-    isOnline: true,
-  );
+  final ApiClient _api = ApiClient.instance;
 
   /// Dummy app settings for testing
   static AppSettings _dummySettings = const AppSettings(
@@ -41,62 +32,117 @@ class UserService {
   Future<User?> getCurrentUser() async {
     try {
       // Try to get cached user from local database
-      final cachedUser = await _dbHelper.getUserById('current_user');
+      final prefs = await SharedPreferences.getInstance();
+      final cachedId = prefs.getString('user_id') ?? 'current_user';
+      final cachedUser = await _dbHelper.getUserById(cachedId);
+      try {
+        final uri = Uri.parse('${ApiConstants.baseUrl}/api/users/profile');
+        final response = await _api.get(uri);
+        if (response.statusCode == 200) {
+          final body = json.decode(response.body) as Map<String, dynamic>;
+          final userMap = _extractUserMap(body);
+          if (userMap != null) {
+            final user = _mapBackendUser(userMap);
+            await _dbHelper.upsertUser(user);
+            await _cacheUserPrefs(user);
+            await _cacheProfileMeta(userMap);
+            return user;
+          }
+        }
+        if (response.statusCode == 401) {
+          return null;
+        }
+      } catch (e) {
+        print('Network error, using cached user: $e');
+      }
 
-      // TODO: Replace with actual HTTP request
-      // try {
-      //   final response = await _httpClient.get(Uri.parse('$baseUrl/user/profile'));
-      //   if (response.statusCode == 200) {
-      //     final user = User.fromJson(json.decode(response.body));
-      //     // Cache the fetched user
-      //     await _dbHelper.upsertUser(user);
-      //     return user;
-      //   } else if (response.statusCode == 401) {
-      //     return null; // User not authenticated
-      //   }
-      // } catch (e) {
-      //   // Network error - return cached data if available
-      //   print('Network error, using cached user: $e');
-      // }
-
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      // Cache dummy user
-      await _dbHelper.upsertUser(_dummyCurrentUser);
-
-      return cachedUser ?? _dummyCurrentUser;
+      return cachedUser;
     } catch (e) {
       print('Error loading current user: $e');
-      return _dummyCurrentUser;
+      return null;
     }
   }
 
   /// Update user profile
   /// Updates local database first, then syncs with API
-  Future<User> updateUserProfile(User user) async {
+  Future<User> updateUserProfile(
+    User user, {
+    DateTime? dateOfBirth,
+    String? gender,
+    String? profileImagePath,
+  }) async {
     try {
       // Update local database immediately
       await _dbHelper.upsertUser(user);
 
-      // TODO: Replace with actual HTTP request
       try {
-        final response = await _httpClient.put(
-          Uri.parse('${ApiConstants.baseUrl}/auth/create-profile'),
-          headers: {'Content-Type': 'application/json'},
-          body: json.encode(user.toJson()),
-        );
+        final prefs = await SharedPreferences.getInstance();
+        final token = prefs.getString('access_token') ?? '';
+
+        final resolvedGender = gender ?? prefs.getString('user_gender');
+        DateTime? resolvedDob = dateOfBirth;
+        if (resolvedDob == null) {
+          final dobStr = prefs.getString('user_dob');
+          if (dobStr != null && dobStr.isNotEmpty) {
+            try {
+              resolvedDob = DateTime.parse(dobStr);
+            } catch (_) {}
+          }
+        }
+
+        if (resolvedGender == null || resolvedGender.isEmpty) {
+          throw Exception('Missing required field: gender');
+        }
+        if (resolvedDob == null) {
+          throw Exception('Missing required field: dateOfBirth');
+        }
+
+        final uri = Uri.parse('${ApiConstants.baseUrl}/api/users/profile');
+        final request = _httpClient.MultipartRequest('PUT', uri);
+        request.headers['Authorization'] = 'Bearer $token';
+        request.headers['X-Client-Platform'] = _getClientPlatform();
+
+        request.fields['name'] = user.name;
+        request.fields['gender'] = resolvedGender.toUpperCase();
+        request.fields['dateOfBirth'] = _formatDobForServer(resolvedDob);
+        if (user.email != null && user.email!.isNotEmpty) {
+          request.fields['email'] = user.email!;
+        }
+        if (user.bio != null && user.bio!.isNotEmpty) {
+          request.fields['bio'] = user.bio!;
+        }
+
+        final imagePath = profileImagePath;
+        if (imagePath != null && imagePath.isNotEmpty) {
+          final isRemote =
+              imagePath.startsWith('http://') ||
+              imagePath.startsWith('https://');
+          if (!isRemote) {
+            final file = await _httpClient.MultipartFile.fromPath(
+              'profilePicture',
+              imagePath,
+            );
+            request.files.add(file);
+          }
+        }
+
+        final streamed = await request.send();
+        final response = await _httpClient.Response.fromStream(streamed);
         if (response.statusCode == 200) {
-          final serverUser = User.fromJson(json.decode(response.body));
-          //Update local database with server response
-          await _dbHelper.upsertUser(serverUser);
-          return serverUser;
+          final body = json.decode(response.body) as Map<String, dynamic>;
+          final userMap = _extractUserMap(body);
+          if (userMap != null) {
+            final serverUser = _mapBackendUser(userMap);
+            await _dbHelper.upsertUser(serverUser);
+            await _cacheUserPrefs(serverUser);
+            await _cacheProfileMeta(userMap);
+            return serverUser;
+          }
         }
       } catch (e) {
         //Network error - already updated locally
         print('Network error updating profile, saved locally: $e');
       }
-      await Future.delayed(const Duration(milliseconds: 400));
       return user;
     } catch (e) {
       print('Error updating user profile: $e');
@@ -225,11 +271,17 @@ class UserService {
   /// Clears local database and SharedPreferences
   Future<void> logout() async {
     try {
-      // TODO: Replace with actual HTTP request
-      // final response = await _httpClient.post(Uri.parse('$baseUrl/auth/logout'));
-      // if (response.statusCode != 200) {
-      //   throw Exception('Failed to logout');
-      // }
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final refreshToken = prefs.getString('refresh_token');
+        final uri = Uri.parse('${ApiConstants.baseUrl}/api/auth/logout');
+        final body = json.encode({
+          'refreshToken': refreshToken ?? '',
+        });
+        await _api.post(uri, body: body);
+      } catch (e) {
+        print('Logout API failed, continuing local cleanup: $e');
+      }
 
       // Clear local database
       await _dbHelper.clearAllData();
@@ -237,13 +289,119 @@ class UserService {
       // Clear SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
-
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 300));
     } catch (e) {
       print('Error during logout: $e');
       rethrow;
     }
+  }
+
+  String _getClientPlatform() {
+    if (kIsWeb) return 'web';
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return 'android';
+      case TargetPlatform.iOS:
+        return 'ios';
+      case TargetPlatform.macOS:
+        return 'macos';
+      case TargetPlatform.windows:
+        return 'windows';
+      case TargetPlatform.linux:
+        return 'linux';
+      case TargetPlatform.fuchsia:
+        return 'fuchsia';
+    }
+  }
+
+  String _formatDobForServer(DateTime date) {
+    final dd = date.day.toString().padLeft(2, '0');
+    final mm = date.month.toString().padLeft(2, '0');
+    final yyyy = date.year.toString();
+    return '$dd-$mm-$yyyy';
+  }
+
+  Map<String, dynamic>? _extractUserMap(Map<String, dynamic> body) {
+    final data = body['data'];
+    if (data is Map<String, dynamic>) {
+      if (data['user'] is Map<String, dynamic>) {
+        return data['user'] as Map<String, dynamic>;
+      }
+      return data;
+    }
+    if (body['user'] is Map<String, dynamic>) {
+      return body['user'] as Map<String, dynamic>;
+    }
+    return null;
+  }
+
+  User _mapBackendUser(Map<String, dynamic> json) {
+    final avatarUrl =
+        json['profilePic'] ??
+        json['profilePicture'] ??
+        json['profilePicUrl'] ??
+        json['profilePictureUrl'] ??
+        json['avatarUrl'];
+    final lastSeenRaw = json['lastSeen']?.toString();
+    DateTime? lastSeen;
+    if (lastSeenRaw != null && lastSeenRaw.isNotEmpty) {
+      try {
+        lastSeen = DateTime.parse(lastSeenRaw);
+      } catch (_) {}
+    }
+
+    return User(
+      id: json['id']?.toString() ?? json['userId']?.toString() ?? 'current_user',
+      name: json['name']?.toString() ?? 'User',
+      avatarUrl: avatarUrl?.toString(),
+      bio: json['bio']?.toString(),
+      email: json['email']?.toString(),
+      phone: json['phone']?.toString() ?? json['phoneNumber']?.toString(),
+      isOnline: json['isOnline'] == true,
+      lastSeen: lastSeen,
+    );
+  }
+
+  Future<void> _cacheUserPrefs(User user) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_id', user.id);
+    await prefs.setString('user_name', user.name);
+    if (user.email != null) await prefs.setString('user_email', user.email!);
+    if (user.bio != null) await prefs.setString('user_bio', user.bio!);
+    if (user.avatarUrl != null) {
+      await prefs.setString('user_avatar', user.avatarUrl!);
+    }
+    if (user.phone != null) await prefs.setString('phone_number', user.phone!);
+  }
+
+  Future<void> _cacheProfileMeta(Map<String, dynamic> userMap) async {
+    final prefs = await SharedPreferences.getInstance();
+    final gender = userMap['gender']?.toString();
+    if (gender != null && gender.isNotEmpty) {
+      await prefs.setString('user_gender', gender);
+    }
+    final dobRaw =
+        userMap['dateOfBirth']?.toString() ?? userMap['dob']?.toString();
+    if (dobRaw != null && dobRaw.isNotEmpty) {
+      final dob = _parseDob(dobRaw);
+      if (dob != null) {
+        await prefs.setString('user_dob', dob.toIso8601String());
+      }
+    }
+  }
+
+  DateTime? _parseDob(String raw) {
+    try {
+      return DateTime.parse(raw);
+    } catch (_) {}
+
+    final match = RegExp(r'^(\d{2})-(\d{2})-(\d{4})$').firstMatch(raw);
+    if (match != null) {
+      final d = int.tryParse(match.group(1)!) ?? 1;
+      final m = int.tryParse(match.group(2)!) ?? 1;
+      final y = int.tryParse(match.group(3)!) ?? 1970;
+      return DateTime(y, m, d);
+    }
+    return null;
   }
 
   /// Delete user account

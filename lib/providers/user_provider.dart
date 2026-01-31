@@ -127,6 +127,28 @@ class UserProfileNotifier extends StateNotifier<User?> {
     }
   }
 
+  /// Update user profile with full data (including DOB, gender, image)
+  Future<User> updateProfileFull({
+    required User user,
+    DateTime? dateOfBirth,
+    String? gender,
+    String? profileImagePath,
+  }) async {
+    try {
+      final result = await _userService.updateUserProfile(
+        user,
+        dateOfBirth: dateOfBirth,
+        gender: gender,
+        profileImagePath: profileImagePath,
+      );
+      state = result;
+      return result;
+    } catch (e) {
+      print('Error updating profile: $e');
+      rethrow;
+    }
+  }
+
   /// Update avatar
   Future<void> updateAvatar(String avatarUrl) async {
     if (state == null) return;

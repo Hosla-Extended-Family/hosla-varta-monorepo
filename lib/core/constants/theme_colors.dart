@@ -133,10 +133,10 @@ class ThemeColors {
   
   // Modern overlay colors for better UI feedback
   static Color getOverlayColor(BuildContext context, {double opacity = 0.1}) {
-    return getTextColor(context).withOpacity(opacity);
+    return getTextColor(context).withValues(alpha: opacity);
   }
   
   static Color getDisabledColor(BuildContext context) {
-    return getSecondaryTextColor(context).withOpacity(0.6);
+    return getSecondaryTextColor(context).withValues(alpha: 0.6);
   }
 }

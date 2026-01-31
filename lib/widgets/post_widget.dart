@@ -63,13 +63,13 @@ class _PostWidgetState extends State<PostWidget>
         color: ThemeColors.getCardColor(context),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: ThemeColors.getBorderColor(context).withOpacity(0.1),
+          color: ThemeColors.getBorderColor(context).withValues(alpha: 0.1),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withOpacity(0.3)
+                ? Colors.black.withValues(alpha: 0.3)
                 : ThemeColors.getOverlayColor(context, opacity: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 4),
@@ -93,8 +93,8 @@ class _PostWidgetState extends State<PostWidget>
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
                       colors: [
-                        ThemeColors.primaryColor.withOpacity(0.6),
-                        ThemeColors.secondaryColor.withOpacity(0.6),
+                        ThemeColors.primaryColor.withValues(alpha: 0.6),
+                        ThemeColors.secondaryColor.withValues(alpha: 0.6),
                       ],
                     ),
                   ),

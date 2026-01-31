@@ -43,7 +43,7 @@ class AppTheme {
     cardTheme: CardThemeData(
       color: ThemeColors.lightCardColor,
       elevation: 4,
-      shadowColor: ThemeColors.lightBorderColor.withOpacity(0.5),
+      shadowColor: ThemeColors.lightBorderColor.withValues(alpha: 0.5),
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -149,7 +149,7 @@ class AppTheme {
         backgroundColor: ThemeColors.primaryColor,
         foregroundColor: ThemeColors.lightTextColor,
         elevation: 4,
-        shadowColor: ThemeColors.primaryColor.withOpacity(0.3),
+        shadowColor: ThemeColors.primaryColor.withValues(alpha: 0.3),
         surfaceTintColor: Colors.transparent,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         shape: RoundedRectangleBorder(
@@ -245,7 +245,7 @@ class AppTheme {
     cardTheme: CardThemeData(
       color: ThemeColors.darkCardColor,
       elevation: 6,
-      shadowColor: Colors.black.withOpacity(0.3),
+      shadowColor: Colors.black.withValues(alpha: 0.3),
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -351,7 +351,7 @@ class AppTheme {
         backgroundColor: ThemeColors.primaryColor,
         foregroundColor: ThemeColors.darkTextColor,
         elevation: 6,
-        shadowColor: ThemeColors.primaryColor.withOpacity(0.3),
+        shadowColor: ThemeColors.primaryColor.withValues(alpha: 0.3),
         surfaceTintColor: Colors.transparent,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         shape: RoundedRectangleBorder(

@@ -286,13 +286,13 @@ class _PostCardState extends ConsumerState<PostCard>
         color: ThemeColors.getCardColor(context),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: ThemeColors.getBorderColor(context).withOpacity(0.1),
+          color: ThemeColors.getBorderColor(context).withValues(alpha: 0.1),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withOpacity(0.3)
+                ? Colors.black.withValues(alpha: 0.3)
                 : ThemeColors.getOverlayColor(context, opacity: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 4),
@@ -390,7 +390,7 @@ class _PostCardState extends ConsumerState<PostCard>
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: ThemeColors.primaryColor.withOpacity(0.1),
+                      color: ThemeColors.primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
@@ -454,7 +454,7 @@ class _PostCardState extends ConsumerState<PostCard>
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Divider(
               height: 1,
-              color: ThemeColors.getBorderColor(context).withOpacity(0.2),
+              color: ThemeColors.getBorderColor(context).withValues(alpha: 0.2),
             ),
           ),
           // Actions row: Like, Comment, Share (evenly spaced, with labels)

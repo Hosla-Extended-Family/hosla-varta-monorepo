@@ -1,6 +1,6 @@
 class ApiConstants {
   static const String baseUrl =
-      'https://edited-reflects-cleaner-walks.trycloudflare.com';
+      'https://transformation-ash-brake-hdtv.trycloudflare.com';
 
   static const String postsEndpoint = '/api/posts';
   static const String commentsEndpoint = '/api/comments';
