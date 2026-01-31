@@ -55,23 +55,20 @@ class FeedService {
   /// TODO: Implement actual API call
   /// Example: GET /api/posts/:id
   Future<Post?> getPostById(String postId) async {
-    // TODO: Replace with actual HTTP request
-    // final response = await _httpClient.get(Uri.parse('$baseUrl/posts/$postId'));
-    // if (response.statusCode == 200) {
-    //   return Post.fromJson(json.decode(response.body));
-    // } else if (response.statusCode == 404) {
-    //   return null;
-    // }
-    // throw Exception('Failed to load post');
-
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    try {
-      return _dummyPosts.firstWhere((post) => post.id == postId);
-    } catch (e) {
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId',
+    );
+    final response = await _api.get(uri);
+    if (response.statusCode == 200) {
+      final res = json.decode(response.body) as Map<String, dynamic>;
+      final data = res['data'];
+      if (data is Map<String, dynamic>) {
+        return _mapBackendPost(data);
+      }
       return null;
     }
+    if (response.statusCode == 404) return null;
+    throw Exception('Failed to load post: ${response.statusCode}');
   }
 
   /// Create a new post
@@ -172,105 +169,85 @@ class FeedService {
   /// TODO: Implement actual API call
   /// Example: PUT /api/posts/:id
   Future<Post> updatePost(String postId, CreatePostRequest request) async {
-    // TODO: Replace with actual HTTP request
-    // final response = await _httpClient.put(
-    //   Uri.parse('$baseUrl/posts/$postId'),
-    //   headers: {'Content-Type': 'application/json'},
-    //   body: json.encode(request.toJson()),
-    // );
-    // if (response.statusCode == 200) {
-    //   return Post.fromJson(json.decode(response.body));
-    // }
-    // throw Exception('Failed to update post');
-
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 400));
-
-    final index = _dummyPosts.indexWhere((post) => post.id == postId);
-    if (index != -1) {
-      final updatedPost = _dummyPosts[index].copyWith(
-        content: request.content,
-        imageUrl: request.imageUrl,
-        tags: request.tags,
-        updatedAt: DateTime.now(),
-      );
-      _dummyPosts[index] = updatedPost;
-      return updatedPost;
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId',
+    );
+    final title = request.content.length > 60
+        ? request.content.substring(0, 60)
+        : request.content;
+    final body = json.encode({
+      'title': title.isNotEmpty ? title : null,
+      'body': request.content,
+      'mediaUrls': [if (request.imageUrl != null) request.imageUrl!],
+      'tags': request.tags,
+    });
+    final response = await _api.put(uri, body: body);
+    if (response.statusCode == 200) {
+      final res = json.decode(response.body) as Map<String, dynamic>;
+      final data = res['data'];
+      if (data is Map<String, dynamic>) {
+        return _mapBackendPost(data);
+      }
+      throw Exception('Update returned unexpected payload');
     }
-
-    throw Exception('Post not found');
+    throw Exception('Failed to update post: ${response.statusCode}');
   }
 
   /// Delete a post
   /// TODO: Implement actual API call
   /// Example: DELETE /api/posts/:id
   Future<void> deletePost(String postId) async {
-    // TODO: Replace with actual HTTP request
-    // final response = await _httpClient.delete(Uri.parse('$baseUrl/posts/$postId'));
-    // if (response.statusCode != 200) {
-    //   throw Exception('Failed to delete post');
-    // }
-
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    _dummyPosts.removeWhere((post) => post.id == postId);
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId',
+    );
+    final response = await _api.delete(uri);
+    if (response.statusCode == 200 || response.statusCode == 204) return;
+    if (response.statusCode == 404) return;
+    throw Exception('Failed to delete post: ${response.statusCode}');
   }
 
   /// Like a post
   /// TODO: Implement actual API call
   /// Example: POST /api/posts/:id/like
   Future<Post> likePost(String postId) async {
-    // TODO: Replace with actual HTTP request
-    // final response = await _httpClient.post(Uri.parse('$baseUrl/posts/$postId/like'));
-    // if (response.statusCode == 200) {
-    //   return Post.fromJson(json.decode(response.body));
-    // }
-    // throw Exception('Failed to like post');
-
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 200));
-
-    final index = _dummyPosts.indexWhere((post) => post.id == postId);
-    if (index != -1) {
-      final post = _dummyPosts[index];
-      final updatedPost = post.copyWith(
-        isLiked: true,
-        likeCount: post.likeCount + 1,
-      );
-      _dummyPosts[index] = updatedPost;
-      return updatedPost;
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId/like',
+    );
+    final response = await _api.post(uri);
+    if (response.statusCode == 200) {
+      final res = json.decode(response.body) as Map<String, dynamic>;
+      final data = res['data'];
+      if (data is Map<String, dynamic>) {
+        final postJson = (data['post'] is Map<String, dynamic>)
+            ? (data['post'] as Map<String, dynamic>)
+            : data;
+        return _mapBackendPost(postJson);
+      }
+      throw Exception('Like returned unexpected payload');
     }
-
-    throw Exception('Post not found');
+    throw Exception('Failed to like post: ${response.statusCode}');
   }
 
   /// Unlike a post
   /// TODO: Implement actual API call
   /// Example: DELETE /api/posts/:id/like
   Future<Post> unlikePost(String postId) async {
-    // TODO: Replace with actual HTTP request
-    // final response = await _httpClient.delete(Uri.parse('$baseUrl/posts/$postId/like'));
-    // if (response.statusCode == 200) {
-    //   return Post.fromJson(json.decode(response.body));
-    // }
-    // throw Exception('Failed to unlike post');
-
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 200));
-
-    final index = _dummyPosts.indexWhere((post) => post.id == postId);
-    if (index != -1) {
-      final post = _dummyPosts[index];
-      final updatedPost = post.copyWith(
-        isLiked: false,
-        likeCount: post.likeCount - 1 >= 0 ? post.likeCount - 1 : 0,
-      );
-      _dummyPosts[index] = updatedPost;
-      return updatedPost;
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId/like',
+    );
+    final response = await _api.delete(uri);
+    if (response.statusCode == 200) {
+      final res = json.decode(response.body) as Map<String, dynamic>;
+      final data = res['data'];
+      if (data is Map<String, dynamic>) {
+        final postJson = (data['post'] is Map<String, dynamic>)
+            ? (data['post'] as Map<String, dynamic>)
+            : data;
+        return _mapBackendPost(postJson);
+      }
+      throw Exception('Unlike returned unexpected payload');
     }
-
-    throw Exception('Post not found');
+    throw Exception('Failed to unlike post: ${response.statusCode}');
   }
 
   /// Save a post
@@ -322,86 +299,65 @@ class FeedService {
   }
 
   /// Get comments for a post
-  /// TODO: Implement actual API call
-  /// Example: GET /api/posts/:id/comments
+  /// GET /posts/:postId/comments?page=1&limit=50
+  /// Authentication: Optional
   Future<List<Comment>> getPostComments(String postId) async {
-    // TODO: Replace with actual HTTP request
-    // final response = await _httpClient.get(Uri.parse('$baseUrl/posts/$postId/comments'));
-    // if (response.statusCode == 200) {
-    //   final List<dynamic> jsonList = json.decode(response.body)['comments'];
-    //   return jsonList.map((json) => Comment.fromJson(json)).toList();
-    // }
-    // throw Exception('Failed to load comments');
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId/comments',
+    ).replace(queryParameters: {'page': '1', 'limit': '50'});
 
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 400));
+    final response = await _api.get(uri);
+    if (response.statusCode == 200) {
+      final res = json.decode(response.body) as Map<String, dynamic>;
+      final data = res['data'];
 
-    // Return dummy comments
-    return [
-      Comment(
-        id: '1',
-        postId: postId,
-        userId: 'user6',
-        userName: 'Amit Verma',
-        userAvatarUrl:
-            'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face',
-        content: 'Great post! This is really helpful.',
-        likeCount: 5,
-        isLiked: false,
-        createdAt: DateTime.now().subtract(const Duration(hours: 1)),
-      ),
-      Comment(
-        id: '2',
-        postId: postId,
-        userId: 'user7',
-        userName: 'Kavita Sharma',
-        userAvatarUrl:
-            'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
-        content: 'Thanks for sharing! 💚',
-        likeCount: 3,
-        isLiked: true,
-        createdAt: DateTime.now().subtract(const Duration(minutes: 30)),
-      ),
-    ];
+      List<dynamic> commentsJson = const [];
+      if (data is Map<String, dynamic> && data['comments'] is List) {
+        commentsJson = data['comments'] as List<dynamic>;
+      } else if (res['comments'] is List) {
+        commentsJson = res['comments'] as List<dynamic>;
+      }
+
+      return commentsJson
+          .whereType<Map>()
+          .map((j) => Comment.fromJson(j.cast<String, dynamic>()))
+          .toList();
+    }
+
+    throw Exception('Failed to load comments: ${response.statusCode}');
   }
 
   /// Add a comment to a post
-  /// TODO: Implement actual API call
-  /// Example: POST /api/posts/:id/comments
+  /// POST /posts/:postId/comments
+  /// Authentication: Required
   Future<Comment> addComment(String postId, String content) async {
-    // TODO: Replace with actual HTTP request
-    // final response = await _httpClient.post(
-    //   Uri.parse('$baseUrl/posts/$postId/comments'),
-    //   headers: {'Content-Type': 'application/json'},
-    //   body: json.encode({'content': content}),
-    // );
-    // if (response.statusCode == 201) {
-    //   return Comment.fromJson(json.decode(response.body));
-    // }
-    // throw Exception('Failed to add comment');
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId/comments',
+    );
+    final response = await _api.post(
+      uri,
+      body: json.encode({'content': content}),
+    );
 
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 300));
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      final res = json.decode(response.body) as Map<String, dynamic>;
+      final data = res['data'];
 
-    // Update comment count
-    final index = _dummyPosts.indexWhere((post) => post.id == postId);
-    if (index != -1) {
-      final post = _dummyPosts[index];
-      _dummyPosts[index] = post.copyWith(commentCount: post.commentCount + 1);
+      Map<String, dynamic>? commentJson;
+      if (data is Map<String, dynamic> && data['comment'] is Map) {
+        commentJson = (data['comment'] as Map).cast<String, dynamic>();
+      } else if (data is Map<String, dynamic>) {
+        commentJson = data;
+      }
+
+      if (commentJson != null) {
+        return Comment.fromJson(commentJson);
+      }
+
+      throw Exception('Add comment returned unexpected payload');
     }
 
-    return Comment(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      postId: postId,
-      userId: 'current_user',
-      userName: 'John Doe',
-      userAvatarUrl:
-          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-      content: content,
-      likeCount: 0,
-      isLiked: false,
-      createdAt: DateTime.now(),
-    );
+    throw Exception('Failed to add comment: ${response.statusCode}');
   }
 
   /// Share a post
@@ -426,21 +382,18 @@ class FeedService {
   }
 
   /// Report a post
-  /// TODO: Implement actual API call
-  /// Example: POST /api/posts/:id/report
+  /// POST /reports
+  /// Authentication: Required (Member+)
   Future<void> reportPost(String postId, String reason) async {
-    // TODO: Replace with actual HTTP request
-    // final response = await _httpClient.post(
-    //   Uri.parse('$baseUrl/posts/$postId/report'),
-    //   headers: {'Content-Type': 'application/json'},
-    //   body: json.encode({'reason': reason}),
-    // );
-    // if (response.statusCode != 200) {
-    //   throw Exception('Failed to report post');
-    // }
-
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 300));
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.reportsEndpoint}',
+    );
+    final response = await _api.post(
+      uri,
+      body: json.encode({'postId': postId, 'reason': reason}),
+    );
+    if (response.statusCode == 201 || response.statusCode == 200) return;
+    throw Exception('Failed to report post: ${response.statusCode}');
   }
 
   /// Get saved posts

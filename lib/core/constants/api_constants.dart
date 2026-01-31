@@ -1,7 +1,10 @@
 class ApiConstants {
-  static const String baseUrl = 'https://shoot-agencies-bass-sensitive.trycloudflare.com';
+  static const String baseUrl =
+      'https://edited-reflects-cleaner-walks.trycloudflare.com';
 
   static const String postsEndpoint = '/api/posts';
+  static const String commentsEndpoint = '/api/comments';
+  static const String reportsEndpoint = '/api/reports';
   static const String userEndpoint = '/user';
   static const String authEndpoint = '/auth';
 

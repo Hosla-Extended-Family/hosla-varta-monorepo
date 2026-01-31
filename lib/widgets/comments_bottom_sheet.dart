@@ -44,6 +44,19 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
     });
 
     final localRepo = ref.read(localPostRepositoryProvider);
+    // Try server first (auth optional), then fall back to local cache.
+    try {
+      final postService = ref.read(postServiceProvider);
+      final serverComments = await postService.getComments(
+        postId: widget.post.id,
+      );
+      for (final c in serverComments) {
+        await localRepo.saveComment(c);
+      }
+    } catch (_) {
+      // Ignore network errors; cached comments will still show.
+    }
+
     final comments = await localRepo.getCommentsByPostId(widget.post.id);
 
     setState(() {

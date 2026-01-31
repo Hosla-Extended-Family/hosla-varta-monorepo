@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:hosla/core/constants/api_constants.dart';
+import 'package:hosla/models/post_model.dart';
 import 'package:hosla/services/api_client.dart';
 
 /// Service class for handling post-related API calls
@@ -22,19 +23,30 @@ class PostService {
     required String content,
     String? imageUrl,
     List<String> tags = const [],
+    String? id,
+    DateTime? createdAt,
   }) async {
     try {
       final url = Uri.parse(
         '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}',
       );
 
-      // Map to API spec: title/body/mediaUrls/tags
+      // Map to API spec
       final title = content.length > 60 ? content.substring(0, 60) : content;
       final requestBody = jsonEncode({
+        if (id != null && id.isNotEmpty) 'id': id,
         'title': title.isNotEmpty ? title : null,
         'body': content,
         'mediaUrls': [if (imageUrl != null && imageUrl.isNotEmpty) imageUrl],
         'tags': tags,
+
+        // Requested Mapped Fields
+        'authorId': userId,
+        'authorName': userName,
+        'authorProfilePicUrl': userAvatarUrl,
+
+        // createdAt is server-controlled in most APIs, but supported by spec
+        if (createdAt != null) 'createdAt': createdAt.toIso8601String(),
       });
 
       final response = await _api
@@ -145,9 +157,7 @@ class PostService {
         '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/user/$userId',
       );
 
-      final response = await _httpClient
-          .get(url, headers: {'Content-Type': 'application/json'})
-          .timeout(ApiConstants.timeout);
+      final response = await _api.get(url).timeout(ApiConstants.timeout);
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -181,24 +191,33 @@ class PostService {
     required String content,
     String? imageUrl,
     List<String> tags = const [],
+    String? userId,
+    String? userName,
+    String? userAvatarUrl,
+    DateTime? createdAt,
   }) async {
     try {
       final url = Uri.parse(
         '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId',
       );
 
+      final title = content.length > 60 ? content.substring(0, 60) : content;
       final requestBody = {
-        'content': content,
-        'imageUrl': imageUrl ?? '',
+        'id': postId,
+        'title': title.isNotEmpty ? title : null,
+        'body': content,
+        'mediaUrls': [if (imageUrl != null && imageUrl.isNotEmpty) imageUrl],
         'tags': tags,
+
+        // Requested Mapped Fields (best-effort)
+        if (userId != null) 'authorId': userId,
+        if (userName != null) 'authorName': userName,
+        if (userAvatarUrl != null) 'authorProfilePicUrl': userAvatarUrl,
+        if (createdAt != null) 'createdAt': createdAt.toIso8601String(),
       };
 
-      final response = await _httpClient
-          .put(
-            url,
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode(requestBody),
-          )
+      final response = await _api
+          .put(url, body: jsonEncode(requestBody))
           .timeout(ApiConstants.timeout);
 
       if (response.statusCode == 200) {
@@ -242,9 +261,7 @@ class PostService {
         '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId',
       );
 
-      final response = await _httpClient
-          .delete(url, headers: {'Content-Type': 'application/json'})
-          .timeout(ApiConstants.timeout);
+      final response = await _api.delete(url).timeout(ApiConstants.timeout);
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -269,16 +286,14 @@ class PostService {
 
   /// Like or unlike a post
   ///
-  /// Toggles the like status of a post
+  /// Likes a post
   Future<Map<String, dynamic>> likePost(String postId) async {
     try {
       final url = Uri.parse(
         '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId/like',
       );
 
-      final response = await _httpClient
-          .post(url, headers: {'Content-Type': 'application/json'})
-          .timeout(ApiConstants.timeout);
+      final response = await _api.post(url).timeout(ApiConstants.timeout);
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -292,6 +307,39 @@ class PostService {
         return {
           'success': false,
           'message': errorData['message'] ?? 'Failed to like post',
+          'data': null,
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Network error: ${e.toString()}',
+        'data': null,
+      };
+    }
+  }
+
+  /// Unlike a post
+  Future<Map<String, dynamic>> unlikePost(String postId) async {
+    try {
+      final url = Uri.parse(
+        '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId/like',
+      );
+
+      final response = await _api.delete(url).timeout(ApiConstants.timeout);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return {
+          'success': true,
+          'message': responseData['message'] ?? 'Post unliked',
+          'data': responseData['data'],
+        };
+      } else {
+        final errorData = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': errorData['message'] ?? 'Failed to unlike post',
           'data': null,
         };
       }
@@ -339,6 +387,113 @@ class PostService {
         'data': null,
       };
     }
+  }
+
+  /// Get comments for a post
+  ///
+  /// GET /posts/:postId/comments?page=1&limit=50
+  /// Authentication: Optional
+  Future<List<Comment>> getComments({
+    required String postId,
+    int page = 1,
+    int limit = 50,
+  }) async {
+    final uri =
+        Uri.parse(
+          '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId/comments',
+        ).replace(
+          queryParameters: {'page': page.toString(), 'limit': limit.toString()},
+        );
+
+    final response = await _api.get(uri).timeout(ApiConstants.timeout);
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load comments: ${response.statusCode}');
+    }
+
+    final res = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = res['data'];
+    final commentsJson =
+        (data is Map<String, dynamic> && data['comments'] is List)
+        ? (data['comments'] as List)
+        : (res['comments'] is List ? (res['comments'] as List) : const []);
+
+    return commentsJson
+        .whereType<Map>()
+        .map((j) => Comment.fromJson(j.cast<String, dynamic>()))
+        .toList();
+  }
+
+  /// Add a comment to a post
+  ///
+  /// POST /posts/:postId/comments
+  /// Authentication: Required
+  Future<Comment> addComment({
+    required String postId,
+    required String content,
+    String? parentId,
+  }) async {
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId/comments',
+    );
+    final body = jsonEncode({
+      'content': content,
+      if (parentId != null && parentId.isNotEmpty) 'parentId': parentId,
+    });
+
+    final response = await _api
+        .post(uri, body: body)
+        .timeout(ApiConstants.timeout);
+
+    if (response.statusCode != 201 && response.statusCode != 200) {
+      throw Exception('Failed to add comment: ${response.statusCode}');
+    }
+
+    final res = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = res['data'];
+    final dynamic commentJson =
+        (data is Map<String, dynamic> && data['comment'] is Map)
+        ? data['comment']
+        : data;
+
+    if (commentJson is Map) {
+      return Comment.fromJson(commentJson.cast<String, dynamic>());
+    }
+
+    throw Exception('Add comment returned unexpected payload');
+  }
+
+  /// Delete a comment
+  ///
+  /// DELETE /comments/:id
+  /// Authentication: Comment author or admin
+  Future<void> deleteComment({required String commentId}) async {
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.commentsEndpoint}/$commentId',
+    );
+
+    final response = await _api.delete(uri).timeout(ApiConstants.timeout);
+    if (response.statusCode == 200 || response.statusCode == 204) return;
+    if (response.statusCode == 404) return;
+    throw Exception('Failed to delete comment: ${response.statusCode}');
+  }
+
+  /// Report content (post)
+  ///
+  /// POST /reports
+  /// Authentication: Required (Member+)
+  Future<void> reportPost({
+    required String postId,
+    required String reason,
+  }) async {
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.reportsEndpoint}',
+    );
+    final response = await _api
+        .post(uri, body: jsonEncode({'postId': postId, 'reason': reason}))
+        .timeout(ApiConstants.timeout);
+
+    if (response.statusCode == 201 || response.statusCode == 200) return;
+    throw Exception('Failed to report post: ${response.statusCode}');
   }
 
   /// Dispose of resources

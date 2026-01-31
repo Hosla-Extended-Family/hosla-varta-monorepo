@@ -3,6 +3,7 @@ import 'package:hosla/models/post_model.dart';
 import 'package:hosla/services/local_post_repository.dart';
 import 'package:hosla/services/post_service.dart';
 import 'package:hosla/services/sync_service.dart';
+import 'package:hosla/providers/feed_provider.dart' as feed;
 
 /// Provider for PostService instance
 final postServiceProvider = Provider<PostService>((ref) => PostService());
@@ -194,7 +195,9 @@ class PostActions {
   /// Like or unlike a post
   Future<bool> toggleLike(Post post) async {
     final newLikeState = !post.isLiked;
-    final newLikeCount = newLikeState ? post.likeCount + 1 : post.likeCount - 1;
+    final newLikeCount = newLikeState
+        ? post.likeCount + 1
+        : (post.likeCount - 1 < 0 ? 0 : post.likeCount - 1);
 
     // Optimistic update in local DB
     await localRepo.updatePostLike(post.id, newLikeState, newLikeCount);
@@ -208,11 +211,20 @@ class PostActions {
 
     // Try to sync with server
     try {
-      final result = await postService.likePost(post.id);
+      final result = newLikeState
+          ? await postService.likePost(post.id)
+          : await postService.unlikePost(post.id);
 
       if (result['success'] == true && result['data'] != null) {
         // Server returned updated post data, use it
-        final serverPost = Post.fromJson(result['data']['post']);
+        final data = result['data'];
+        final dynamic postJson =
+            (data is Map<String, dynamic> && data['post'] is Map)
+            ? data['post']
+            : data;
+        final serverPost = Post.fromJson(
+          (postJson as Map).cast<String, dynamic>(),
+        );
         await localRepo.savePost(serverPost);
         _updatePostInProviders(serverPost);
         return true;
@@ -395,8 +407,9 @@ class PostActions {
     required String userId,
     required String userName,
     String? userAvatarUrl,
+    String? parentId,
   }) async {
-    final comment = Comment(
+    final pendingComment = Comment(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       postId: post.id,
       userId: userId,
@@ -408,7 +421,7 @@ class PostActions {
     );
 
     // Save to local DB
-    await localRepo.saveComment(comment);
+    await localRepo.saveComment(pendingComment);
 
     // Update comment count in post
     final updatedPost = post.copyWith(commentCount: post.commentCount + 1);
@@ -416,12 +429,29 @@ class PostActions {
     _updatePostInProviders(updatedPost);
 
     // Queue for sync (when backend endpoint is available)
-    await syncService.queueAction(
-      type: ActionType.comment,
-      payload: {'postId': post.id, 'commentId': comment.id, 'content': content},
-    );
+    try {
+      final serverComment = await postService.addComment(
+        postId: post.id,
+        content: content,
+        parentId: parentId,
+      );
 
-    return true;
+      // Replace pending comment with server comment
+      await localRepo.deleteComment(pendingComment.id);
+      await localRepo.saveComment(serverComment);
+      return true;
+    } catch (_) {
+      await syncService.queueAction(
+        type: ActionType.comment,
+        payload: {
+          'postId': post.id,
+          'commentId': pendingComment.id,
+          'content': content,
+          if (parentId != null && parentId.isNotEmpty) 'parentId': parentId,
+        },
+      );
+      return true;
+    }
   }
 
   /// Update post in all relevant providers
@@ -441,6 +471,13 @@ class PostActions {
         // Provider may not be initialized
       }
     }
+
+    // Update in feed provider (if active)
+    try {
+      ref.read(feed.feedPostsProvider.notifier).upsertLocalPost(post);
+    } catch (_) {
+      // Feed provider may not be in use on current screen
+    }
   }
 
   /// Remove post from all providers
@@ -451,6 +488,12 @@ class PostActions {
       ref.read(savedPostsProvider.notifier).removePost(postId);
     } catch (e) {
       // Provider may not be initialized
+    }
+
+    try {
+      ref.read(feed.feedPostsProvider.notifier).removeLocalPost(postId);
+    } catch (_) {
+      // Feed provider may not be in use on current screen
     }
   }
 }

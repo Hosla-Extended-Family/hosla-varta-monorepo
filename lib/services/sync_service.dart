@@ -105,7 +105,9 @@ class SyncService {
         case ActionType.unlike:
           final postId = action.payload['postId'] as String?;
           if (postId == null) return false;
-          final result = await _postService.likePost(postId);
+          final result = action.type == ActionType.like
+              ? await _postService.likePost(postId)
+              : await _postService.unlikePost(postId);
           return result['success'] ?? false;
 
         case ActionType.save:
@@ -138,7 +140,22 @@ class SyncService {
           return result['success'] ?? false;
 
         case ActionType.comment:
-          // Handle comment sync separately
+          final postId = action.payload['postId'] as String?;
+          final commentId = action.payload['commentId'] as String?;
+          final content = action.payload['content'] as String?;
+          final parentId = action.payload['parentId'] as String?;
+          if (postId == null || commentId == null || content == null)
+            return false;
+
+          final serverComment = await _postService.addComment(
+            postId: postId,
+            content: content,
+            parentId: parentId,
+          );
+
+          // Replace the pending comment with the server comment
+          await _localRepo.deleteComment(commentId);
+          await _localRepo.saveComment(serverComment);
           return true;
       }
     } catch (e) {

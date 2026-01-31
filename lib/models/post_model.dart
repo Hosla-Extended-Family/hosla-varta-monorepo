@@ -32,26 +32,104 @@ class Post {
     this.updatedAt,
   });
 
+  static DateTime _parseBackendDate(dynamic raw) {
+    if (raw == null) return DateTime.now();
+    final s = raw.toString().trim();
+    if (s.isEmpty) return DateTime.now();
+
+    // ISO 8601 first
+    final iso = DateTime.tryParse(s);
+    if (iso != null) return iso;
+
+    // Backend format observed in feed: "DD-MM-YYYYHH:MM:SS"
+    final re = RegExp(r'^(\d{2})-(\d{2})-(\d{4})(\d{2}):(\d{2}):(\d{2})$');
+    final m = re.firstMatch(s);
+    if (m != null) {
+      final d = int.tryParse(m.group(1)!) ?? 1;
+      final mo = int.tryParse(m.group(2)!) ?? 1;
+      final y = int.tryParse(m.group(3)!) ?? 1970;
+      final h = int.tryParse(m.group(4)!) ?? 0;
+      final mi = int.tryParse(m.group(5)!) ?? 0;
+      final sec = int.tryParse(m.group(6)!) ?? 0;
+      return DateTime(y, mo, d, h, mi, sec);
+    }
+
+    return DateTime.now();
+  }
+
+  static String _combineTitleBody({
+    String? title,
+    String? body,
+    String? content,
+  }) {
+    final t = (title ?? '').trim();
+    final b = (body ?? '').trim();
+    if (t.isNotEmpty && b.isNotEmpty) return '$t\n\n$b';
+    if (t.isNotEmpty) return t;
+    if (b.isNotEmpty) return b;
+    return (content ?? '').toString();
+  }
+
+  static String? _extractFirstMediaUrl(dynamic mediaUrls, dynamic imageUrl) {
+    if (imageUrl != null) {
+      final s = imageUrl.toString().trim();
+      if (s.isNotEmpty) return s;
+    }
+    if (mediaUrls is List) {
+      for (final e in mediaUrls) {
+        final s = e?.toString().trim() ?? '';
+        if (s.isNotEmpty) return s;
+      }
+    }
+    return null;
+  }
+
   /// Factory constructor for creating Post from JSON
   factory Post.fromJson(Map<String, dynamic> json) {
+    final authorId = json['authorId'] ?? json['userId'];
+    final authorName = json['authorName'] ?? json['userName'];
+    final authorProfilePicUrl =
+        json['authorProfilePicUrl'] ?? json['userAvatarUrl'];
+
+    final title = json['title']?.toString();
+    final body = json['body']?.toString();
+    final content = json['content']?.toString();
+
+    final imageUrl = _extractFirstMediaUrl(json['mediaUrls'], json['imageUrl']);
+
+    final tagsRaw = json['tags'];
+    final tags = tagsRaw is List
+        ? tagsRaw.map((e) => e.toString()).toList()
+        : <String>[];
+
+    final likeCount =
+        (json['likeCount'] as num?)?.toInt() ??
+        (json['likes'] as num?)?.toInt() ??
+        0;
+    final commentCount =
+        (json['commentCount'] as num?)?.toInt() ??
+        (json['comments'] as num?)?.toInt() ??
+        0;
+    final shareCount = (json['shareCount'] as num?)?.toInt() ?? 0;
+
+    final isLiked = json['isLikedByMe'] == true || json['isLiked'] == true;
+
     return Post(
       id: json['id'] ?? '',
-      userId: json['userId'] ?? '',
-      userName: json['userName'] ?? 'Unknown User',
-      userAvatarUrl: json['userAvatarUrl'],
-      content: json['content'] ?? '',
-      imageUrl: json['imageUrl'],
-      tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
-      likeCount: json['likeCount'] ?? 0,
-      commentCount: json['commentCount'] ?? 0,
-      shareCount: json['shareCount'] ?? 0,
-      isLiked: json['isLiked'] ?? false,
+      userId: authorId?.toString() ?? '',
+      userName: authorName?.toString() ?? 'Unknown User',
+      userAvatarUrl: authorProfilePicUrl?.toString(),
+      content: _combineTitleBody(title: title, body: body, content: content),
+      imageUrl: imageUrl,
+      tags: tags,
+      likeCount: likeCount,
+      commentCount: commentCount,
+      shareCount: shareCount,
+      isLiked: isLiked,
       isSaved: json['isSaved'] ?? false,
-      createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
-          : DateTime.now(),
+      createdAt: _parseBackendDate(json['createdAt']),
       updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'])
+          ? _parseBackendDate(json['updatedAt'])
           : null,
     );
   }
@@ -217,19 +295,44 @@ class Comment {
     this.syncStatus = SyncStatus.synced,
   });
 
+  static DateTime _parseBackendDate(dynamic raw) {
+    if (raw == null) return DateTime.now();
+    final s = raw.toString().trim();
+    if (s.isEmpty) return DateTime.now();
+
+    final iso = DateTime.tryParse(s);
+    if (iso != null) return iso;
+
+    final re = RegExp(r'^(\d{2})-(\d{2})-(\d{4})(\d{2}):(\d{2}):(\d{2})$');
+    final m = re.firstMatch(s);
+    if (m != null) {
+      final d = int.tryParse(m.group(1)!) ?? 1;
+      final mo = int.tryParse(m.group(2)!) ?? 1;
+      final y = int.tryParse(m.group(3)!) ?? 1970;
+      final h = int.tryParse(m.group(4)!) ?? 0;
+      final mi = int.tryParse(m.group(5)!) ?? 0;
+      final sec = int.tryParse(m.group(6)!) ?? 0;
+      return DateTime(y, mo, d, h, mi, sec);
+    }
+
+    return DateTime.now();
+  }
+
   factory Comment.fromJson(Map<String, dynamic> json) {
+    final userId = json['userId'] ?? json['authorId'];
+    final userName = json['userName'] ?? json['authorName'];
+    final userAvatarUrl = json['userAvatarUrl'] ?? json['authorProfilePicUrl'];
+
     return Comment(
       id: json['id'] ?? '',
       postId: json['postId'] ?? '',
-      userId: json['userId'] ?? '',
-      userName: json['userName'] ?? 'Unknown User',
-      userAvatarUrl: json['userAvatarUrl'],
+      userId: userId?.toString() ?? '',
+      userName: userName?.toString() ?? 'Unknown User',
+      userAvatarUrl: userAvatarUrl?.toString(),
       content: json['content'] ?? '',
       likeCount: json['likeCount'] ?? 0,
       isLiked: json['isLiked'] ?? false,
-      createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
-          : DateTime.now(),
+      createdAt: _parseBackendDate(json['createdAt']),
       syncStatus: json['syncStatus'] != null
           ? SyncStatus.fromJson(json['syncStatus'])
           : SyncStatus.synced,

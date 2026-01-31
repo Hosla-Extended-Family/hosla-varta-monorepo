@@ -5,7 +5,9 @@ import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/models/post_model.dart';
 import 'package:hosla/providers/post_provider.dart';
 import 'package:hosla/providers/user_provider.dart';
+import 'package:hosla/widgets/comments_bottom_sheet.dart';
 import 'package:hosla/widgets/profile_pic.dart';
+import 'package:share_plus/share_plus.dart';
 
 /// Enhanced post card widget with actions (like, save, comment, edit, delete)
 class PostCard extends ConsumerStatefulWidget {
@@ -33,6 +35,7 @@ class _PostCardState extends ConsumerState<PostCard>
   bool _isExpanded = false;
   late AnimationController _likeController;
   late Animation<double> _scaleAnimation;
+  late Post _post;
 
   bool _hasValidImage(String? url) {
     if (url == null) return false;
@@ -45,6 +48,7 @@ class _PostCardState extends ConsumerState<PostCard>
   @override
   void initState() {
     super.initState();
+    _post = widget.post;
     _likeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 200),
@@ -56,6 +60,14 @@ class _PostCardState extends ConsumerState<PostCard>
   }
 
   @override
+  void didUpdateWidget(covariant PostCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.post != widget.post) {
+      _post = widget.post;
+    }
+  }
+
+  @override
   void dispose() {
     _likeController.dispose();
     super.dispose();
@@ -64,22 +76,80 @@ class _PostCardState extends ConsumerState<PostCard>
   void _toggleLike() async {
     final postActions = ref.read(postActionsProvider);
 
+    final current = _post;
+    final nextLiked = !current.isLiked;
+    final nextCount = nextLiked
+        ? current.likeCount + 1
+        : (current.likeCount - 1 < 0 ? 0 : current.likeCount - 1);
+
+    // Local optimistic UI
+    setState(() {
+      _post = current.copyWith(isLiked: nextLiked, likeCount: nextCount);
+    });
+
     // Trigger animation
-    if (!widget.post.isLiked) {
+    if (!current.isLiked) {
       _likeController.forward().then((_) => _likeController.reverse());
     }
 
-    await postActions.toggleLike(widget.post);
+    await postActions.toggleLike(current);
+
+    // Refresh from local DB (authoritative offline cache)
+    try {
+      final localRepo = ref.read(localPostRepositoryProvider);
+      final latest = await localRepo.getPostById(current.id);
+      if (!mounted) return;
+      if (latest != null) {
+        setState(() => _post = latest);
+      }
+    } catch (_) {}
   }
 
   void _toggleSave() async {
     final postActions = ref.read(postActionsProvider);
-    await postActions.toggleSave(widget.post);
+    await postActions.toggleSave(_post);
+  }
+
+  Future<void> _openComments() async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => CommentsBottomSheet(post: _post),
+    );
+
+    // After closing, refresh post (commentCount might have changed)
+    try {
+      final localRepo = ref.read(localPostRepositoryProvider);
+      final latest = await localRepo.getPostById(_post.id);
+      if (!mounted) return;
+      if (latest != null) {
+        setState(() => _post = latest);
+      }
+    } catch (_) {}
+  }
+
+  void _sharePost() {
+    final content = _post.content.trim();
+    final imageUrl = _hasValidImage(_post.imageUrl) ? _post.imageUrl : null;
+    final pieces = [
+      if (content.isNotEmpty) content,
+      if (imageUrl != null) imageUrl,
+    ];
+    if (pieces.isEmpty) {
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Nothing to share for this post')),
+      );
+      return;
+    }
+    final text = pieces.join('\n');
+    Share.share(text, subject: 'Post by ${_post.userName}');
   }
 
   void _showPostMenu() {
     final currentUser = ref.read(currentUserProfileProvider);
-    final isOwner = currentUser?.id == widget.post.userId;
+    final isOwner = currentUser?.id == _post.userId;
 
     showModalBottomSheet(
       context: context,
@@ -115,9 +185,9 @@ class _PostCardState extends ConsumerState<PostCard>
               ],
               ListTile(
                 leading: Icon(
-                  widget.post.isSaved ? Icons.bookmark : Icons.bookmark_border,
+                  _post.isSaved ? Icons.bookmark : Icons.bookmark_border,
                 ),
-                title: Text(widget.post.isSaved ? 'Unsave Post' : 'Save Post'),
+                title: Text(_post.isSaved ? 'Unsave Post' : 'Save Post'),
                 onTap: () {
                   Navigator.pop(context);
                   _toggleSave();
@@ -128,7 +198,7 @@ class _PostCardState extends ConsumerState<PostCard>
                 title: const Text('Share'),
                 onTap: () {
                   Navigator.pop(context);
-                  // TODO: Implement share
+                  _sharePost();
                 },
               ),
               if (!isOwner)
@@ -137,7 +207,28 @@ class _PostCardState extends ConsumerState<PostCard>
                   title: const Text('Report'),
                   onTap: () {
                     Navigator.pop(context);
-                    // TODO: Implement report
+                    final messenger = ScaffoldMessenger.of(context);
+                    ref
+                        .read(postServiceProvider)
+                        .reportPost(postId: _post.id, reason: 'SPAM')
+                        .then((_) {
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Reported. Thanks for letting us know.',
+                              ),
+                            ),
+                          );
+                        })
+                        .catchError((_) {
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Failed to report. Please try again.',
+                              ),
+                            ),
+                          );
+                        });
                   },
                 ),
             ],
@@ -218,10 +309,7 @@ class _PostCardState extends ConsumerState<PostCard>
             child: Row(
               children: [
                 // Profile Picture
-                ProfilePic(
-                  radius: 24,
-                  imageUrl: widget.post.userAvatarUrl ?? '',
-                ),
+                ProfilePic(radius: 24, imageUrl: _post.userAvatarUrl ?? ''),
                 const SizedBox(width: 12),
                 // User Info
                 Expanded(
@@ -229,14 +317,14 @@ class _PostCardState extends ConsumerState<PostCard>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.post.userName,
+                        _post.userName,
                         style: TextThemes.getTitleStyle(
                           context,
                         ).copyWith(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        widget.post.getRelativeTime(),
+                        _post.getRelativeTime(),
                         style: TextThemes.getBodySmallStyle(context).copyWith(
                           color: ThemeColors.getSecondaryTextColor(context),
                           fontSize: 12,
@@ -261,12 +349,12 @@ class _PostCardState extends ConsumerState<PostCard>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.post.content,
+                  _post.content,
                   style: TextThemes.getBodyMediumStyle(context),
                   maxLines: maxLines,
                   overflow: _isExpanded ? null : TextOverflow.ellipsis,
                 ),
-                if (widget.post.content.length > 150)
+                if (_post.content.length > 150)
                   TextButton(
                     onPressed: () {
                       setState(() {
@@ -274,36 +362,19 @@ class _PostCardState extends ConsumerState<PostCard>
                       });
                     },
                     child: Text(
-                      _isExpanded ? 'Show less' : 'Show more',
-                      style: TextStyle(color: ThemeColors.primaryColor),
+                      _isExpanded ? 'show less' : 'read more',
+                      style: TextStyle(
+                        color: ThemeColors.primaryColor,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
               ],
             ),
           ),
 
-          // Image Section: show only if URL is valid; collapse on error
-          if (_hasValidImage(widget.post.imageUrl))
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12.0),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: Image.network(
-                    widget.post.imageUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      // If loading fails, render nothing
-                      return const SizedBox.shrink();
-                    },
-                  ),
-                ),
-              ),
-            ),
-
           // Tags Section
-          if (widget.post.tags.isNotEmpty)
+          if (_post.tags.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
@@ -312,7 +383,7 @@ class _PostCardState extends ConsumerState<PostCard>
               child: Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: widget.post.tags.map((tag) {
+                children: _post.tags.map((tag) {
                   return Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -334,52 +405,175 @@ class _PostCardState extends ConsumerState<PostCard>
               ),
             ),
 
-          // Action Buttons
+          // Image Section: show only if URL is valid; collapse on error
+          if (_hasValidImage(_post.imageUrl))
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Image.network(
+                    _post.imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      // If loading fails, render nothing
+                      return const SizedBox.shrink();
+                    },
+                  ),
+                ),
+              ),
+            ),
+
+          // Stats row: likes and comments
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             child: Row(
               children: [
-                // Like Button
-                ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: IconButton(
-                    icon: Icon(
-                      widget.post.isLiked
-                          ? Icons.favorite
-                          : Icons.favorite_border,
-                      color: widget.post.isLiked ? Colors.red : null,
-                    ),
-                    onPressed: _toggleLike,
-                  ),
-                ),
                 Text(
-                  '${widget.post.likeCount}',
-                  style: TextThemes.getBodyMediumStyle(context),
+                  '${_post.likeCount} likes',
+                  style: TextThemes.getBodySmallStyle(
+                    context,
+                  ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
                 ),
                 const SizedBox(width: 16),
-                // Comment Button
-                IconButton(
-                  icon: const Icon(Icons.comment_outlined),
-                  onPressed: widget.onComment,
-                ),
                 Text(
-                  '${widget.post.commentCount}',
-                  style: TextThemes.getBodyMediumStyle(context),
-                ),
-                const Spacer(),
-                // Save Button
-                IconButton(
-                  icon: Icon(
-                    widget.post.isSaved
-                        ? Icons.bookmark
-                        : Icons.bookmark_border,
-                    color: widget.post.isSaved
-                        ? ThemeColors.primaryColor
-                        : null,
-                  ),
-                  onPressed: _toggleSave,
+                  '${_post.commentCount} comments',
+                  style: TextThemes.getBodySmallStyle(
+                    context,
+                  ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
                 ),
               ],
+            ),
+          ),
+          // Divider before actions
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Divider(
+              height: 1,
+              color: ThemeColors.getBorderColor(context).withOpacity(0.2),
+            ),
+          ),
+          // Actions row: Like, Comment, Share (evenly spaced, with labels)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: SizedBox(
+              height: 56,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: _toggleLike,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ScaleTransition(
+                              scale: _scaleAnimation,
+                              child: Icon(
+                                _post.isLiked
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: _post.isLiked
+                                    ? Colors.red
+                                    : ThemeColors.getSecondaryTextColor(
+                                        context,
+                                      ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                'Like',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                softWrap: false,
+                                style: TextThemes.getBodyMediumStyle(context)
+                                    .copyWith(
+                                      color: ThemeColors.getSecondaryTextColor(
+                                        context,
+                                      ),
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: widget.onComment ?? _openComments,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.comment_outlined,
+                              color: ThemeColors.getSecondaryTextColor(context),
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                'Comment',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                softWrap: false,
+                                style: TextThemes.getBodyMediumStyle(context)
+                                    .copyWith(
+                                      color: ThemeColors.getSecondaryTextColor(
+                                        context,
+                                      ),
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: _sharePost,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.share,
+                              color: ThemeColors.getSecondaryTextColor(context),
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                'Share',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                softWrap: false,
+                                style: TextThemes.getBodyMediumStyle(context)
+                                    .copyWith(
+                                      color: ThemeColors.getSecondaryTextColor(
+                                        context,
+                                      ),
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

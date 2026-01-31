@@ -51,6 +51,26 @@ class FeedPostsNotifier extends StateNotifier<AsyncValue<List<Post>>> {
     loadPosts();
   }
 
+  /// Update/insert a post in the current feed list without hitting network.
+  void upsertLocalPost(Post updatedPost) {
+    state.whenData((currentPosts) {
+      final index = currentPosts.indexWhere((p) => p.id == updatedPost.id);
+      if (index == -1) return;
+      final next = [...currentPosts];
+      next[index] = updatedPost;
+      state = AsyncValue.data(next);
+    });
+  }
+
+  /// Remove a post from the current feed list without hitting network.
+  void removeLocalPost(String postId) {
+    state.whenData((currentPosts) {
+      state = AsyncValue.data(
+        currentPosts.where((p) => p.id != postId).toList(),
+      );
+    });
+  }
+
   /// Load initial posts
   Future<void> loadPosts() async {
     state = const AsyncValue.loading();
