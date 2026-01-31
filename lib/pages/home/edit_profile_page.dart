@@ -22,17 +22,17 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
   final _nameController = TextEditingController();
   final _bioController = TextEditingController();
   final _emailController = TextEditingController();
-  
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  
+
   bool _isLoading = false;
   bool _hasChanges = false;
   String? _selectedGender;
   DateTime? _selectedDateOfBirth;
   File? _selectedImage;
   String? _currentAvatarUrl;
-  
+
   final List<String> _genderOptions = ['MALE', 'FEMALE', 'OTHER'];
 
   @override
@@ -47,7 +47,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
       curve: Curves.easeOut,
     );
     _animationController.forward();
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUserData();
     });
@@ -56,20 +56,21 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
   Future<void> _loadUserData() async {
     final currentUser = ref.read(currentUserProfileProvider);
     final prefs = await SharedPreferences.getInstance();
-    
+
     if (currentUser != null) {
       _nameController.text = currentUser.name;
       _bioController.text = currentUser.bio ?? '';
       _emailController.text = currentUser.email ?? '';
       _currentAvatarUrl = currentUser.avatarUrl;
     }
-    
+
     // Load gender from prefs
     final savedGender = prefs.getString('user_gender');
-    if (savedGender != null && _genderOptions.contains(savedGender.toUpperCase())) {
+    if (savedGender != null &&
+        _genderOptions.contains(savedGender.toUpperCase())) {
       _selectedGender = savedGender.toUpperCase();
     }
-    
+
     // Load DOB from prefs
     final savedDob = prefs.getString('user_dob');
     if (savedDob != null && savedDob.isNotEmpty) {
@@ -77,7 +78,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
         _selectedDateOfBirth = DateTime.parse(savedDob);
       } catch (_) {}
     }
-    
+
     setState(() {});
   }
 
@@ -124,10 +125,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                     ),
                   ],
                 ),
-                
+
                 // Spacer for profile picture overflow
                 const SizedBox(height: 70),
-                
+
                 // Form Content
                 FadeTransition(
                   opacity: _fadeAnimation,
@@ -141,7 +142,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                           // Personal Information Section
                           _buildSectionTitle('Personal Information'),
                           const SizedBox(height: 16),
-                          
+
                           // Name Field
                           _buildInputCard(
                             label: 'Full Name',
@@ -161,31 +162,31 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                               onChanged: (_) => _markAsChanged(),
                             ),
                           ),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Gender
                           _buildInputCard(
                             label: 'Gender',
                             icon: Icons.wc_rounded,
                             child: _buildGenderDropdown(),
                           ),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Date of Birth
                           _buildInputCard(
                             label: 'Date of Birth',
                             icon: Icons.cake_rounded,
                             child: _buildDatePicker(),
                           ),
-                          
+
                           const SizedBox(height: 32),
-                          
+
                           // Contact Information Section
                           _buildSectionTitle('Contact Information'),
                           const SizedBox(height: 16),
-                          
+
                           // Email Field
                           _buildInputCard(
                             label: 'Email Address',
@@ -197,8 +198,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                               keyboardType: TextInputType.emailAddress,
                               validator: (value) {
                                 if (value != null && value.isNotEmpty) {
-                                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                      .hasMatch(value)) {
+                                  if (!RegExp(
+                                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                                  ).hasMatch(value)) {
                                     return 'Enter a valid email';
                                   }
                                 }
@@ -207,13 +209,13 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                               onChanged: (_) => _markAsChanged(),
                             ),
                           ),
-                          
+
                           const SizedBox(height: 32),
-                          
+
                           // About Section
                           _buildSectionTitle('About You'),
                           const SizedBox(height: 16),
-                          
+
                           // Bio Field
                           _buildInputCard(
                             label: 'Bio',
@@ -235,10 +237,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
               ],
             ),
           ),
-          
+
           // Top Bar
           _buildTopBar(topPadding, isDark),
-          
+
           // Bottom Save Button
           _buildBottomSaveButton(isDark),
         ],
@@ -329,7 +331,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                 ),
               ),
             ),
-            
+
             const Expanded(
               child: Text(
                 'Edit Profile',
@@ -341,7 +343,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                 ),
               ),
             ),
-            
+
             // Placeholder for symmetry
             const SizedBox(width: 56),
           ],
@@ -392,21 +394,22 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                         width: 110,
                         height: 110,
                       )
-                    : (_currentAvatarUrl != null && _currentAvatarUrl!.isNotEmpty
-                        ? Image.network(
-                            _currentAvatarUrl!,
-                            fit: BoxFit.cover,
-                            width: 110,
-                            height: 110,
-                            errorBuilder: (context, error, stackTrace) {
-                              return _buildDefaultAvatar();
-                            },
-                          )
-                        : _buildDefaultAvatar()),
+                    : (_currentAvatarUrl != null &&
+                              _currentAvatarUrl!.isNotEmpty
+                          ? Image.network(
+                              _currentAvatarUrl!,
+                              fit: BoxFit.cover,
+                              width: 110,
+                              height: 110,
+                              errorBuilder: (context, error, stackTrace) {
+                                return _buildDefaultAvatar();
+                              },
+                            )
+                          : _buildDefaultAvatar()),
               ),
             ),
           ),
-          
+
           // Camera Icon
           Positioned(
             bottom: 0,
@@ -468,10 +471,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                ThemeColors.primaryColor,
-                ThemeColors.secondaryColor,
-              ],
+              colors: [ThemeColors.primaryColor, ThemeColors.secondaryColor],
             ),
             borderRadius: BorderRadius.circular(2),
           ),
@@ -479,10 +479,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
         const SizedBox(width: 12),
         Text(
           title,
-          style: TextThemes.getTitleStyle(context).copyWith(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextThemes.getTitleStyle(
+            context,
+          ).copyWith(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -495,7 +494,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
     bool isOptional = false,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Container(
       decoration: BoxDecoration(
         color: ThemeColors.getSurfaceColor(context),
@@ -529,11 +528,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                     ),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(
-                    icon,
-                    size: 18,
-                    color: ThemeColors.primaryColor,
-                  ),
+                  child: Icon(icon, size: 18, color: ThemeColors.primaryColor),
                 ),
                 const SizedBox(width: 12),
                 Text(
@@ -546,9 +541,14 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                 if (isOptional) ...[
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
-                      color: ThemeColors.getSecondaryTextColor(context).withOpacity(0.1),
+                      color: ThemeColors.getSecondaryTextColor(
+                        context,
+                      ).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -597,9 +597,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
         ),
         border: InputBorder.none,
         contentPadding: EdgeInsets.zero,
-        counterStyle: TextThemes.getBodySmallStyle(context).copyWith(
-          color: ThemeColors.getSecondaryTextColor(context),
-        ),
+        counterStyle: TextThemes.getBodySmallStyle(
+          context,
+        ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
       ),
     );
   }
@@ -628,8 +628,8 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                   gender == 'MALE'
                       ? Icons.male_rounded
                       : gender == 'FEMALE'
-                          ? Icons.female_rounded
-                          : Icons.transgender_rounded,
+                      ? Icons.female_rounded
+                      : Icons.transgender_rounded,
                   size: 18,
                   color: ThemeColors.primaryColor,
                 ),
@@ -666,7 +666,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                 style: TextThemes.getBodyMediumStyle(context).copyWith(
                   color: _selectedDateOfBirth != null
                       ? ThemeColors.getTextColor(context)
-                      : ThemeColors.getSecondaryTextColor(context).withOpacity(0.5),
+                      : ThemeColors.getSecondaryTextColor(
+                          context,
+                        ).withOpacity(0.5),
                 ),
               ),
             ),
@@ -746,7 +748,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                       children: [
                         Icon(
                           Icons.check_circle_outline_rounded,
-                          color: _hasChanges ? Colors.white : ThemeColors.getSecondaryTextColor(context),
+                          color: _hasChanges
+                              ? Colors.white
+                              : ThemeColors.getSecondaryTextColor(context),
                           size: 22,
                         ),
                         const SizedBox(width: 10),
@@ -755,7 +759,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: _hasChanges ? Colors.white : ThemeColors.getSecondaryTextColor(context),
+                            color: _hasChanges
+                                ? Colors.white
+                                : ThemeColors.getSecondaryTextColor(context),
                           ),
                         ),
                       ],
@@ -769,7 +775,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
 
   void _showImagePickerOptions() {
     HapticFeedback.mediumImpact();
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -792,19 +798,18 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               Text(
                 'Change Profile Picture',
-                style: TextThemes.getTitleStyle(context).copyWith(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextThemes.getTitleStyle(
+                  context,
+                ).copyWith(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Options
               _buildImageOption(
                 icon: Icons.camera_alt_rounded,
@@ -816,7 +821,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                   _pickImage(ImageSource.camera);
                 },
               ),
-              
+
               _buildImageOption(
                 icon: Icons.photo_library_rounded,
                 title: 'Choose from Gallery',
@@ -827,8 +832,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                   _pickImage(ImageSource.gallery);
                 },
               ),
-              
-              if (_selectedImage != null || (_currentAvatarUrl != null && _currentAvatarUrl!.isNotEmpty))
+
+              if (_selectedImage != null ||
+                  (_currentAvatarUrl != null && _currentAvatarUrl!.isNotEmpty))
                 _buildImageOption(
                   icon: Icons.delete_outline_rounded,
                   title: 'Remove Photo',
@@ -843,7 +849,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                     _markAsChanged();
                   },
                 ),
-              
+
               const SizedBox(height: 16),
             ],
           ),
@@ -883,9 +889,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                   children: [
                     Text(
                       title,
-                      style: TextThemes.getBodyMediumStyle(context).copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: TextThemes.getBodyMediumStyle(
+                        context,
+                      ).copyWith(fontWeight: FontWeight.w600),
                     ),
                     Text(
                       subtitle,
@@ -916,7 +922,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
         maxHeight: 800,
         imageQuality: 85,
       );
-      
+
       if (pickedFile != null) {
         setState(() {
           _selectedImage = File(pickedFile.path);
@@ -930,8 +936,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
 
   Future<void> _selectDate() async {
     final now = DateTime.now();
-    final initialDate = _selectedDateOfBirth ?? DateTime(now.year - 18, now.month, now.day);
-    
+    final initialDate =
+        _selectedDateOfBirth ?? DateTime(now.year - 18, now.month, now.day);
+
     final picked = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -951,7 +958,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
         );
       },
     );
-    
+
     if (picked != null) {
       setState(() {
         _selectedDateOfBirth = picked;
@@ -983,18 +990,17 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
             const SizedBox(width: 12),
             Text(
               'Discard Changes?',
-              style: TextThemes.getTitleStyle(context).copyWith(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextThemes.getTitleStyle(
+                context,
+              ).copyWith(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ],
         ),
         content: Text(
           'You have unsaved changes. Are you sure you want to discard them?',
-          style: TextThemes.getBodyMediumStyle(context).copyWith(
-            color: ThemeColors.getSecondaryTextColor(context),
-          ),
+          style: TextThemes.getBodyMediumStyle(
+            context,
+          ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
         ),
         actions: [
           TextButton(
@@ -1030,13 +1036,13 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    
+
     // Validate required fields
     if (_selectedGender == null) {
       SnackBarWidget.show(context, 'Please select your gender');
       return;
     }
-    
+
     if (_selectedDateOfBirth == null) {
       SnackBarWidget.show(context, 'Please select your date of birth');
       return;
@@ -1050,30 +1056,35 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
       if (currentUser == null) {
         throw Exception('User not found');
       }
-      
+
       // Create updated user object
       final updatedUser = currentUser.copyWith(
         name: _nameController.text.trim(),
-        email: _emailController.text.trim().isNotEmpty 
-            ? _emailController.text.trim() 
+        email: _emailController.text.trim().isNotEmpty
+            ? _emailController.text.trim()
             : null,
-        bio: _bioController.text.trim().isNotEmpty 
-            ? _bioController.text.trim() 
+        bio: _bioController.text.trim().isNotEmpty
+            ? _bioController.text.trim()
             : null,
       );
-      
+
       // Call API with multipart form data through the provider
-      await ref.read(currentUserProfileProvider.notifier).updateProfileFull(
-        user: updatedUser,
-        dateOfBirth: _selectedDateOfBirth,
-        gender: _selectedGender,
-        profileImagePath: _selectedImage?.path,
-      );
-      
+      await ref
+          .read(currentUserProfileProvider.notifier)
+          .updateProfileFull(
+            user: updatedUser,
+            dateOfBirth: _selectedDateOfBirth,
+            gender: _selectedGender,
+            profileImagePath: _selectedImage?.path,
+          );
+
       // Save gender and DOB to prefs for future use
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_gender', _selectedGender!);
-      await prefs.setString('user_dob', _selectedDateOfBirth!.toIso8601String());
+      await prefs.setString(
+        'user_dob',
+        _selectedDateOfBirth!.toIso8601String(),
+      );
 
       if (mounted) {
         HapticFeedback.heavyImpact();
@@ -1096,8 +1107,18 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
 
   String _formatDate(DateTime date) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
@@ -1120,9 +1141,11 @@ class _PatternPainter extends CustomPainter {
     const radius = 3.0;
 
     for (double y = 0; y < size.height; y += spacing) {
-      for (double x = (y ~/ spacing).isEven ? 0 : spacing / 2;
-          x < size.width;
-          x += spacing) {
+      for (
+        double x = (y ~/ spacing).isEven ? 0 : spacing / 2;
+        x < size.width;
+        x += spacing
+      ) {
         canvas.drawCircle(Offset(x, y), radius, paint);
       }
     }

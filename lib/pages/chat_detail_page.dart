@@ -66,7 +66,8 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
 
   void _onScroll() {
     if (!_scrollController.hasClients) return;
-    final showButton = _scrollController.offset <
+    final showButton =
+        _scrollController.offset <
         _scrollController.position.maxScrollExtent - 200;
     if (showButton != _showScrollToBottom) {
       setState(() => _showScrollToBottom = showButton);
@@ -88,14 +89,14 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0A0E11) : const Color(0xFFF5F5F5),
+      backgroundColor: isDark
+          ? const Color(0xFF0A0E11)
+          : const Color(0xFFF5F5F5),
       body: Stack(
         children: [
           // Chat background pattern
           Positioned.fill(
-            child: CustomPaint(
-              painter: _ChatBackgroundPainter(isDark: isDark),
-            ),
+            child: CustomPaint(painter: _ChatBackgroundPainter(isDark: isDark)),
           ),
 
           // Main content
@@ -177,7 +178,9 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
                         color: ThemeColors.successColor,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isDark ? const Color(0xFF1A1D21) : Colors.white,
+                          color: isDark
+                              ? const Color(0xFF1A1D21)
+                              : Colors.white,
                           width: 2,
                         ),
                       ),
@@ -198,10 +201,9 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
                   children: [
                     Text(
                       widget.chat.name,
-                      style: TextThemes.getBodyMediumStyle(context).copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
+                      style: TextThemes.getBodyMediumStyle(
+                        context,
+                      ).copyWith(fontWeight: FontWeight.w600, fontSize: 16),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -213,19 +215,21 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
                           const SizedBox(width: 4),
                           Text(
                             'typing...',
-                            style: TextThemes.getBodySmallStyle(context).copyWith(
-                              color: ThemeColors.primaryColor,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 12,
-                            ),
+                            style: TextThemes.getBodySmallStyle(context)
+                                .copyWith(
+                                  color: ThemeColors.primaryColor,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 12,
+                                ),
                           ),
                         ] else
                           Text(
                             _getOnlineStatus(),
-                            style: TextThemes.getBodySmallStyle(context).copyWith(
-                              color: ThemeColors.successColor,
-                              fontSize: 12,
-                            ),
+                            style: TextThemes.getBodySmallStyle(context)
+                                .copyWith(
+                                  color: ThemeColors.successColor,
+                                  fontSize: 12,
+                                ),
                           ),
                       ],
                     ),
@@ -235,16 +239,8 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
             ),
 
             // Action buttons
-            _buildActionButton(
-              Icons.videocam_rounded,
-              () {},
-              isDark,
-            ),
-            _buildActionButton(
-              Icons.call_rounded,
-              () {},
-              isDark,
-            ),
+            _buildActionButton(Icons.videocam_rounded, () {}, isDark),
+            _buildActionButton(Icons.call_rounded, () {}, isDark),
             _buildActionButton(
               Icons.more_vert_rounded,
               _showChatOptions,
@@ -306,11 +302,15 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
           showDateSeparator = true;
         } else {
           final prevMessage = messages[index - 1];
-          showDateSeparator = !_isSameDay(message.timestamp, prevMessage.timestamp);
+          showDateSeparator = !_isSameDay(
+            message.timestamp,
+            prevMessage.timestamp,
+          );
         }
 
         // Check if this is the first message from sender in a sequence
-        final showTail = index == messages.length - 1 ||
+        final showTail =
+            index == messages.length - 1 ||
             messages[index + 1].senderId != message.senderId ||
             !_isSameDay(message.timestamp, messages[index + 1].timestamp);
 
@@ -357,8 +357,9 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
         right: isCurrentUser ? 0 : 60,
       ),
       child: Row(
-        mainAxisAlignment:
-            isCurrentUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isCurrentUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           // Other user avatar (only show for last message in sequence)
@@ -373,7 +374,10 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
             child: GestureDetector(
               onLongPress: () => _showMessageOptions(message),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   gradient: isCurrentUser
                       ? LinearGradient(
@@ -391,8 +395,12 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(18),
                     topRight: const Radius.circular(18),
-                    bottomLeft: Radius.circular(isCurrentUser || !showTail ? 18 : 4),
-                    bottomRight: Radius.circular(!isCurrentUser || !showTail ? 18 : 4),
+                    bottomLeft: Radius.circular(
+                      isCurrentUser || !showTail ? 18 : 4,
+                    ),
+                    bottomRight: Radius.circular(
+                      !isCurrentUser || !showTail ? 18 : 4,
+                    ),
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -426,7 +434,9 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
                         if (isCurrentUser) ...[
                           const SizedBox(width: 4),
                           Icon(
-                            message.isRead ? Icons.done_all_rounded : Icons.done_rounded,
+                            message.isRead
+                                ? Icons.done_all_rounded
+                                : Icons.done_rounded,
                             size: 14,
                             color: message.isRead
                                 ? Colors.white
@@ -445,7 +455,11 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
     );
   }
 
-  Widget _buildMessageContent(Message message, bool isCurrentUser, bool isDark) {
+  Widget _buildMessageContent(
+    Message message,
+    bool isCurrentUser,
+    bool isDark,
+  ) {
     switch (message.type) {
       case MessageType.text:
         return Text(
@@ -454,7 +468,9 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
             fontSize: 15,
             color: isCurrentUser
                 ? Colors.white
-                : (isDark ? Colors.white.withValues(alpha: 0.95) : const Color(0xFF1A1A1A)),
+                : (isDark
+                      ? Colors.white.withValues(alpha: 0.95)
+                      : const Color(0xFF1A1A1A)),
             height: 1.3,
           ),
         );
@@ -499,10 +515,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
           ],
         );
       case MessageType.emoji:
-        return Text(
-          message.content,
-          style: const TextStyle(fontSize: 40),
-        );
+        return Text(message.content, style: const TextStyle(fontSize: 40));
     }
   }
 
@@ -566,9 +579,12 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
                           style: TextThemes.getBodyMediumStyle(context),
                           decoration: InputDecoration(
                             hintText: 'Message',
-                            hintStyle: TextThemes.getBodyMediumStyle(context).copyWith(
-                              color: ThemeColors.getSecondaryTextColor(context),
-                            ),
+                            hintStyle: TextThemes.getBodyMediumStyle(context)
+                                .copyWith(
+                                  color: ThemeColors.getSecondaryTextColor(
+                                    context,
+                                  ),
+                                ),
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 8,
@@ -627,7 +643,9 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: ThemeColors.primaryColor.withValues(alpha: 0.3),
+                          color: ThemeColors.primaryColor.withValues(
+                            alpha: 0.3,
+                          ),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -716,17 +734,16 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
           const SizedBox(height: 24),
           Text(
             'No messages yet',
-            style: TextThemes.getTitleStyle(context).copyWith(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextThemes.getTitleStyle(
+              context,
+            ).copyWith(fontSize: 20, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Text(
             'Say hello to ${widget.chat.name}!',
-            style: TextThemes.getBodyMediumStyle(context).copyWith(
-              color: ThemeColors.getSecondaryTextColor(context),
-            ),
+            style: TextThemes.getBodyMediumStyle(
+              context,
+            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
           ),
           const SizedBox(height: 24),
           GestureDetector(
@@ -812,9 +829,9 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
               _buildOptionTile(Icons.copy_rounded, 'Copy', () {
                 Clipboard.setData(ClipboardData(text: message.content));
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Message copied')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('Message copied')));
               }),
               _buildOptionTile(Icons.reply_rounded, 'Reply', () {
                 Navigator.pop(context);
@@ -825,14 +842,9 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
               _buildOptionTile(Icons.star_outline_rounded, 'Star', () {
                 Navigator.pop(context);
               }),
-              _buildOptionTile(
-                Icons.delete_outline_rounded,
-                'Delete',
-                () {
-                  Navigator.pop(context);
-                },
-                isDestructive: true,
-              ),
+              _buildOptionTile(Icons.delete_outline_rounded, 'Delete', () {
+                Navigator.pop(context);
+              }, isDestructive: true),
               const SizedBox(height: 8),
             ],
           ),
@@ -854,9 +866,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
       ),
       title: Text(
         title,
-        style: TextStyle(
-          color: isDestructive ? Colors.red : null,
-        ),
+        style: TextStyle(color: isDestructive ? Colors.red : null),
       ),
       onTap: onTap,
     );
@@ -965,9 +975,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
           const SizedBox(height: 8),
           Text(
             label,
-            style: TextThemes.getBodySmallStyle(context).copyWith(
-              fontSize: 12,
-            ),
+            style: TextThemes.getBodySmallStyle(context).copyWith(fontSize: 12),
           ),
         ],
       ),
@@ -997,10 +1005,14 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
                 ),
               ),
               const SizedBox(height: 8),
-              _buildOptionTile(Icons.person_outline_rounded, 'View Profile', () {
-                Navigator.pop(context);
-                _viewContactInfo();
-              }),
+              _buildOptionTile(
+                Icons.person_outline_rounded,
+                'View Profile',
+                () {
+                  Navigator.pop(context);
+                  _viewContactInfo();
+                },
+              ),
               _buildOptionTile(
                 widget.chat.isMuted
                     ? Icons.notifications_rounded
@@ -1051,7 +1063,8 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ContactInfoPage(user: user, mutualGroups: mutualGroups),
+        builder: (context) =>
+            ContactInfoPage(user: user, mutualGroups: mutualGroups),
       ),
     );
   }
@@ -1105,9 +1118,11 @@ class _ChatBackgroundPainter extends CustomPainter {
     const radius = 2.0;
 
     for (double y = 0; y < size.height; y += spacing) {
-      for (double x = (y ~/ spacing).isEven ? 0 : spacing / 2;
-          x < size.width;
-          x += spacing) {
+      for (
+        double x = (y ~/ spacing).isEven ? 0 : spacing / 2;
+        x < size.width;
+        x += spacing
+      ) {
         canvas.drawCircle(Offset(x, y), radius, paint);
       }
     }

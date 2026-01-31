@@ -17,7 +17,9 @@ class Button extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: ThemeColors.primaryColor,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: ThemeColors.primaryColor.withValues(alpha: 0.5),
+          disabledBackgroundColor: ThemeColors.primaryColor.withValues(
+            alpha: 0.5,
+          ),
           disabledForegroundColor: Colors.white.withValues(alpha: 0.7),
           elevation: 0,
           shadowColor: Colors.transparent,

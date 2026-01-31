@@ -12,9 +12,9 @@ class SnackBarWidget {
     Duration duration = const Duration(seconds: 3),
   }) {
     ScaffoldMessenger.of(context).clearSnackBars();
-    
+
     final config = _getConfig(type);
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -24,28 +24,20 @@ class SnackBarWidget {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    config.color,
-                    config.color.withOpacity(0.7),
-                  ],
+                  colors: [config.color, config.color.withOpacity(0.7)],
                 ),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                config.icon,
-                color: Colors.white,
-                size: 18,
-              ),
+              child: Icon(config.icon, color: Colors.white, size: 18),
             ),
             const SizedBox(width: 12),
             // Message
             Expanded(
               child: Text(
                 message,
-                style: TextThemes.getBodyMediumStyle(context).copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: TextThemes.getBodyMediumStyle(
+                  context,
+                ).copyWith(color: Colors.white, fontWeight: FontWeight.w500),
               ),
             ),
           ],
@@ -53,9 +45,7 @@ class SnackBarWidget {
         backgroundColor: const Color(0xFF1E2428),
         elevation: 8,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         duration: duration,

@@ -234,36 +234,34 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
                     ),
                   )
                 : _comments.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: _comments.length,
-                        itemBuilder: (context, index) {
-                          final comment = _comments[index];
-                          // Get replies (comments that mention this user)
-                          final replies = _comments
-                              .where(
-                                (c) =>
-                                    c.content.startsWith(
-                                      '@${comment.userName}',
-                                    ) &&
-                                    c.id != comment.id &&
-                                    c.createdAt.isAfter(comment.createdAt),
-                              )
-                              .toList();
+                ? _buildEmptyState()
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: _comments.length,
+                    itemBuilder: (context, index) {
+                      final comment = _comments[index];
+                      // Get replies (comments that mention this user)
+                      final replies = _comments
+                          .where(
+                            (c) =>
+                                c.content.startsWith('@${comment.userName}') &&
+                                c.id != comment.id &&
+                                c.createdAt.isAfter(comment.createdAt),
+                          )
+                          .toList();
 
-                          return _CommentTile(
-                            comment: comment,
-                            replies: replies,
-                            isExpanded: _expandedReplies[comment.id] ?? false,
-                            onReply: () => _startReply(comment),
-                            onLike: () => _likeComment(comment),
-                            onToggleReplies: () => _toggleReplies(comment.id),
-                            onReplyToReply: _startReply,
-                          );
-                        },
-                      ),
+                      return _CommentTile(
+                        comment: comment,
+                        replies: replies,
+                        isExpanded: _expandedReplies[comment.id] ?? false,
+                        onReply: () => _startReply(comment),
+                        onLike: () => _likeComment(comment),
+                        onToggleReplies: () => _toggleReplies(comment.id),
+                        onReplyToReply: _startReply,
+                      );
+                    },
+                  ),
           ),
 
           // Reply indicator
@@ -321,7 +319,9 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: ThemeColors.getSecondaryTextColor(context).withValues(alpha: 0.1),
+                        color: ThemeColors.getSecondaryTextColor(
+                          context,
+                        ).withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -341,7 +341,9 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
               color: ThemeColors.getSurfaceColor(context),
               border: Border(
                 top: BorderSide(
-                  color: ThemeColors.getBorderColor(context).withValues(alpha: 0.3),
+                  color: ThemeColors.getBorderColor(
+                    context,
+                  ).withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -349,7 +351,10 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
             child: SafeArea(
               top: false,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -374,7 +379,9 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
                           color: ThemeColors.getBackgroundColor(context),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: ThemeColors.getBorderColor(context).withValues(alpha: 0.4),
+                            color: ThemeColors.getBorderColor(
+                              context,
+                            ).withValues(alpha: 0.4),
                             width: 1,
                           ),
                         ),
@@ -386,9 +393,12 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
                             hintText: _replyingTo != null
                                 ? 'Reply to @$_replyingToUserName...'
                                 : 'Add a comment...',
-                            hintStyle: TextThemes.getBodyMediumStyle(context).copyWith(
-                              color: ThemeColors.getSecondaryTextColor(context),
-                            ),
+                            hintStyle: TextThemes.getBodyMediumStyle(context)
+                                .copyWith(
+                                  color: ThemeColors.getSecondaryTextColor(
+                                    context,
+                                  ),
+                                ),
                             border: InputBorder.none,
                             isDense: true,
                             contentPadding: const EdgeInsets.symmetric(
@@ -415,7 +425,9 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
                           height: 36,
                           decoration: BoxDecoration(
                             color: _isSending
-                                ? ThemeColors.primaryColor.withValues(alpha: 0.7)
+                                ? ThemeColors.primaryColor.withValues(
+                                    alpha: 0.7,
+                                  )
                                 : ThemeColors.primaryColor,
                             shape: BoxShape.circle,
                           ),
@@ -424,7 +436,9 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
                                   padding: EdgeInsets.all(10),
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation(Colors.white),
+                                    valueColor: AlwaysStoppedAnimation(
+                                      Colors.white,
+                                    ),
                                   ),
                                 )
                               : const Icon(
@@ -466,16 +480,16 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
           const SizedBox(height: 16),
           Text(
             'No comments yet',
-            style: TextThemes.getBodyMediumStyle(context).copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextThemes.getBodyMediumStyle(
+              context,
+            ).copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Text(
             'Start the conversation!',
-            style: TextThemes.getBodySmallStyle(context).copyWith(
-              color: ThemeColors.getSecondaryTextColor(context),
-            ),
+            style: TextThemes.getBodySmallStyle(
+              context,
+            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
           ),
         ],
       ),
@@ -526,10 +540,7 @@ class _CommentTile extends StatelessWidget {
     final matches = mentionRegex.allMatches(content);
 
     if (matches.isEmpty) {
-      return Text(
-        content,
-        style: TextThemes.getBodyMediumStyle(context),
-      );
+      return Text(content, style: TextThemes.getBodyMediumStyle(context));
     }
 
     final spans = <InlineSpan>[];
@@ -621,14 +632,14 @@ class _CommentTile extends StatelessWidget {
                         if (comment.likeCount > 0) ...[
                           Text(
                             '${comment.likeCount} ${comment.likeCount == 1 ? 'like' : 'likes'}',
-                            style: TextThemes.getBodySmallStyle(
-                              context,
-                            ).copyWith(
-                              color:
-                                  ThemeColors.getSecondaryTextColor(context),
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
-                            ),
+                            style: TextThemes.getBodySmallStyle(context)
+                                .copyWith(
+                                  color: ThemeColors.getSecondaryTextColor(
+                                    context,
+                                  ),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                ),
                           ),
                           const SizedBox(width: 16),
                         ],
@@ -638,14 +649,14 @@ class _CommentTile extends StatelessWidget {
                           onTap: onReply,
                           child: Text(
                             'Reply',
-                            style: TextThemes.getBodySmallStyle(
-                              context,
-                            ).copyWith(
-                              color:
-                                  ThemeColors.getSecondaryTextColor(context),
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
-                            ),
+                            style: TextThemes.getBodySmallStyle(context)
+                                .copyWith(
+                                  color: ThemeColors.getSecondaryTextColor(
+                                    context,
+                                  ),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                ),
                           ),
                         ),
 
@@ -808,9 +819,9 @@ class _ReplyTile extends StatelessWidget {
         spans.add(
           TextSpan(
             text: content.substring(lastEnd, match.start),
-            style: TextThemes.getBodyMediumStyle(context).copyWith(
-              fontSize: 13,
-            ),
+            style: TextThemes.getBodyMediumStyle(
+              context,
+            ).copyWith(fontSize: 13),
           ),
         );
       }
@@ -857,10 +868,9 @@ class _ReplyTile extends StatelessWidget {
               children: [
                 Text(
                   reply.userName,
-                  style: TextThemes.getBodyMediumStyle(context).copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
+                  style: TextThemes.getBodyMediumStyle(
+                    context,
+                  ).copyWith(fontWeight: FontWeight.bold, fontSize: 13),
                 ),
                 const SizedBox(height: 2),
                 _buildReplyContent(context, reply.content),

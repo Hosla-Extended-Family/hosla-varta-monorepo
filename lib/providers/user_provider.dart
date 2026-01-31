@@ -6,14 +6,16 @@ import 'package:hosla/services/user_service.dart';
 final userServiceProvider = Provider<UserService>((ref) => UserService());
 
 /// Provider for current user profile
-final currentUserProfileProvider = StateNotifierProvider<UserProfileNotifier, User?>((ref) {
-  return UserProfileNotifier(ref.read(userServiceProvider));
-});
+final currentUserProfileProvider =
+    StateNotifierProvider<UserProfileNotifier, User?>((ref) {
+      return UserProfileNotifier(ref.read(userServiceProvider));
+    });
 
 /// Provider for app settings
-final appSettingsProvider = StateNotifierProvider<AppSettingsNotifier, AppSettings>((ref) {
-  return AppSettingsNotifier(ref.read(userServiceProvider));
-});
+final appSettingsProvider =
+    StateNotifierProvider<AppSettingsNotifier, AppSettings>((ref) {
+      return AppSettingsNotifier(ref.read(userServiceProvider));
+    });
 
 /// App settings model
 class AppSettings {

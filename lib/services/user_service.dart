@@ -275,9 +275,7 @@ class UserService {
         final prefs = await SharedPreferences.getInstance();
         final refreshToken = prefs.getString('refresh_token');
         final uri = Uri.parse('${ApiConstants.baseUrl}/api/auth/logout');
-        final body = json.encode({
-          'refreshToken': refreshToken ?? '',
-        });
+        final body = json.encode({'refreshToken': refreshToken ?? ''});
         await _api.post(uri, body: body);
       } catch (e) {
         print('Logout API failed, continuing local cleanup: $e');
@@ -350,7 +348,10 @@ class UserService {
     }
 
     return User(
-      id: json['id']?.toString() ?? json['userId']?.toString() ?? 'current_user',
+      id:
+          json['id']?.toString() ??
+          json['userId']?.toString() ??
+          'current_user',
       name: json['name']?.toString() ?? 'User',
       avatarUrl: avatarUrl?.toString(),
       bio: json['bio']?.toString(),

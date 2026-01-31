@@ -35,7 +35,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           children: [
             // Header with gradient and profile picture overlapping
             SizedBox(
-              height: headerHeight + 55, // Extra space for profile picture overlap
+              height:
+                  headerHeight + 55, // Extra space for profile picture overlap
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -82,7 +83,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (_) => const SettingsPage()),
+                                MaterialPageRoute(
+                                  builder: (_) => const SettingsPage(),
+                                ),
                               );
                             },
                             icon: const Icon(
@@ -127,10 +130,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             // User Name
             Text(
               currentUser?.name ?? 'User',
-              style: TextThemes.getTitleStyle(context).copyWith(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextThemes.getTitleStyle(
+                context,
+              ).copyWith(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
 
@@ -138,9 +140,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             if (currentUser?.phone != null)
               Text(
                 currentUser!.phone!,
-                style: TextThemes.getBodyMediumStyle(context).copyWith(
-                  color: ThemeColors.getSecondaryTextColor(context),
-                ),
+                style: TextThemes.getBodyMediumStyle(
+                  context,
+                ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
               ),
             const SizedBox(height: 8),
 
@@ -151,9 +153,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 child: Text(
                   currentUser.bio!,
                   textAlign: TextAlign.center,
-                  style: TextThemes.getBodyMediumStyle(context).copyWith(
-                    color: ThemeColors.getSecondaryTextColor(context),
-                  ),
+                  style: TextThemes.getBodyMediumStyle(
+                    context,
+                  ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
                 ),
               ),
             const SizedBox(height: 24),
@@ -194,7 +196,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
             // Menu Items
             _buildMenuSection(context, isDark),
-            
+
             const SizedBox(height: 32),
           ],
         ),
@@ -238,7 +240,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             color: ThemeColors.getBackgroundColor(context),
           ),
           child: ClipOval(
-            child: currentUser?.avatarUrl != null &&
+            child:
+                currentUser?.avatarUrl != null &&
                     currentUser!.avatarUrl!.isNotEmpty
                 ? Image.network(
                     currentUser.avatarUrl!,
@@ -274,11 +277,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   Widget _buildDefaultAvatar() {
     return Container(
       color: ThemeColors.primaryColor.withOpacity(0.1),
-      child: Icon(
-        Icons.person,
-        size: 48,
-        color: ThemeColors.primaryColor,
-      ),
+      child: Icon(Icons.person, size: 48, color: ThemeColors.primaryColor),
     );
   }
 
@@ -353,10 +352,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             color: ThemeColors.getBorderColor(context).withOpacity(0.3),
           ),
         ),
-        child: Icon(
-          icon,
-          color: ThemeColors.getTextColor(context),
-        ),
+        child: Icon(icon, color: ThemeColors.getTextColor(context)),
       ),
     );
   }
@@ -551,9 +547,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   children: [
                     Text(
                       title,
-                      style: TextThemes.getBodyMediumStyle(context).copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: TextThemes.getBodyMediumStyle(
+                        context,
+                      ).copyWith(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -621,25 +617,24 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             const SizedBox(height: 16),
             Text(
               'Hosla Varta',
-              style: TextThemes.getTitleStyle(context).copyWith(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextThemes.getTitleStyle(
+                context,
+              ).copyWith(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
               'Version 1.0.0',
-              style: TextThemes.getBodyMediumStyle(context).copyWith(
-                color: ThemeColors.getSecondaryTextColor(context),
-              ),
+              style: TextThemes.getBodyMediumStyle(
+                context,
+              ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
             ),
             const SizedBox(height: 16),
             Text(
               'Connect with your community\nShare moments, stories & more',
               textAlign: TextAlign.center,
-              style: TextThemes.getBodySmallStyle(context).copyWith(
-                color: ThemeColors.getSecondaryTextColor(context),
-              ),
+              style: TextThemes.getBodySmallStyle(
+                context,
+              ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
             ),
           ],
         ),
@@ -682,18 +677,17 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               const SizedBox(width: 12),
               Text(
                 'Logout',
-                style: TextThemes.getTitleStyle(context).copyWith(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextThemes.getTitleStyle(
+                  context,
+                ).copyWith(fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ],
           ),
           content: Text(
             'Are you sure you want to logout? You\'ll need to sign in again to access your account.',
-            style: TextThemes.getBodyMediumStyle(context).copyWith(
-              color: ThemeColors.getSecondaryTextColor(context),
-            ),
+            style: TextThemes.getBodyMediumStyle(
+              context,
+            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
           ),
           actions: [
             TextButton(
@@ -740,7 +734,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       await prefs.setBool('is_logged_in', false);
 
       if (mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/login', (route) => false);
       }
     } catch (e) {
       if (mounted) {
@@ -767,9 +763,11 @@ class _PatternPainter extends CustomPainter {
     const radius = 4.0;
 
     for (double y = 0; y < size.height; y += spacing) {
-      for (double x = (y ~/ spacing).isEven ? 0 : spacing / 2;
-          x < size.width;
-          x += spacing) {
+      for (
+        double x = (y ~/ spacing).isEven ? 0 : spacing / 2;
+        x < size.width;
+        x += spacing
+      ) {
         canvas.drawCircle(Offset(x, y), radius, paint);
       }
     }
