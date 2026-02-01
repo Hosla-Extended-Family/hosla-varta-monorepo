@@ -24,7 +24,7 @@ class SnackBarWidget {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [config.color, config.color.withOpacity(0.7)],
+                  colors: [config.color, config.color.withValues(alpha: 0.7)],
                 ),
                 borderRadius: BorderRadius.circular(10),
               ),

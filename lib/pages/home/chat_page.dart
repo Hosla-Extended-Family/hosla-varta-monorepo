@@ -137,7 +137,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           height: 1,
                           color: ThemeColors.getSecondaryTextColor(
                             context,
-                          ).withOpacity(0.1),
+                          ).withValues(alpha: 0.1),
                         ),
                       ),
                       itemBuilder: (context, index) {
@@ -176,7 +176,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: ThemeColors.primaryColor.withOpacity(0.1),
+                          color: ThemeColors.primaryColor.withValues(
+                            alpha: 0.1,
+                          ),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -291,8 +293,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: ThemeColors.primaryColor.withOpacity(
-                                    0.3,
+                                  color: ThemeColors.primaryColor.withValues(
+                                    alpha: 0.3,
                                   ),
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
@@ -376,7 +378,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: ThemeColors.primaryColor.withOpacity(0.1),
+              color: ThemeColors.primaryColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -506,7 +508,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
               decoration: BoxDecoration(
                 color: ThemeColors.getSecondaryTextColor(
                   context,
-                ).withOpacity(0.3),
+                ).withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -557,7 +559,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
               decoration: BoxDecoration(
                 color: ThemeColors.getSecondaryTextColor(
                   context,
-                ).withOpacity(0.3),
+                ).withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -611,7 +613,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
               decoration: BoxDecoration(
                 color: ThemeColors.getSecondaryTextColor(
                   context,
-                ).withOpacity(0.3),
+                ).withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

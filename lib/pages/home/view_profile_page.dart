@@ -63,8 +63,8 @@ class ViewProfilePage extends ConsumerWidget {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: ThemeColors.primaryColor.withOpacity(
-                                  0.3,
+                                color: ThemeColors.primaryColor.withValues(
+                                  alpha: 0.3,
                                 ),
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
@@ -175,9 +175,12 @@ class ViewProfilePage extends ConsumerWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.green.withOpacity(0.15),
+          color: Colors.green.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.green.withOpacity(0.3), width: 1),
+          border: Border.all(
+            color: Colors.green.withValues(alpha: 0.3),
+            width: 1,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -228,7 +231,7 @@ class ViewProfilePage extends ConsumerWidget {
         color: ThemeColors.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: ThemeColors.getBorderColor(context).withOpacity(0.1),
+          color: ThemeColors.getBorderColor(context).withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -240,8 +243,8 @@ class ViewProfilePage extends ConsumerWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  ThemeColors.primaryColor.withOpacity(0.15),
-                  ThemeColors.primaryColor.withOpacity(0.08),
+                  ThemeColors.primaryColor.withValues(alpha: 0.15),
+                  ThemeColors.primaryColor.withValues(alpha: 0.08),
                 ],
               ),
               borderRadius: BorderRadius.circular(10),
@@ -307,8 +310,8 @@ class ViewProfilePage extends ConsumerWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  ThemeColors.primaryColor.withOpacity(0.15),
-                  ThemeColors.primaryColor.withOpacity(0.08),
+                  ThemeColors.primaryColor.withValues(alpha: 0.15),
+                  ThemeColors.primaryColor.withValues(alpha: 0.08),
                 ],
               ),
               borderRadius: BorderRadius.circular(12),
@@ -329,8 +332,8 @@ class ViewProfilePage extends ConsumerWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  ThemeColors.primaryColor.withOpacity(0.15),
-                  ThemeColors.primaryColor.withOpacity(0.08),
+                  ThemeColors.primaryColor.withValues(alpha: 0.15),
+                  ThemeColors.primaryColor.withValues(alpha: 0.08),
                 ],
               ),
               borderRadius: BorderRadius.circular(12),
@@ -357,7 +360,7 @@ class ViewProfilePage extends ConsumerWidget {
         color: ThemeColors.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: ThemeColors.getBorderColor(context).withOpacity(0.1),
+          color: ThemeColors.getBorderColor(context).withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -375,7 +378,7 @@ class ViewProfilePage extends ConsumerWidget {
           Divider(
             height: 1,
             indent: 68,
-            color: ThemeColors.getBorderColor(context).withOpacity(0.2),
+            color: ThemeColors.getBorderColor(context).withValues(alpha: 0.2),
           ),
           _buildMediaTile(
             context,
@@ -389,7 +392,7 @@ class ViewProfilePage extends ConsumerWidget {
           Divider(
             height: 1,
             indent: 68,
-            color: ThemeColors.getBorderColor(context).withOpacity(0.2),
+            color: ThemeColors.getBorderColor(context).withValues(alpha: 0.2),
           ),
           _buildMediaTile(
             context,
@@ -423,8 +426,8 @@ class ViewProfilePage extends ConsumerWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    ThemeColors.primaryColor.withOpacity(0.15),
-                    ThemeColors.primaryColor.withOpacity(0.08),
+                    ThemeColors.primaryColor.withValues(alpha: 0.15),
+                    ThemeColors.primaryColor.withValues(alpha: 0.08),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(10),

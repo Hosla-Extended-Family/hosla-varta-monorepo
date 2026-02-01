@@ -230,13 +230,15 @@ class _PostWidgetState extends State<PostWidget>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            ThemeColors.primaryColor.withOpacity(0.15),
-                            ThemeColors.primaryColor.withOpacity(0.08),
+                            ThemeColors.primaryColor.withValues(alpha: 0.15),
+                            ThemeColors.primaryColor.withValues(alpha: 0.08),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: ThemeColors.primaryColor.withOpacity(0.3),
+                          color: ThemeColors.primaryColor.withValues(
+                            alpha: 0.3,
+                          ),
                           width: 1,
                         ),
                       ),
@@ -290,7 +292,7 @@ class _PostWidgetState extends State<PostWidget>
                           size: 64,
                           color: ThemeColors.getSecondaryTextColor(
                             context,
-                          ).withOpacity(0.3),
+                          ).withValues(alpha: 0.3),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -335,7 +337,7 @@ class _PostWidgetState extends State<PostWidget>
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Divider(
               height: 1,
-              color: ThemeColors.getBorderColor(context).withOpacity(0.2),
+              color: ThemeColors.getBorderColor(context).withValues(alpha: 0.2),
             ),
           ),
           const SizedBox(height: 8),
@@ -431,7 +433,7 @@ class _PostWidgetState extends State<PostWidget>
               decoration: BoxDecoration(
                 color: ThemeColors.getSecondaryTextColor(
                   context,
-                ).withOpacity(0.3),
+                ).withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -626,7 +628,7 @@ class _PostWidgetState extends State<PostWidget>
                           return ListTile(
                             leading: CircleAvatar(
                               backgroundColor: ThemeColors.primaryColor
-                                  .withOpacity(0.2),
+                                  .withValues(alpha: 0.2),
                               child: Icon(
                                 Icons.person,
                                 color: ThemeColors.primaryColor,

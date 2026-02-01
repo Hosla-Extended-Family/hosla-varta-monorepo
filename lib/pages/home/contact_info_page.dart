@@ -178,7 +178,7 @@ class ContactInfoPage extends ConsumerWidget {
                       indent: 72,
                       color: ThemeColors.getBorderColor(
                         context,
-                      ).withOpacity(0.3),
+                      ).withValues(alpha: 0.3),
                     ),
                     _buildTile(
                       context,
@@ -197,7 +197,7 @@ class ContactInfoPage extends ConsumerWidget {
                       indent: 72,
                       color: ThemeColors.getBorderColor(
                         context,
-                      ).withOpacity(0.3),
+                      ).withValues(alpha: 0.3),
                     ),
                     _buildTile(
                       context,
@@ -261,7 +261,7 @@ class ContactInfoPage extends ConsumerWidget {
                                 indent: 72,
                                 color: ThemeColors.getBorderColor(
                                   context,
-                                ).withOpacity(0.3),
+                                ).withValues(alpha: 0.3),
                               ),
                           ],
                         ),
@@ -290,7 +290,7 @@ class ContactInfoPage extends ConsumerWidget {
                       indent: 72,
                       color: ThemeColors.getBorderColor(
                         context,
-                      ).withOpacity(0.3),
+                      ).withValues(alpha: 0.3),
                     ),
                     _buildTile(
                       context,

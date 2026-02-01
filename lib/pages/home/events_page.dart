@@ -210,7 +210,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                       ? ThemeColors.primaryColor
                       : ThemeColors.getSecondaryTextColor(
                           context,
-                        ).withOpacity(0.2),
+                        ).withValues(alpha: 0.2),
                   width: 1.5,
                 ),
               ),
@@ -226,7 +226,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 4,
-      shadowColor: ThemeColors.primaryColor.withOpacity(0.15),
+      shadowColor: ThemeColors.primaryColor.withValues(alpha: 0.15),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: InkWell(
         onTap: () => _openEventDetail(event),
@@ -254,8 +254,8 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                               colors: [
-                                ThemeColors.primaryColor.withOpacity(0.3),
-                                ThemeColors.primaryColor.withOpacity(0.1),
+                                ThemeColors.primaryColor.withValues(alpha: 0.3),
+                                ThemeColors.primaryColor.withValues(alpha: 0.1),
                               ],
                             ),
                           ),
@@ -318,7 +318,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                       horizontal: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: ThemeColors.primaryColor.withOpacity(0.08),
+                      color: ThemeColors.primaryColor.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -393,13 +393,19 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                ThemeColors.primaryColor.withOpacity(0.15),
-                                ThemeColors.primaryColor.withOpacity(0.08),
+                                ThemeColors.primaryColor.withValues(
+                                  alpha: 0.15,
+                                ),
+                                ThemeColors.primaryColor.withValues(
+                                  alpha: 0.08,
+                                ),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: ThemeColors.primaryColor.withOpacity(0.3),
+                              color: ThemeColors.primaryColor.withValues(
+                                alpha: 0.3,
+                              ),
                               width: 1,
                             ),
                           ),
@@ -429,7 +435,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                         decoration: BoxDecoration(
                           color: ThemeColors.getSuccessColor(
                             context,
-                          ).withOpacity(0.1),
+                          ).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -461,7 +467,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                         decoration: BoxDecoration(
                           color: ThemeColors.getWarningColor(
                             context,
-                          ).withOpacity(0.1),
+                          ).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -531,7 +537,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
         border: Border.all(color: chipColor, width: 2),
         boxShadow: [
           BoxShadow(
-            color: chipColor.withOpacity(0.3),
+            color: chipColor.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -594,13 +600,15 @@ class _EventsPageState extends ConsumerState<EventsPage> {
           border: Border.all(
             color: isSelected
                 ? ThemeColors.primaryColor
-                : ThemeColors.getSecondaryTextColor(context).withOpacity(0.3),
+                : ThemeColors.getSecondaryTextColor(
+                    context,
+                  ).withValues(alpha: 0.3),
             width: 2,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: ThemeColors.primaryColor.withOpacity(0.3),
+                    color: ThemeColors.primaryColor.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -627,7 +635,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: ThemeColors.primaryColor.withOpacity(0.1),
+              color: ThemeColors.primaryColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -666,7 +674,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: ThemeColors.primaryColor.withOpacity(0.1),
+              color: ThemeColors.primaryColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -749,7 +757,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
               decoration: BoxDecoration(
                 color: ThemeColors.getSecondaryTextColor(
                   context,
-                ).withOpacity(0.3),
+                ).withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

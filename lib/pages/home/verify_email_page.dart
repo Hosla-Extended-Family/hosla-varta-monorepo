@@ -277,8 +277,8 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      ThemeColors.primaryColor.withOpacity(0.15),
-                      ThemeColors.primaryColor.withOpacity(0.08),
+                      ThemeColors.primaryColor.withValues(alpha: 0.15),
+                      ThemeColors.primaryColor.withValues(alpha: 0.08),
                     ],
                   ),
                   shape: BoxShape.circle,
@@ -325,12 +325,14 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                   color: ThemeColors.getCardColor(context),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: ThemeColors.getBorderColor(context).withOpacity(0.1),
+                    color: ThemeColors.getBorderColor(
+                      context,
+                    ).withValues(alpha: 0.1),
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: isDark
-                          ? Colors.black.withOpacity(0.3)
+                          ? Colors.black.withValues(alpha: 0.3)
                           : ThemeColors.getOverlayColor(context, opacity: 0.08),
                       blurRadius: 20,
                       offset: const Offset(0, 4),
@@ -387,12 +389,14 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                   color: ThemeColors.getCardColor(context),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: ThemeColors.getBorderColor(context).withOpacity(0.1),
+                    color: ThemeColors.getBorderColor(
+                      context,
+                    ).withValues(alpha: 0.1),
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: isDark
-                          ? Colors.black.withOpacity(0.3)
+                          ? Colors.black.withValues(alpha: 0.3)
                           : ThemeColors.getOverlayColor(context, opacity: 0.08),
                       blurRadius: 20,
                       offset: const Offset(0, 4),
@@ -494,10 +498,10 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: ThemeColors.primaryColor.withOpacity(0.1),
+                color: ThemeColors.primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: ThemeColors.primaryColor.withOpacity(0.2),
+                  color: ThemeColors.primaryColor.withValues(alpha: 0.2),
                 ),
               ),
               child: Row(

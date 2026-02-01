@@ -343,8 +343,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
-                disabledBackgroundColor: ThemeColors.primaryColor.withOpacity(
-                  0.5,
+                disabledBackgroundColor: ThemeColors.primaryColor.withValues(
+                  alpha: 0.5,
                 ),
               ),
               child: _isLoading
@@ -446,7 +446,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
                           Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: ThemeColors.primaryColor.withOpacity(0.1),
+                              color: ThemeColors.primaryColor.withValues(
+                                alpha: 0.1,
+                              ),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -703,7 +705,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: color, size: 24),

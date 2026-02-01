@@ -196,7 +196,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: ThemeColors.primaryColor.withOpacity(0.1),
+                    color: ThemeColors.primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -221,7 +221,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
 
           Divider(
             height: 1,
-            color: ThemeColors.getBorderColor(context).withOpacity(0.5),
+            color: ThemeColors.getBorderColor(context).withValues(alpha: 0.5),
           ),
 
           // Comments List
@@ -468,7 +468,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: ThemeColors.primaryColor.withOpacity(0.1),
+              color: ThemeColors.primaryColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -713,7 +713,7 @@ class _CommentTile extends StatelessWidget {
                     height: 1,
                     color: ThemeColors.getSecondaryTextColor(
                       context,
-                    ).withOpacity(0.3),
+                    ).withValues(alpha: 0.3),
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -750,7 +750,7 @@ class _CommentTile extends StatelessWidget {
                     height: 1,
                     color: ThemeColors.getSecondaryTextColor(
                       context,
-                    ).withOpacity(0.3),
+                    ).withValues(alpha: 0.3),
                   ),
                   const SizedBox(width: 8),
                   Text(

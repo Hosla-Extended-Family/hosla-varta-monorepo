@@ -96,7 +96,7 @@ class _FeedPageState extends ConsumerState<FeedPage>
               centerTitle: false,
               backgroundColor: ThemeColors.getNavBarColor(
                 context,
-              ).withOpacity(0.8),
+              ).withValues(alpha: 0.8),
               elevation: 0,
               title: AnimatedOpacity(
                 opacity: _showTitle ? 1.0 : 1.0,
@@ -192,8 +192,8 @@ class _FeedPageState extends ConsumerState<FeedPage>
                             shape: BoxShape.circle,
                             gradient: LinearGradient(
                               colors: [
-                                ThemeColors.primaryColor.withOpacity(0.3),
-                                ThemeColors.primaryColor.withOpacity(0.1),
+                                ThemeColors.primaryColor.withValues(alpha: 0.3),
+                                ThemeColors.primaryColor.withValues(alpha: 0.1),
                               ],
                             ),
                           ),
@@ -353,7 +353,7 @@ class _FeedPageState extends ConsumerState<FeedPage>
   //                   ),
   //                   if (isAddStory)
   //                     Container(
-  //                       color: Colors.black.withOpacity(0.3),
+  //                       color: Colors.black.withValues(alpha: 0.3),
   //                       child: const Icon(
   //                         Icons.add_circle,
   //                         color: Colors.white,

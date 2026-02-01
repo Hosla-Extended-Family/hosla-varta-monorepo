@@ -52,7 +52,9 @@ class _BlockedUsersPageState extends ConsumerState<BlockedUsersPage> {
               separatorBuilder: (context, index) => Divider(
                 height: 1,
                 indent: 80,
-                color: ThemeColors.getBorderColor(context).withOpacity(0.5),
+                color: ThemeColors.getBorderColor(
+                  context,
+                ).withValues(alpha: 0.5),
               ),
               itemBuilder: (context, index) {
                 final user = _blockedUsers[index];
@@ -70,7 +72,9 @@ class _BlockedUsersPageState extends ConsumerState<BlockedUsersPage> {
           Icon(
             Icons.block_outlined,
             size: 80,
-            color: ThemeColors.getSecondaryTextColor(context).withOpacity(0.5),
+            color: ThemeColors.getSecondaryTextColor(
+              context,
+            ).withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(

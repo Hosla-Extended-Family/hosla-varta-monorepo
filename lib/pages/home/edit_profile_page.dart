@@ -279,7 +279,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
               height: 200,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withValues(alpha: 0.05),
               ),
             ),
           ),
@@ -291,7 +291,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
               height: 180,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.03),
+                color: Colors.white.withValues(alpha: 0.03),
               ),
             ),
           ),
@@ -321,7 +321,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -373,7 +373,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: ThemeColors.primaryColor.withOpacity(0.4),
+                  color: ThemeColors.primaryColor.withValues(alpha: 0.4),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -430,7 +430,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: ThemeColors.primaryColor.withOpacity(0.3),
+                    color: ThemeColors.primaryColor.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -452,11 +452,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
     return Container(
       width: 110,
       height: 110,
-      color: ThemeColors.primaryColor.withOpacity(0.1),
+      color: ThemeColors.primaryColor.withValues(alpha: 0.1),
       child: Icon(
         Icons.person_rounded,
         size: 50,
-        color: ThemeColors.primaryColor.withOpacity(0.5),
+        color: ThemeColors.primaryColor.withValues(alpha: 0.5),
       ),
     );
   }
@@ -502,8 +502,8 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withOpacity(0.3)
-                : Colors.black.withOpacity(0.04),
+                ? Colors.black.withValues(alpha: 0.3)
+                : Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -522,8 +522,8 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        ThemeColors.primaryColor.withOpacity(0.15),
-                        ThemeColors.primaryColor.withOpacity(0.05),
+                        ThemeColors.primaryColor.withValues(alpha: 0.15),
+                        ThemeColors.primaryColor.withValues(alpha: 0.05),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(10),
@@ -548,7 +548,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                     decoration: BoxDecoration(
                       color: ThemeColors.getSecondaryTextColor(
                         context,
-                      ).withOpacity(0.1),
+                      ).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -593,7 +593,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextThemes.getBodyMediumStyle(context).copyWith(
-          color: ThemeColors.getSecondaryTextColor(context).withOpacity(0.5),
+          color: ThemeColors.getSecondaryTextColor(
+            context,
+          ).withValues(alpha: 0.5),
         ),
         border: InputBorder.none,
         contentPadding: EdgeInsets.zero,
@@ -611,7 +613,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
         hint: Text(
           'Select gender',
           style: TextThemes.getBodyMediumStyle(context).copyWith(
-            color: ThemeColors.getSecondaryTextColor(context).withOpacity(0.5),
+            color: ThemeColors.getSecondaryTextColor(
+              context,
+            ).withValues(alpha: 0.5),
           ),
         ),
         isExpanded: true,
@@ -668,7 +672,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                       ? ThemeColors.getTextColor(context)
                       : ThemeColors.getSecondaryTextColor(
                           context,
-                        ).withOpacity(0.5),
+                        ).withValues(alpha: 0.5),
                 ),
               ),
             ),
@@ -699,7 +703,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
           color: ThemeColors.getSurfaceColor(context),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),
@@ -721,12 +725,14 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                   : null,
               color: _hasChanges && !_isLoading
                   ? null
-                  : ThemeColors.getSecondaryTextColor(context).withOpacity(0.2),
+                  : ThemeColors.getSecondaryTextColor(
+                      context,
+                    ).withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(16),
               boxShadow: _hasChanges && !_isLoading
                   ? [
                       BoxShadow(
-                        color: ThemeColors.primaryColor.withOpacity(0.4),
+                        color: ThemeColors.primaryColor.withValues(alpha: 0.4),
                         blurRadius: 12,
                         offset: const Offset(0, 6),
                       ),
@@ -877,7 +883,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(icon, color: color, size: 24),
@@ -978,7 +984,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: ThemeColors.warningColor.withOpacity(0.1),
+                color: ThemeColors.warningColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
@@ -1134,7 +1140,7 @@ class _PatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.04)
+      ..color = Colors.white.withValues(alpha: 0.04)
       ..style = PaintingStyle.fill;
 
     const spacing = 25.0;

@@ -35,7 +35,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
             leading: Container(
               margin: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 shape: BoxShape.circle,
               ),
               child: IconButton(
@@ -48,7 +48,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
               Container(
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
+                  color: Colors.black.withValues(alpha: 0.5),
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
@@ -60,7 +60,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
               Container(
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
+                  color: Colors.black.withValues(alpha: 0.5),
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
@@ -112,8 +112,8 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withOpacity(0.3),
-                          Colors.black.withOpacity(0.7),
+                          Colors.black.withValues(alpha: 0.3),
+                          Colors.black.withValues(alpha: 0.7),
                         ],
                       ),
                     ),
@@ -147,13 +147,13 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                       border: Border.all(
                         color: ThemeColors.getBorderColor(
                           context,
-                        ).withOpacity(0.1),
+                        ).withValues(alpha: 0.1),
                         width: 1,
                       ),
                       boxShadow: [
                         BoxShadow(
                           color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.black.withOpacity(0.3)
+                              ? Colors.black.withValues(alpha: 0.3)
                               : ThemeColors.getOverlayColor(
                                   context,
                                   opacity: 0.08,
@@ -245,7 +245,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                         border: Border.all(
                           color: ThemeColors.getBorderColor(
                             context,
-                          ).withOpacity(0.1),
+                          ).withValues(alpha: 0.1),
                           width: 1,
                         ),
                       ),
@@ -325,7 +325,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -360,7 +360,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: ThemeColors.primaryColor.withOpacity(0.1),
+            color: ThemeColors.primaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, size: 20, color: ThemeColors.primaryColor),
@@ -411,13 +411,13 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            ThemeColors.primaryColor.withOpacity(0.08),
-            ThemeColors.primaryColor.withOpacity(0.03),
+            ThemeColors.primaryColor.withValues(alpha: 0.08),
+            ThemeColors.primaryColor.withValues(alpha: 0.03),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: ThemeColors.primaryColor.withOpacity(0.2),
+          color: ThemeColors.primaryColor.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -518,13 +518,13 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    ThemeColors.primaryColor.withOpacity(0.15),
-                    ThemeColors.primaryColor.withOpacity(0.08),
+                    ThemeColors.primaryColor.withValues(alpha: 0.15),
+                    ThemeColors.primaryColor.withValues(alpha: 0.08),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: ThemeColors.primaryColor.withOpacity(0.3),
+                  color: ThemeColors.primaryColor.withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -604,7 +604,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
         color: ThemeColors.getSurfaceColor(context),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -620,8 +620,8 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                 gradient: userStatus == EventStatus.interested
                     ? LinearGradient(
                         colors: [
-                          Colors.orange.withOpacity(0.15),
-                          Colors.orange.withOpacity(0.05),
+                          Colors.orange.withValues(alpha: 0.15),
+                          Colors.orange.withValues(alpha: 0.05),
                         ],
                       )
                     : null,
@@ -669,7 +669,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                 borderRadius: BorderRadius.circular(12),
                 gradient: LinearGradient(
                   colors: userStatus == EventStatus.going
-                      ? [Colors.green, Colors.green.withOpacity(0.8)]
+                      ? [Colors.green, Colors.green.withValues(alpha: 0.8)]
                       : [
                           ThemeColors.primaryColor,
                           ThemeColors.primaryColor.withBlue(200),
@@ -681,7 +681,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                         (userStatus == EventStatus.going
                                 ? Colors.green
                                 : ThemeColors.primaryColor)
-                            .withOpacity(0.4),
+                            .withValues(alpha: 0.4),
                     blurRadius: 12,
                     offset: const Offset(0, 6),
                   ),

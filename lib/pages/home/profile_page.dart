@@ -217,7 +217,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             gradient: LinearGradient(
               colors: [
                 ThemeColors.primaryColor,
-                ThemeColors.primaryColor.withOpacity(0.5),
+                ThemeColors.primaryColor.withValues(alpha: 0.5),
               ],
             ),
           ),
@@ -276,7 +276,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   Widget _buildDefaultAvatar() {
     return Container(
-      color: ThemeColors.primaryColor.withOpacity(0.1),
+      color: ThemeColors.primaryColor.withValues(alpha: 0.1),
       child: Icon(Icons.person, size: 48, color: ThemeColors.primaryColor),
     );
   }
@@ -306,7 +306,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           border: isPrimary
               ? null
               : Border.all(
-                  color: ThemeColors.getBorderColor(context).withOpacity(0.3),
+                  color: ThemeColors.getBorderColor(
+                    context,
+                  ).withValues(alpha: 0.3),
                 ),
         ),
         child: Row(
@@ -349,7 +351,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           color: ThemeColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: ThemeColors.getBorderColor(context).withOpacity(0.3),
+            color: ThemeColors.getBorderColor(context).withValues(alpha: 0.3),
           ),
         ),
         child: Icon(icon, color: ThemeColors.getTextColor(context)),
@@ -367,7 +369,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -534,7 +536,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.1),
+                  color: iconColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: iconColor, size: 22),
@@ -581,7 +583,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Divider(
-        color: ThemeColors.getBorderColor(context).withOpacity(0.3),
+        color: ThemeColors.getBorderColor(context).withValues(alpha: 0.3),
         height: 1,
       ),
     );
@@ -665,7 +667,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: ThemeColors.errorColor.withOpacity(0.1),
+                  color: ThemeColors.errorColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -756,7 +758,7 @@ class _PatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.05)
+      ..color = Colors.white.withValues(alpha: 0.05)
       ..style = PaintingStyle.fill;
 
     const spacing = 30.0;

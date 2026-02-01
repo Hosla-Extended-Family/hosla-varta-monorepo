@@ -37,10 +37,14 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                child: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
               onPressed: () => Navigator.pop(context),
             ),
@@ -50,11 +54,13 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
                 icon: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: 0.3),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    _isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded,
+                    _isGridView
+                        ? Icons.view_list_rounded
+                        : Icons.grid_view_rounded,
                     color: Colors.white,
                     size: 20,
                   ),
@@ -96,7 +102,7 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withOpacity(0.5),
+                          Colors.black.withValues(alpha: 0.5),
                         ],
                       ),
                     ),
@@ -114,7 +120,7 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Icon(
@@ -141,7 +147,9 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
                                     data: (posts) => Text(
                                       '${posts.length} ${posts.length == 1 ? 'post' : 'posts'} saved',
                                       style: TextStyle(
-                                        color: Colors.white.withOpacity(0.8),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.8,
+                                        ),
                                         fontSize: 14,
                                         fontFamily: 'Quicksand',
                                       ),
@@ -149,7 +157,9 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
                                     loading: () => Text(
                                       'Loading...',
                                       style: TextStyle(
-                                        color: Colors.white.withOpacity(0.8),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.8,
+                                        ),
                                         fontSize: 14,
                                         fontFamily: 'Quicksand',
                                       ),
@@ -173,50 +183,45 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
           savedPostsAsyncValue.when(
             data: (posts) {
               if (posts.isEmpty) {
-                return SliverFillRemaining(
-                  child: _buildEmptyState(context),
-                );
+                return SliverFillRemaining(child: _buildEmptyState(context));
               }
 
               if (_isGridView) {
                 return SliverPadding(
                   padding: const EdgeInsets.all(2),
                   sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 2,
-                      mainAxisSpacing: 2,
-                      childAspectRatio: 1,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 2,
+                          mainAxisSpacing: 2,
+                          childAspectRatio: 1,
+                        ),
                     delegate: SliverChildBuilderDelegate(
-                      (context, index) => _buildGridItem(context, posts[index], posts, index),
+                      (context, index) =>
+                          _buildGridItem(context, posts[index], posts, index),
                       childCount: posts.length,
                     ),
                   ),
                 );
               } else {
                 return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final post = posts[index];
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: PostCard(
-                          post: post,
-                          onEdit: () => _showEditDialog(context, post),
-                          onComment: () => _showComments(context, post),
-                        ),
-                      );
-                    },
-                    childCount: posts.length,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final post = posts[index];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: PostCard(
+                        post: post,
+                        onEdit: () => _showEditDialog(context, post),
+                        onComment: () => _showComments(context, post),
+                      ),
+                    );
+                  }, childCount: posts.length),
                 );
               }
             },
             loading: () => const SliverFillRemaining(
-              child: Center(
-                child: CircularProgressIndicator(),
-              ),
+              child: Center(child: CircularProgressIndicator()),
             ),
             error: (error, stack) => SliverFillRemaining(
               child: _buildErrorState(context, error.toString()),
@@ -227,15 +232,18 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
     );
   }
 
-  Widget _buildGridItem(BuildContext context, Post post, List<Post> allPosts, int index) {
+  Widget _buildGridItem(
+    BuildContext context,
+    Post post,
+    List<Post> allPosts,
+    int index,
+  ) {
     final hasImage = post.imageUrl != null && post.imageUrl!.isNotEmpty;
 
     return GestureDetector(
       onTap: () => _showPostDetail(context, allPosts, index),
       child: Container(
-        decoration: BoxDecoration(
-          color: ThemeColors.getSurfaceColor(context),
-        ),
+        decoration: BoxDecoration(color: ThemeColors.getSurfaceColor(context)),
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -272,9 +280,12 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
                 bottom: 4,
                 left: 4,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
+                    color: Colors.black.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -284,7 +295,10 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
                       const SizedBox(width: 2),
                       Text(
                         '${post.likeCount}',
-                        style: const TextStyle(color: Colors.white, fontSize: 10),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                        ),
                       ),
                     ],
                   ),
@@ -304,17 +318,17 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            ThemeColors.warningColor.withOpacity(0.1),
-            ThemeColors.primaryColor.withOpacity(0.1),
+            ThemeColors.warningColor.withValues(alpha: 0.1),
+            ThemeColors.primaryColor.withValues(alpha: 0.1),
           ],
         ),
       ),
       child: Center(
         child: Text(
-          post.content.length > 50 ? '${post.content.substring(0, 50)}...' : post.content,
-          style: TextThemes.getBodySmallStyle(context).copyWith(
-            fontSize: 10,
-          ),
+          post.content.length > 50
+              ? '${post.content.substring(0, 50)}...'
+              : post.content,
+          style: TextThemes.getBodySmallStyle(context).copyWith(fontSize: 10),
           textAlign: TextAlign.center,
           maxLines: 4,
           overflow: TextOverflow.ellipsis,
@@ -331,7 +345,7 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: ThemeColors.warningColor.withOpacity(0.1),
+              color: ThemeColors.warningColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -343,10 +357,9 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
           const SizedBox(height: 24),
           Text(
             'No Saved Posts',
-            style: TextThemes.getTitleStyle(context).copyWith(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextThemes.getTitleStyle(
+              context,
+            ).copyWith(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Padding(
@@ -354,9 +367,9 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
             child: Text(
               'Posts you save will appear here. Tap the bookmark icon on any post to save it for later.',
               textAlign: TextAlign.center,
-              style: TextThemes.getBodyMediumStyle(context).copyWith(
-                color: ThemeColors.getSecondaryTextColor(context),
-              ),
+              style: TextThemes.getBodyMediumStyle(
+                context,
+              ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
             ),
           ),
           const SizedBox(height: 24),
@@ -386,7 +399,7 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: ThemeColors.errorColor.withOpacity(0.1),
+              color: ThemeColors.errorColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -398,10 +411,9 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
           const SizedBox(height: 20),
           Text(
             'Oops! Something went wrong',
-            style: TextThemes.getTitleStyle(context).copyWith(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextThemes.getTitleStyle(
+              context,
+            ).copyWith(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Padding(
@@ -409,9 +421,9 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
             child: Text(
               'We couldn\'t load your saved posts. Please try again.',
               textAlign: TextAlign.center,
-              style: TextThemes.getBodyMediumStyle(context).copyWith(
-                color: ThemeColors.getSecondaryTextColor(context),
-              ),
+              style: TextThemes.getBodyMediumStyle(
+                context,
+              ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
             ),
           ),
           const SizedBox(height: 24),
@@ -435,14 +447,16 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
     );
   }
 
-  void _showPostDetail(BuildContext context, List<Post> posts, int initialIndex) {
+  void _showPostDetail(
+    BuildContext context,
+    List<Post> posts,
+    int initialIndex,
+  ) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => _PostDetailView(
-          posts: posts,
-          initialIndex: initialIndex,
-        ),
+        builder: (context) =>
+            _PostDetailView(posts: posts, initialIndex: initialIndex),
       ),
     );
   }
@@ -469,10 +483,7 @@ class _PostDetailView extends ConsumerWidget {
   final List<Post> posts;
   final int initialIndex;
 
-  const _PostDetailView({
-    required this.posts,
-    required this.initialIndex,
-  });
+  const _PostDetailView({required this.posts, required this.initialIndex});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -485,10 +496,7 @@ class _PostDetailView extends ConsumerWidget {
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          'Saved Posts',
-          style: TextThemes.getTitleStyle(context),
-        ),
+        title: Text('Saved Posts', style: TextThemes.getTitleStyle(context)),
       ),
       body: PageView.builder(
         controller: PageController(initialPage: initialIndex),
@@ -518,16 +526,18 @@ class _PatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.05)
+      ..color = Colors.white.withValues(alpha: 0.05)
       ..style = PaintingStyle.fill;
 
     const spacing = 25.0;
     const radius = 3.0;
 
     for (double y = 0; y < size.height; y += spacing) {
-      for (double x = (y ~/ spacing).isEven ? 0 : spacing / 2;
-          x < size.width;
-          x += spacing) {
+      for (
+        double x = (y ~/ spacing).isEven ? 0 : spacing / 2;
+        x < size.width;
+        x += spacing
+      ) {
         canvas.drawCircle(Offset(x, y), radius, paint);
       }
     }
