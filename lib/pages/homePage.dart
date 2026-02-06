@@ -19,7 +19,7 @@ class _HomepageState extends State<Homepage> {
     EventsPage(),
     ChatPage(),
     EmergencyPage(),
-    SettingsPage(),
+    SettingsPage(showBackButton: false),
   ];
 
   void _onItemTapped(int index) {

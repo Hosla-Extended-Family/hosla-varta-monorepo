@@ -7,6 +7,7 @@ import 'package:hosla/pages/home/profile_page.dart';
 import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/providers/feed_provider.dart';
 import 'package:hosla/widgets/post_card.dart';
+import 'package:hosla/widgets/loading_widget.dart';
 import 'dart:ui';
 
 class FeedPage extends ConsumerStatefulWidget {
@@ -273,7 +274,12 @@ class _FeedPageState extends ConsumerState<FeedPage>
                     );
                   },
                   loading: () => const SliverToBoxAdapter(
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 40),
+                        child: LoadingWidget(message: 'Loading posts...'),
+                      ),
+                    ),
                   ),
                   error: (e, _) => SliverToBoxAdapter(
                     child: Center(

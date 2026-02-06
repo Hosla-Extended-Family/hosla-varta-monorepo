@@ -12,7 +12,9 @@ import 'package:hosla/widgets/snack_bar_widget.dart';
 
 /// Modern Settings page with enhanced UI matching app design language
 class SettingsPage extends ConsumerStatefulWidget {
-  const SettingsPage({super.key});
+  final bool showBackButton;
+  
+  const SettingsPage({super.key, this.showBackButton = true});
 
   @override
   ConsumerState<SettingsPage> createState() => _SettingsPageState();
@@ -35,21 +37,24 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             pinned: true,
             stretch: true,
             backgroundColor: ThemeColors.getNavBarColor(context),
-            leading: IconButton(
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.arrow_back_ios_rounded,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
-              onPressed: () => Navigator.pop(context),
-            ),
+            automaticallyImplyLeading: false,
+            leading: widget.showBackButton
+                ? IconButton(
+                    icon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_ios_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  )
+                : null,
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,

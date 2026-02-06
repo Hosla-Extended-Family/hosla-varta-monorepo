@@ -142,14 +142,47 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
     }
   }
 
-  void _likeComment(Comment comment) {
-    // TODO: Implement comment like functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(comment.isLiked ? 'Unliked comment' : 'Liked comment'),
-        duration: const Duration(seconds: 1),
-      ),
+  void _likeComment(Comment comment) async {
+    // Optimistic update
+    final updatedComment = comment.copyWith(
+      isLiked: !comment.isLiked,
+      likeCount: comment.isLiked 
+          ? (comment.likeCount > 0 ? comment.likeCount - 1 : 0)
+          : comment.likeCount + 1,
     );
+    
+    setState(() {
+      final index = _comments.indexWhere((c) => c.id == comment.id);
+      if (index != -1) {
+        _comments[index] = updatedComment;
+      }
+    });
+    
+    // Call API
+    try {
+      final postService = ref.read(postServiceProvider);
+      final result = updatedComment.isLiked
+          ? await postService.likeComment(commentId: comment.id)
+          : await postService.unlikeComment(commentId: comment.id);
+      
+      if (!result['success']) {
+        // Revert on failure
+        setState(() {
+          final index = _comments.indexWhere((c) => c.id == comment.id);
+          if (index != -1) {
+            _comments[index] = comment;
+          }
+        });
+      }
+    } catch (e) {
+      // Revert on error
+      setState(() {
+        final index = _comments.indexWhere((c) => c.id == comment.id);
+        if (index != -1) {
+          _comments[index] = comment;
+        }
+      });
+    }
   }
 
   @override

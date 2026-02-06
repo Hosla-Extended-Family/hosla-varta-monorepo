@@ -269,13 +269,21 @@ class UserService {
 
   /// Logout user
   /// Clears local database and SharedPreferences
+  ///
+  /// POST /auth/logout
+  /// Header: X-Client-Platform: <platform>
+  /// Header: Authorization: Bearer <access_token>
+  /// Body: { "refreshToken": "..." }
   Future<void> logout() async {
     try {
+      // Call logout API
       try {
         final prefs = await SharedPreferences.getInstance();
         final refreshToken = prefs.getString('refresh_token');
-        final uri = Uri.parse('${ApiConstants.baseUrl}/api/auth/logout');
+        final uri = Uri.parse('${ApiConstants.baseUrl}/auth/logout');
         final body = json.encode({'refreshToken': refreshToken ?? ''});
+        
+        // API call with proper headers (handled by ApiClient automatically)
         await _api.post(uri, body: body);
       } catch (e) {
         print('Logout API failed, continuing local cleanup: $e');
@@ -562,5 +570,96 @@ class UserService {
 
     // Simulate network delay
     await Future.delayed(const Duration(milliseconds: 350));
+  }
+
+  /// Block a user
+  ///
+  /// POST /api/users/:userId/block
+  Future<Map<String, dynamic>> blockUser(String userId) async {
+    try {
+      final uri = Uri.parse('${ApiConstants.baseUrl}/api/users/$userId/block');
+      final response = await _api.post(uri);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        return {
+          'success': true,
+          'message': responseData['message'] ?? 'User blocked successfully',
+        };
+      } else {
+        final errorData = json.decode(response.body);
+        return {
+          'success': false,
+          'message': errorData['error']?['message'] ?? errorData['message'] ?? 'Failed to block user',
+          'errorCode': errorData['error']?['code'],
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Network error: ${e.toString()}',
+      };
+    }
+  }
+
+  /// Unblock a user
+  ///
+  /// DELETE /api/users/:userId/unblock
+  Future<Map<String, dynamic>> unblockUser(String userId) async {
+    try {
+      final uri = Uri.parse('${ApiConstants.baseUrl}/api/users/$userId/unblock');
+      final response = await _api.delete(uri);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        return {
+          'success': true,
+          'message': responseData['message'] ?? 'User unblocked successfully',
+        };
+      } else {
+        final errorData = json.decode(response.body);
+        return {
+          'success': false,
+          'message': errorData['error']?['message'] ?? errorData['message'] ?? 'Failed to unblock user',
+          'errorCode': errorData['error']?['code'],
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Network error: ${e.toString()}',
+      };
+    }
+  }
+
+  /// Get blocked users list
+  ///
+  /// GET /api/users/blocked
+  Future<Map<String, dynamic>> getBlockedUsers() async {
+    try {
+      final uri = Uri.parse('${ApiConstants.baseUrl}/api/users/blocked');
+      final response = await _api.get(uri);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        return {
+          'success': true,
+          'data': responseData['data'] ?? [],
+        };
+      } else {
+        final errorData = json.decode(response.body);
+        return {
+          'success': false,
+          'message': errorData['message'] ?? 'Failed to fetch blocked users',
+          'data': [],
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Network error: ${e.toString()}',
+        'data': [],
+      };
+    }
   }
 }

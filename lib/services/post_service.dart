@@ -352,31 +352,30 @@ class PostService {
     }
   }
 
-  /// Save or unsave a post
+  /// Save a post
   ///
-  /// Toggles the saved status of a post
+  /// POST /api/posts/{postId}/save
   Future<Map<String, dynamic>> savePost(String postId) async {
     try {
       final url = Uri.parse(
         '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId/save',
       );
 
-      final response = await _httpClient
-          .post(url, headers: {'Content-Type': 'application/json'})
-          .timeout(ApiConstants.timeout);
+      final response = await _api.post(url).timeout(ApiConstants.timeout);
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         return {
           'success': true,
-          'message': responseData['message'] ?? 'Post saved',
+          'message': responseData['message'] ?? 'Post saved successfully',
           'data': responseData['data'],
         };
       } else {
         final errorData = jsonDecode(response.body);
         return {
           'success': false,
-          'message': errorData['message'] ?? 'Failed to save post',
+          'message': errorData['error']?['message'] ?? errorData['message'] ?? 'Failed to save post',
+          'errorCode': errorData['error']?['code'],
           'data': null,
         };
       }
@@ -385,6 +384,127 @@ class PostService {
         'success': false,
         'message': 'Network error: ${e.toString()}',
         'data': null,
+      };
+    }
+  }
+
+  /// Unsave a post
+  ///
+  /// DELETE /api/posts/{postId}/save
+  Future<Map<String, dynamic>> unsavePost(String postId) async {
+    try {
+      final url = Uri.parse(
+        '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId/save',
+      );
+
+      final response = await _api.delete(url).timeout(ApiConstants.timeout);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return {
+          'success': true,
+          'message': responseData['message'] ?? 'Post unsaved successfully',
+          'data': responseData['data'],
+        };
+      } else {
+        final errorData = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': errorData['error']?['message'] ?? errorData['message'] ?? 'Failed to unsave post',
+          'errorCode': errorData['error']?['code'],
+          'data': null,
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Network error: ${e.toString()}',
+        'data': null,
+      };
+    }
+  }
+
+  /// Get user profile grid posts
+  ///
+  /// GET /api/posts/user/{userId}?page=1&limit=20
+  Future<Map<String, dynamic>> getUserPostsGrid({
+    required String userId,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+
+      final url = Uri.parse(
+        '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/user/$userId',
+      ).replace(queryParameters: queryParams);
+
+      final response = await _api.get(url).timeout(ApiConstants.timeout);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return {
+          'success': responseData['success'] == true,
+          'data': responseData['data'] ?? {},
+        };
+      } else {
+        final errorData = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': errorData['message'] ?? 'Failed to fetch user posts',
+          'data': {},
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Network error: ${e.toString()}',
+        'data': {},
+      };
+    }
+  }
+
+  /// Get saved posts list
+  ///
+  /// GET /api/posts/saved/list?page=1&limit=20
+  Future<Map<String, dynamic>> getSavedPosts({
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+
+      final url = Uri.parse(
+        '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/saved/list',
+      ).replace(queryParameters: queryParams);
+
+      final response = await _api.get(url).timeout(ApiConstants.timeout);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return {
+          'success': responseData['success'] == true,
+          'data': responseData['data'] ?? {},
+        };
+      } else {
+        final errorData = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': errorData['message'] ?? 'Failed to fetch saved posts',
+          'data': {},
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Network error: ${e.toString()}',
+        'data': {},
       };
     }
   }
@@ -475,6 +595,72 @@ class PostService {
     if (response.statusCode == 200 || response.statusCode == 204) return;
     if (response.statusCode == 404) return;
     throw Exception('Failed to delete comment: ${response.statusCode}');
+  }
+
+  /// Like a comment
+  ///
+  /// POST /api/comments/:id/like
+  /// Authentication: Required
+  Future<Map<String, dynamic>> likeComment({required String commentId}) async {
+    try {
+      final uri = Uri.parse(
+        '${ApiConstants.baseUrl}${ApiConstants.commentsEndpoint}/$commentId/like',
+      );
+
+      final response = await _api.post(uri).timeout(ApiConstants.timeout);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return {
+          'success': responseData['success'] == true,
+          'liked': responseData['liked'] == true,
+        };
+      } else {
+        final errorData = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': errorData['message'] ?? 'Failed to like comment',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Network error: ${e.toString()}',
+      };
+    }
+  }
+
+  /// Unlike a comment
+  ///
+  /// DELETE /api/comments/:id/like
+  /// Authentication: Required
+  Future<Map<String, dynamic>> unlikeComment({required String commentId}) async {
+    try {
+      final uri = Uri.parse(
+        '${ApiConstants.baseUrl}${ApiConstants.commentsEndpoint}/$commentId/like',
+      );
+
+      final response = await _api.delete(uri).timeout(ApiConstants.timeout);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return {
+          'success': responseData['success'] == true,
+          'liked': responseData['liked'] == false,
+        };
+      } else {
+        final errorData = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': errorData['message'] ?? 'Failed to unlike comment',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Network error: ${e.toString()}',
+      };
+    }
   }
 
   /// Report content (post)

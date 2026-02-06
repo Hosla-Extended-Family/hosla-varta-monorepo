@@ -7,6 +7,7 @@ import 'package:hosla/providers/post_provider.dart';
 import 'package:hosla/widgets/post_card.dart';
 import 'package:hosla/widgets/edit_post_dialog.dart';
 import 'package:hosla/widgets/comments_bottom_sheet.dart';
+import 'package:hosla/widgets/loading_widget.dart';
 
 /// Page for viewing saved posts with enhanced UI
 class SavedPostsPage extends ConsumerStatefulWidget {
@@ -221,7 +222,9 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
               }
             },
             loading: () => const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()),
+              child: Center(
+                child: LoadingWidget(message: 'Loading saved posts...'),
+              ),
             ),
             error: (error, stack) => SliverFillRemaining(
               child: _buildErrorState(context, error.toString()),

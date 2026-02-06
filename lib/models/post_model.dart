@@ -4,32 +4,48 @@ class Post {
   final String userId;
   final String userName;
   final String? userAvatarUrl;
+  final String? title;
   final String content;
   final String? imageUrl;
+  final List<String> mediaUrls;
+  final String? youtubeVideoId;
   final List<String> tags;
   final int likeCount;
   final int commentCount;
   final int shareCount;
   final bool isLiked;
   final bool isSaved;
+  final bool isPinned;
+  final bool canEdit;
+  final bool canDelete;
+  final bool canReport;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final DateTime? savedAt;
 
   const Post({
     required this.id,
     required this.userId,
     required this.userName,
     this.userAvatarUrl,
+    this.title,
     required this.content,
     this.imageUrl,
+    this.mediaUrls = const [],
+    this.youtubeVideoId,
     this.tags = const [],
     this.likeCount = 0,
     this.commentCount = 0,
     this.shareCount = 0,
     this.isLiked = false,
     this.isSaved = false,
+    this.isPinned = false,
+    this.canEdit = false,
+    this.canDelete = false,
+    this.canReport = false,
     required this.createdAt,
     this.updatedAt,
+    this.savedAt,
   });
 
   static DateTime _parseBackendDate(dynamic raw) {
@@ -102,6 +118,11 @@ class Post {
         ? tagsRaw.map((e) => e.toString()).toList()
         : <String>[];
 
+    final mediaUrlsRaw = json['mediaUrls'];
+    final mediaUrls = mediaUrlsRaw is List
+        ? mediaUrlsRaw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList()
+        : <String>[];
+
     final likeCount =
         (json['likeCount'] as num?)?.toInt() ??
         (json['likes'] as num?)?.toInt() ??
@@ -119,17 +140,27 @@ class Post {
       userId: authorId?.toString() ?? '',
       userName: authorName?.toString() ?? 'Unknown User',
       userAvatarUrl: authorProfilePicUrl?.toString(),
+      title: title,
       content: _combineTitleBody(title: title, body: body, content: content),
       imageUrl: imageUrl,
+      mediaUrls: mediaUrls,
+      youtubeVideoId: json['youtubeVideoId']?.toString(),
       tags: tags,
       likeCount: likeCount,
       commentCount: commentCount,
       shareCount: shareCount,
       isLiked: isLiked,
-      isSaved: json['isSaved'] ?? false,
+      isSaved: json['isSavedByMe'] == true || json['isSaved'] == true,
+      isPinned: json['isPinned'] == true,
+      canEdit: json['canEdit'] == true,
+      canDelete: json['canDelete'] == true,
+      canReport: json['canReport'] == true,
       createdAt: _parseBackendDate(json['createdAt']),
       updatedAt: json['updatedAt'] != null
           ? _parseBackendDate(json['updatedAt'])
+          : null,
+      savedAt: json['savedAt'] != null
+          ? _parseBackendDate(json['savedAt'])
           : null,
     );
   }
@@ -141,16 +172,24 @@ class Post {
       'userId': userId,
       'userName': userName,
       'userAvatarUrl': userAvatarUrl,
+      'title': title,
       'content': content,
       'imageUrl': imageUrl,
+      'mediaUrls': mediaUrls,
+      'youtubeVideoId': youtubeVideoId,
       'tags': tags,
       'likeCount': likeCount,
       'commentCount': commentCount,
       'shareCount': shareCount,
       'isLiked': isLiked,
       'isSaved': isSaved,
+      'isPinned': isPinned,
+      'canEdit': canEdit,
+      'canDelete': canDelete,
+      'canReport': canReport,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
+      'savedAt': savedAt?.toIso8601String(),
     };
   }
 
@@ -160,32 +199,48 @@ class Post {
     String? userId,
     String? userName,
     String? userAvatarUrl,
+    String? title,
     String? content,
     String? imageUrl,
+    List<String>? mediaUrls,
+    String? youtubeVideoId,
     List<String>? tags,
     int? likeCount,
     int? commentCount,
     int? shareCount,
     bool? isLiked,
     bool? isSaved,
+    bool? isPinned,
+    bool? canEdit,
+    bool? canDelete,
+    bool? canReport,
     DateTime? createdAt,
     DateTime? updatedAt,
+    DateTime? savedAt,
   }) {
     return Post(
       id: id ?? this.id,
       userId: userId ?? this.userId,
       userName: userName ?? this.userName,
       userAvatarUrl: userAvatarUrl ?? this.userAvatarUrl,
+      title: title ?? this.title,
       content: content ?? this.content,
       imageUrl: imageUrl ?? this.imageUrl,
+      mediaUrls: mediaUrls ?? this.mediaUrls,
+      youtubeVideoId: youtubeVideoId ?? this.youtubeVideoId,
       tags: tags ?? this.tags,
       likeCount: likeCount ?? this.likeCount,
       commentCount: commentCount ?? this.commentCount,
       shareCount: shareCount ?? this.shareCount,
       isLiked: isLiked ?? this.isLiked,
       isSaved: isSaved ?? this.isSaved,
+      isPinned: isPinned ?? this.isPinned,
+      canEdit: canEdit ?? this.canEdit,
+      canDelete: canDelete ?? this.canDelete,
+      canReport: canReport ?? this.canReport,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      savedAt: savedAt ?? this.savedAt,
     );
   }
 

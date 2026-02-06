@@ -8,6 +8,7 @@ import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/widgets/post_card.dart';
 import 'package:hosla/widgets/edit_post_dialog.dart';
 import 'package:hosla/widgets/comments_bottom_sheet.dart';
+import 'package:hosla/widgets/loading_widget.dart';
 import 'dart:ui';
 
 /// Page for viewing all posts by a specific user
@@ -236,7 +237,9 @@ class _UserPostsPageState extends ConsumerState<UserPostsPage> {
               }
             },
             loading: () => const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()),
+              child: Center(
+                child: LoadingWidget(message: 'Loading posts...'),
+              ),
             ),
             error: (error, stack) => SliverFillRemaining(
               child: _buildErrorState(context, error.toString()),
@@ -258,7 +261,13 @@ class _UserPostsPageState extends ConsumerState<UserPostsPage> {
     return GestureDetector(
       onTap: () => _showPostDetail(context, allPosts, index),
       child: Container(
-        decoration: BoxDecoration(color: ThemeColors.getSurfaceColor(context)),
+        decoration: BoxDecoration(
+          color: ThemeColors.getSurfaceColor(context),
+          border: Border.all(
+            color: ThemeColors.getBorderColor(context).withValues(alpha: 0.2),
+            width: 0.5,
+          ),
+        ),
         child: hasImage
             ? Stack(
                 fit: StackFit.expand,
@@ -270,7 +279,7 @@ class _UserPostsPageState extends ConsumerState<UserPostsPage> {
                       return _buildTextPreview(context, post);
                     },
                   ),
-                  // Gradient overlay for multi-image indicator
+                  // Gradient overlay for engagement stats
                   if (post.commentCount > 0 || post.likeCount > 0)
                     Positioned(
                       bottom: 4,

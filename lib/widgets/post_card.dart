@@ -7,6 +7,7 @@ import 'package:hosla/providers/post_provider.dart';
 import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/widgets/comments_bottom_sheet.dart';
 import 'package:hosla/widgets/profile_pic.dart';
+import 'package:hosla/widgets/snack_bar_widget.dart';
 import 'package:share_plus/share_plus.dart';
 
 /// Enhanced post card widget with actions (like, save, comment, edit, delete)
@@ -106,8 +107,37 @@ class _PostCardState extends ConsumerState<PostCard>
   }
 
   void _toggleSave() async {
+    final currentUser = ref.read(currentUserProfileProvider);
+    
+    // Prevent saving own post
+    if (currentUser != null && currentUser.id == _post.userId) {
+      if (!mounted) return;
+      SnackBarWidget.warning(context, 'You cannot save your own post');
+      return;
+    }
+    
     final postActions = ref.read(postActionsProvider);
+    final wasSaved = _post.isSaved;
+    
     await postActions.toggleSave(_post);
+    
+    // Refresh from local DB to get updated state
+    try {
+      final localRepo = ref.read(localPostRepositoryProvider);
+      final latest = await localRepo.getPostById(_post.id);
+      if (!mounted) return;
+      if (latest != null) {
+        setState(() => _post = latest);
+      }
+    } catch (_) {}
+    
+    // Show snackbar feedback using SnackBarWidget
+    if (!mounted) return;
+    if (wasSaved) {
+      SnackBarWidget.success(context, 'Post unsaved');
+    } else {
+      SnackBarWidget.success(context, 'Post saved');
+    }
   }
 
   Future<void> _openComments() async {
@@ -183,16 +213,17 @@ class _PostCardState extends ConsumerState<PostCard>
                   },
                 ),
               ],
-              ListTile(
-                leading: Icon(
-                  _post.isSaved ? Icons.bookmark : Icons.bookmark_border,
+              if (!isOwner)
+                ListTile(
+                  leading: Icon(
+                    _post.isSaved ? Icons.bookmark : Icons.bookmark_border,
+                  ),
+                  title: Text(_post.isSaved ? 'Unsave Post' : 'Save Post'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _toggleSave();
+                  },
                 ),
-                title: Text(_post.isSaved ? 'Unsave Post' : 'Save Post'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _toggleSave();
-                },
-              ),
               ListTile(
                 leading: const Icon(Icons.share),
                 title: const Text('Share'),
@@ -279,21 +310,37 @@ class _PostCardState extends ConsumerState<PostCard>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final maxLines = _isExpanded ? null : 3;
+    
+    // Check if post has emergency tag (case insensitive)
+    final hasEmergencyTag = _post.tags.any(
+      (tag) => tag.toLowerCase() == 'emergency',
+    );
+    
+    // Filter out 'default' tag (case insensitive)
+    final displayTags = _post.tags.where(
+      (tag) => tag.toLowerCase() != 'default',
+    ).toList();
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: ThemeColors.getCardColor(context),
+        color: hasEmergencyTag
+            ? (isDark ? Colors.red.shade900 : Colors.red.shade50)
+            : ThemeColors.getCardColor(context),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: ThemeColors.getBorderColor(context).withValues(alpha: 0.1),
-          width: 1,
+          color: hasEmergencyTag
+              ? Colors.red.shade400
+              : ThemeColors.getBorderColor(context).withValues(alpha: 0.1),
+          width: hasEmergencyTag ? 2 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.3)
-                : ThemeColors.getOverlayColor(context, opacity: 0.08),
+            color: hasEmergencyTag
+                ? Colors.red.withValues(alpha: 0.3)
+                : (isDark
+                    ? Colors.black.withValues(alpha: 0.3)
+                    : ThemeColors.getOverlayColor(context, opacity: 0.08)),
             blurRadius: 20,
             offset: const Offset(0, 4),
             spreadRadius: 0,
@@ -374,7 +421,7 @@ class _PostCardState extends ConsumerState<PostCard>
           ),
 
           // Tags Section
-          if (_post.tags.isNotEmpty)
+          if (displayTags.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
@@ -383,29 +430,51 @@ class _PostCardState extends ConsumerState<PostCard>
               child: Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: _post.tags.map((tag) {
+                children: displayTags.map((tag) {
+                  final isEmergency = tag.toLowerCase() == 'emergency';
                   return Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: ThemeColors.primaryColor.withValues(alpha: 0.1),
+                      color: isEmergency
+                          ? Colors.red.withValues(alpha: 0.2)
+                          : ThemeColors.primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(16),
+                      border: isEmergency
+                          ? Border.all(color: Colors.red, width: 1)
+                          : null,
                     ),
-                    child: Text(
-                      '#$tag',
-                      style: TextThemes.getBodySmallStyle(context).copyWith(
-                        color: ThemeColors.primaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (isEmergency)
+                          const Padding(
+                            padding: EdgeInsets.only(right: 4),
+                            child: Icon(
+                              Icons.warning,
+                              color: Colors.red,
+                              size: 16,
+                            ),
+                          ),
+                        Text(
+                          '#$tag',
+                          style: TextThemes.getBodySmallStyle(context).copyWith(
+                            color: isEmergency
+                                ? Colors.red
+                                : ThemeColors.primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 }).toList(),
               ),
             ),
 
-          // Image Section: show only if URL is valid; collapse on error
+          // Image Section: only show if valid URL exists, hide if no image
           if (_hasValidImage(_post.imageUrl))
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12.0),
@@ -417,7 +486,7 @@ class _PostCardState extends ConsumerState<PostCard>
                     _post.imageUrl!,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
-                      // If loading fails, render nothing
+                      // If loading fails, hide the image section
                       return const SizedBox.shrink();
                     },
                   ),
@@ -498,6 +567,7 @@ class _PostCardState extends ConsumerState<PostCard>
                                       color: ThemeColors.getSecondaryTextColor(
                                         context,
                                       ),
+                                      fontSize: 14
                                     ),
                               ),
                             ),
@@ -531,6 +601,7 @@ class _PostCardState extends ConsumerState<PostCard>
                                       color: ThemeColors.getSecondaryTextColor(
                                         context,
                                       ),
+                                      fontSize: 14
                                     ),
                               ),
                             ),
@@ -564,6 +635,7 @@ class _PostCardState extends ConsumerState<PostCard>
                                       color: ThemeColors.getSecondaryTextColor(
                                         context,
                                       ),
+                                      fontSize: 14
                                     ),
                               ),
                             ),

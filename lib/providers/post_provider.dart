@@ -270,13 +270,12 @@ class PostActions {
 
     // Try to sync with server
     try {
-      final result = await postService.savePost(post.id);
+      final result = newSaveState
+          ? await postService.savePost(post.id)
+          : await postService.unsavePost(post.id);
 
-      if (result['success'] == true && result['data'] != null) {
-        // Server returned updated post data
-        final serverPost = Post.fromJson(result['data']['post']);
-        await localRepo.savePost(serverPost);
-        _updatePostInProviders(serverPost);
+      if (result['success'] == true) {
+        // Server call succeeded
         return true;
       } else {
         // Server call failed, queue for retry
