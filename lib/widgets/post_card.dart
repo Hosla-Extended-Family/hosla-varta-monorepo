@@ -108,19 +108,19 @@ class _PostCardState extends ConsumerState<PostCard>
 
   void _toggleSave() async {
     final currentUser = ref.read(currentUserProfileProvider);
-    
+
     // Prevent saving own post
     if (currentUser != null && currentUser.id == _post.userId) {
       if (!mounted) return;
       SnackBarWidget.warning(context, 'You cannot save your own post');
       return;
     }
-    
+
     final postActions = ref.read(postActionsProvider);
     final wasSaved = _post.isSaved;
-    
+
     await postActions.toggleSave(_post);
-    
+
     // Refresh from local DB to get updated state
     try {
       final localRepo = ref.read(localPostRepositoryProvider);
@@ -130,7 +130,7 @@ class _PostCardState extends ConsumerState<PostCard>
         setState(() => _post = latest);
       }
     } catch (_) {}
-    
+
     // Show snackbar feedback using SnackBarWidget
     if (!mounted) return;
     if (wasSaved) {
@@ -310,16 +310,16 @@ class _PostCardState extends ConsumerState<PostCard>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final maxLines = _isExpanded ? null : 3;
-    
+
     // Check if post has emergency tag (case insensitive)
     final hasEmergencyTag = _post.tags.any(
       (tag) => tag.toLowerCase() == 'emergency',
     );
-    
+
     // Filter out 'default' tag (case insensitive)
-    final displayTags = _post.tags.where(
-      (tag) => tag.toLowerCase() != 'default',
-    ).toList();
+    final displayTags = _post.tags
+        .where((tag) => tag.toLowerCase() != 'default')
+        .toList();
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -339,8 +339,8 @@ class _PostCardState extends ConsumerState<PostCard>
             color: hasEmergencyTag
                 ? Colors.red.withValues(alpha: 0.3)
                 : (isDark
-                    ? Colors.black.withValues(alpha: 0.3)
-                    : ThemeColors.getOverlayColor(context, opacity: 0.08)),
+                      ? Colors.black.withValues(alpha: 0.3)
+                      : ThemeColors.getOverlayColor(context, opacity: 0.08)),
             blurRadius: 20,
             offset: const Offset(0, 4),
             spreadRadius: 0,
@@ -567,7 +567,7 @@ class _PostCardState extends ConsumerState<PostCard>
                                       color: ThemeColors.getSecondaryTextColor(
                                         context,
                                       ),
-                                      fontSize: 14
+                                      fontSize: 14,
                                     ),
                               ),
                             ),
@@ -601,7 +601,7 @@ class _PostCardState extends ConsumerState<PostCard>
                                       color: ThemeColors.getSecondaryTextColor(
                                         context,
                                       ),
-                                      fontSize: 14
+                                      fontSize: 14,
                                     ),
                               ),
                             ),
@@ -635,7 +635,7 @@ class _PostCardState extends ConsumerState<PostCard>
                                       color: ThemeColors.getSecondaryTextColor(
                                         context,
                                       ),
-                                      fontSize: 14
+                                      fontSize: 14,
                                     ),
                               ),
                             ),

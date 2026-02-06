@@ -374,7 +374,10 @@ class PostService {
         final errorData = jsonDecode(response.body);
         return {
           'success': false,
-          'message': errorData['error']?['message'] ?? errorData['message'] ?? 'Failed to save post',
+          'message':
+              errorData['error']?['message'] ??
+              errorData['message'] ??
+              'Failed to save post',
           'errorCode': errorData['error']?['code'],
           'data': null,
         };
@@ -410,7 +413,10 @@ class PostService {
         final errorData = jsonDecode(response.body);
         return {
           'success': false,
-          'message': errorData['error']?['message'] ?? errorData['message'] ?? 'Failed to unsave post',
+          'message':
+              errorData['error']?['message'] ??
+              errorData['message'] ??
+              'Failed to unsave post',
           'errorCode': errorData['error']?['code'],
           'data': null,
         };
@@ -623,10 +629,7 @@ class PostService {
         };
       }
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Network error: ${e.toString()}',
-      };
+      return {'success': false, 'message': 'Network error: ${e.toString()}'};
     }
   }
 
@@ -634,7 +637,9 @@ class PostService {
   ///
   /// DELETE /api/comments/:id/like
   /// Authentication: Required
-  Future<Map<String, dynamic>> unlikeComment({required String commentId}) async {
+  Future<Map<String, dynamic>> unlikeComment({
+    required String commentId,
+  }) async {
     try {
       final uri = Uri.parse(
         '${ApiConstants.baseUrl}${ApiConstants.commentsEndpoint}/$commentId/like',
@@ -656,10 +661,7 @@ class PostService {
         };
       }
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Network error: ${e.toString()}',
-      };
+      return {'success': false, 'message': 'Network error: ${e.toString()}'};
     }
   }
 

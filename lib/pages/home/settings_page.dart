@@ -13,7 +13,7 @@ import 'package:hosla/widgets/snack_bar_widget.dart';
 /// Modern Settings page with enhanced UI matching app design language
 class SettingsPage extends ConsumerStatefulWidget {
   final bool showBackButton;
-  
+
   const SettingsPage({super.key, this.showBackButton = true});
 
   @override
@@ -150,7 +150,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         subtitle: 'Update your profile information',
                         onTap: () => Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const EditProfilePage()),
+                          MaterialPageRoute(
+                            builder: (_) => const EditProfilePage(),
+                          ),
                         ),
                       ),
                       _buildDivider(),
@@ -179,7 +181,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         value: appSettings.notificationsEnabled,
                         onChanged: (value) {
                           HapticFeedback.lightImpact();
-                          ref.read(appSettingsProvider.notifier).updateNotifications(value);
+                          ref
+                              .read(appSettingsProvider.notifier)
+                              .updateNotifications(value);
                         },
                       ),
                       _buildDivider(),
@@ -191,7 +195,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         value: appSettings.soundEnabled,
                         onChanged: (value) {
                           HapticFeedback.lightImpact();
-                          ref.read(appSettingsProvider.notifier).updateSound(value);
+                          ref
+                              .read(appSettingsProvider.notifier)
+                              .updateSound(value);
                         },
                       ),
                       _buildDivider(),
@@ -203,7 +209,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         value: appSettings.vibrationEnabled,
                         onChanged: (value) {
                           HapticFeedback.lightImpact();
-                          ref.read(appSettingsProvider.notifier).updateVibration(value);
+                          ref
+                              .read(appSettingsProvider.notifier)
+                              .updateVibration(value);
                         },
                       ),
                     ],
@@ -217,10 +225,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     icon: Icons.palette_outlined,
                     children: [
                       _buildSwitchTile(
-                        icon: isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                        iconColor: isDark ? const Color(0xFF5C6BC0) : const Color(0xFFFFB74D),
+                        icon: isDark
+                            ? Icons.dark_mode_rounded
+                            : Icons.light_mode_rounded,
+                        iconColor: isDark
+                            ? const Color(0xFF5C6BC0)
+                            : const Color(0xFFFFB74D),
                         title: 'Dark Mode',
-                        subtitle: isDark ? 'Currently using dark theme' : 'Currently using light theme',
+                        subtitle: isDark
+                            ? 'Currently using dark theme'
+                            : 'Currently using light theme',
                         value: ref.watch(themeProvider) == ThemeMode.dark,
                         onChanged: (value) {
                           HapticFeedback.mediumImpact();
@@ -245,7 +259,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         value: appSettings.locationEnabled,
                         onChanged: (value) {
                           HapticFeedback.lightImpact();
-                          ref.read(appSettingsProvider.notifier).updateLocation(value);
+                          ref
+                              .read(appSettingsProvider.notifier)
+                              .updateLocation(value);
                         },
                       ),
                       _buildDivider(),
@@ -257,7 +273,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         value: appSettings.privateProfile,
                         onChanged: (value) {
                           HapticFeedback.lightImpact();
-                          ref.read(appSettingsProvider.notifier).updatePrivateProfile(value);
+                          ref
+                              .read(appSettingsProvider.notifier)
+                              .updatePrivateProfile(value);
                         },
                       ),
                       _buildDivider(),
@@ -284,9 +302,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         title: 'Language',
                         subtitle: appSettings.language,
                         trailing: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: ThemeColors.primaryColor.withValues(alpha: 0.1),
+                            color: ThemeColors.primaryColor.withValues(
+                              alpha: 0.1,
+                            ),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -445,7 +468,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 ),
               ),
               child: ClipOval(
-                child: currentUser?.avatarUrl != null && currentUser!.avatarUrl!.isNotEmpty
+                child:
+                    currentUser?.avatarUrl != null &&
+                        currentUser!.avatarUrl!.isNotEmpty
                     ? Image.network(
                         currentUser.avatarUrl!,
                         fit: BoxFit.cover,
@@ -464,13 +489,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               children: [
                 Text(
                   currentUser?.name ?? 'Loading...',
-                  style: TextThemes.getBodyLargeStyle(context).copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
+                  style: TextThemes.getBodyLargeStyle(
+                    context,
+                  ).copyWith(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
                 const SizedBox(height: 4),
-                if (currentUser?.email != null && currentUser!.email!.isNotEmpty)
+                if (currentUser?.email != null &&
+                    currentUser!.email!.isNotEmpty)
                   Text(
                     currentUser.email!,
                     style: TextThemes.getBodySmallStyle(context).copyWith(
@@ -478,7 +503,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       fontSize: 13,
                     ),
                   ),
-                if (currentUser?.phone != null && currentUser!.phone!.isNotEmpty) ...[
+                if (currentUser?.phone != null &&
+                    currentUser!.phone!.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
                     currentUser.phone!,
@@ -690,10 +716,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               children: [
                 Text(
                   title,
-                  style: TextThemes.getBodyMediumStyle(context).copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
+                  style: TextThemes.getBodyMediumStyle(
+                    context,
+                  ).copyWith(fontWeight: FontWeight.w600, fontSize: 15),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -850,17 +875,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 const SizedBox(height: 20),
                 Text(
                   'Logout',
-                  style: TextThemes.getTitleStyle(context).copyWith(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextThemes.getTitleStyle(
+                    context,
+                  ).copyWith(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Are you sure you want to logout?',
-                  style: TextThemes.getBodyMediumStyle(context).copyWith(
-                    color: ThemeColors.getSecondaryTextColor(context),
-                  ),
+                  style: TextThemes.getBodyMediumStyle(
+                    context,
+                  ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
@@ -871,16 +895,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         onPressed: () => Navigator.pop(context),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: BorderSide(color: ThemeColors.getBorderColor(context)),
+                          side: BorderSide(
+                            color: ThemeColors.getBorderColor(context),
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         child: Text(
                           'Cancel',
-                          style: TextThemes.getBodyMediumStyle(context).copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: TextThemes.getBodyMediumStyle(
+                            context,
+                          ).copyWith(fontWeight: FontWeight.w600),
                         ),
                       ),
                     ),
@@ -890,13 +916,21 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         onPressed: () async {
                           Navigator.pop(context);
                           try {
-                            await ref.read(currentUserProfileProvider.notifier).logout();
+                            await ref
+                                .read(currentUserProfileProvider.notifier)
+                                .logout();
                             if (mounted) {
-                              Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                              Navigator.of(context).pushNamedAndRemoveUntil(
+                                '/login',
+                                (route) => false,
+                              );
                             }
                           } catch (e) {
                             if (mounted) {
-                              SnackBarWidget.show(context, 'Logout failed. Please try again.');
+                              SnackBarWidget.show(
+                                context,
+                                'Logout failed. Please try again.',
+                              );
                             }
                           }
                         },
@@ -980,9 +1014,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 const SizedBox(height: 8),
                 Text(
                   'This action cannot be undone. All your data will be permanently deleted.',
-                  style: TextThemes.getBodyMediumStyle(context).copyWith(
-                    color: ThemeColors.getSecondaryTextColor(context),
-                  ),
+                  style: TextThemes.getBodyMediumStyle(
+                    context,
+                  ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
@@ -993,16 +1027,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         onPressed: () => Navigator.pop(context),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: BorderSide(color: ThemeColors.getBorderColor(context)),
+                          side: BorderSide(
+                            color: ThemeColors.getBorderColor(context),
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         child: Text(
                           'Cancel',
-                          style: TextThemes.getBodyMediumStyle(context).copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: TextThemes.getBodyMediumStyle(
+                            context,
+                          ).copyWith(fontWeight: FontWeight.w600),
                         ),
                       ),
                     ),
@@ -1011,7 +1047,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          SnackBarWidget.show(context, 'Account deletion requested');
+                          SnackBarWidget.show(
+                            context,
+                            'Account deletion requested',
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: ThemeColors.errorColor,
@@ -1083,9 +1122,11 @@ class _PatternPainter extends CustomPainter {
     const radius = 3.0;
 
     for (double y = 0; y < size.height; y += spacing) {
-      for (double x = (y ~/ spacing).isEven ? 0 : spacing / 2;
-          x < size.width;
-          x += spacing) {
+      for (
+        double x = (y ~/ spacing).isEven ? 0 : spacing / 2;
+        x < size.width;
+        x += spacing
+      ) {
         canvas.drawCircle(Offset(x, y), radius, paint);
       }
     }

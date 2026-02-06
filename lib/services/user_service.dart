@@ -282,7 +282,7 @@ class UserService {
         final refreshToken = prefs.getString('refresh_token');
         final uri = Uri.parse('${ApiConstants.baseUrl}/auth/logout');
         final body = json.encode({'refreshToken': refreshToken ?? ''});
-        
+
         // API call with proper headers (handled by ApiClient automatically)
         await _api.post(uri, body: body);
       } catch (e) {
@@ -590,15 +590,15 @@ class UserService {
         final errorData = json.decode(response.body);
         return {
           'success': false,
-          'message': errorData['error']?['message'] ?? errorData['message'] ?? 'Failed to block user',
+          'message':
+              errorData['error']?['message'] ??
+              errorData['message'] ??
+              'Failed to block user',
           'errorCode': errorData['error']?['code'],
         };
       }
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Network error: ${e.toString()}',
-      };
+      return {'success': false, 'message': 'Network error: ${e.toString()}'};
     }
   }
 
@@ -607,7 +607,9 @@ class UserService {
   /// DELETE /api/users/:userId/unblock
   Future<Map<String, dynamic>> unblockUser(String userId) async {
     try {
-      final uri = Uri.parse('${ApiConstants.baseUrl}/api/users/$userId/unblock');
+      final uri = Uri.parse(
+        '${ApiConstants.baseUrl}/api/users/$userId/unblock',
+      );
       final response = await _api.delete(uri);
 
       if (response.statusCode == 200) {
@@ -620,15 +622,15 @@ class UserService {
         final errorData = json.decode(response.body);
         return {
           'success': false,
-          'message': errorData['error']?['message'] ?? errorData['message'] ?? 'Failed to unblock user',
+          'message':
+              errorData['error']?['message'] ??
+              errorData['message'] ??
+              'Failed to unblock user',
           'errorCode': errorData['error']?['code'],
         };
       }
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Network error: ${e.toString()}',
-      };
+      return {'success': false, 'message': 'Network error: ${e.toString()}'};
     }
   }
 
@@ -642,10 +644,7 @@ class UserService {
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
-        return {
-          'success': true,
-          'data': responseData['data'] ?? [],
-        };
+        return {'success': true, 'data': responseData['data'] ?? []};
       } else {
         final errorData = json.decode(response.body);
         return {

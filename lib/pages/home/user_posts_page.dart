@@ -237,9 +237,7 @@ class _UserPostsPageState extends ConsumerState<UserPostsPage> {
               }
             },
             loading: () => const SliverFillRemaining(
-              child: Center(
-                child: LoadingWidget(message: 'Loading posts...'),
-              ),
+              child: Center(child: LoadingWidget(message: 'Loading posts...')),
             ),
             error: (error, stack) => SliverFillRemaining(
               child: _buildErrorState(context, error.toString()),

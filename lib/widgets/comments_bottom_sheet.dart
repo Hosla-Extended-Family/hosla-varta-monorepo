@@ -146,25 +146,25 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
     // Optimistic update
     final updatedComment = comment.copyWith(
       isLiked: !comment.isLiked,
-      likeCount: comment.isLiked 
+      likeCount: comment.isLiked
           ? (comment.likeCount > 0 ? comment.likeCount - 1 : 0)
           : comment.likeCount + 1,
     );
-    
+
     setState(() {
       final index = _comments.indexWhere((c) => c.id == comment.id);
       if (index != -1) {
         _comments[index] = updatedComment;
       }
     });
-    
+
     // Call API
     try {
       final postService = ref.read(postServiceProvider);
       final result = updatedComment.isLiked
           ? await postService.likeComment(commentId: comment.id)
           : await postService.unlikeComment(commentId: comment.id);
-      
+
       if (!result['success']) {
         // Revert on failure
         setState(() {

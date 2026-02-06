@@ -120,7 +120,10 @@ class Post {
 
     final mediaUrlsRaw = json['mediaUrls'];
     final mediaUrls = mediaUrlsRaw is List
-        ? mediaUrlsRaw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList()
+        ? mediaUrlsRaw
+              .map((e) => e.toString())
+              .where((s) => s.isNotEmpty)
+              .toList()
         : <String>[];
 
     final likeCount =
