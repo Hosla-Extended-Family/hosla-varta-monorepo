@@ -121,7 +121,7 @@ class SyncService {
           final postId = action.payload['postId'] as String?;
           final content = action.payload['content'] as String?;
           final imageUrl = action.payload['imageUrl'] as String?;
-          final tags = action.payload['tags'] as List<String>?;
+          final tagIds = action.payload['tagIds'] as List<String>?;
 
           if (postId == null || content == null) return false;
 
@@ -129,7 +129,7 @@ class SyncService {
             postId: postId,
             content: content,
             imageUrl: imageUrl,
-            tags: tags ?? [],
+            tagIds: tagIds ?? [],
           );
           return result['success'] ?? false;
 

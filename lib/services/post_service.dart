@@ -12,6 +12,11 @@ class PostService {
   PostService({http.Client? httpClient})
     : _httpClient = httpClient ?? http.Client();
 
+  static String _formatBackendCreatedAt(DateTime dt) {
+    String two(int v) => v.toString().padLeft(2, '0');
+    return '${two(dt.day)}-${two(dt.month)}-${dt.year}${two(dt.hour)}:${two(dt.minute)}:${two(dt.second)}';
+  }
+
   /// Create a new post
   ///
   /// Sends a POST request to the server with post data
@@ -22,7 +27,7 @@ class PostService {
     String? userAvatarUrl,
     required String content,
     String? imageUrl,
-    List<String> tags = const [],
+    List<String> tagIds = const [],
     String? id,
     DateTime? createdAt,
   }) async {
@@ -33,20 +38,24 @@ class PostService {
 
       // Map to API spec
       final title = content.length > 60 ? content.substring(0, 60) : content;
+      final mediaUrls = <String>[
+        if (imageUrl != null && imageUrl.isNotEmpty) imageUrl,
+      ];
+
       final requestBody = jsonEncode({
         if (id != null && id.isNotEmpty) 'id': id,
         'title': title.isNotEmpty ? title : null,
         'body': content,
-        'mediaUrls': [if (imageUrl != null && imageUrl.isNotEmpty) imageUrl],
-        'tags': tags,
+        'mediaUrls': mediaUrls,
+        'tagIds': tagIds,
 
         // Requested Mapped Fields
         'authorId': userId,
         'authorName': userName,
         'authorProfilePicUrl': userAvatarUrl,
 
-        // createdAt is server-controlled in most APIs, but supported by spec
-        if (createdAt != null) 'createdAt': createdAt.toIso8601String(),
+        // createdAt supported by spec (backend observed format: DD-MM-YYYYHH:MM:SS)
+        if (createdAt != null) 'createdAt': _formatBackendCreatedAt(createdAt),
       });
 
       final response = await _api
@@ -190,7 +199,7 @@ class PostService {
     required String postId,
     required String content,
     String? imageUrl,
-    List<String> tags = const [],
+    List<String> tagIds = const [],
     String? userId,
     String? userName,
     String? userAvatarUrl,
@@ -202,18 +211,22 @@ class PostService {
       );
 
       final title = content.length > 60 ? content.substring(0, 60) : content;
+      final mediaUrls = <String>[
+        if (imageUrl != null && imageUrl.isNotEmpty) imageUrl,
+      ];
+
       final requestBody = {
         'id': postId,
         'title': title.isNotEmpty ? title : null,
         'body': content,
-        'mediaUrls': [if (imageUrl != null && imageUrl.isNotEmpty) imageUrl],
-        'tags': tags,
+        'mediaUrls': mediaUrls,
+        'tagIds': tagIds,
 
         // Requested Mapped Fields (best-effort)
         if (userId != null) 'authorId': userId,
         if (userName != null) 'authorName': userName,
         if (userAvatarUrl != null) 'authorProfilePicUrl': userAvatarUrl,
-        if (createdAt != null) 'createdAt': createdAt.toIso8601String(),
+        if (createdAt != null) 'createdAt': _formatBackendCreatedAt(createdAt),
       };
 
       final response = await _api

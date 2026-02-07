@@ -25,7 +25,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
   final PostService _postService = PostService();
   bool _isLoading = false;
   XFile? _selectedImage;
-  List<String> _tags = [];
+  List<String> _tagIds = []; // Tag UUIDs for API submission
+  List<String> _tagNames = []; // Tag names for display
 
   @override
   void dispose() {
@@ -68,7 +69,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
         userAvatarUrl: userAvatarUrl,
         content: caption,
         imageUrl: imageUrl,
-        tags: _tags,
+        tagIds: _tagIds,
       );
 
       if (result['success'] == true) {
@@ -86,7 +87,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
             userAvatarUrl: userAvatarUrl,
             content: caption,
             imageUrl: imageUrl,
-            tags: _tags,
+            tags: _tagNames,
             createdAt: DateTime.now(),
           );
           await DatabaseHelper.instance.upsertPost(localPost);
@@ -536,10 +537,11 @@ class _CreatePostPageState extends State<CreatePostPage> {
               child: TagSelectionWidget(
                 onTagsChanged: (selectedTagIds, selectedTagNames) {
                   setState(() {
-                    _tags = selectedTagNames;
+                    _tagIds = selectedTagIds;
+                    _tagNames = selectedTagNames;
                   });
                 },
-                initialSelectedTags: _tags,
+                initialSelectedTags: _tagNames,
               ),
             ),
 

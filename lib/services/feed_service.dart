@@ -16,9 +16,12 @@ class FeedService {
   // final http.Client _httpClient;
   final ApiClient _api = ApiClient.instance;
 
-  // Dummy posts data was used for testing previously.
-  // Retained as an empty list to avoid compile issues.
-  static final List<Post> _dummyPosts = [];
+  static String _formatBackendCreatedAt(DateTime dt) {
+    String two(int v) => v.toString().padLeft(2, '0');
+    return '${two(dt.day)}-${two(dt.month)}-${dt.year}${two(dt.hour)}:${two(dt.minute)}:${two(dt.second)}';
+  }
+
+  // NOTE: Feed is always loaded from the backend API.
 
   /// Get feed posts with pagination
   /// TODO: Implement actual API call
@@ -37,18 +40,26 @@ class FeedService {
       '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/feed',
     ).replace(queryParameters: query);
     final response = await _api.get(uri);
-    if (response.statusCode == 200) {
-      final body = json.decode(response.body) as Map<String, dynamic>;
-      final data = body['data'] as Map<String, dynamic>? ?? {};
-      final postsJson = (data['posts'] as List?) ?? [];
-      final posts = postsJson
-          .map<Post>((j) => _mapBackendPost(j as Map<String, dynamic>))
-          .toList();
-      final nextCursor = data['nextCursor']?.toString();
-      return FeedResult(posts: posts, nextCursor: nextCursor);
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load feed: ${response.statusCode}');
     }
-    // No dummy fallback; return empty on failure
-    return FeedResult(posts: const [], nextCursor: null);
+
+    final body = json.decode(response.body) as Map<String, dynamic>;
+    if (body['success'] != true) {
+      final message = body['message']?.toString();
+      throw Exception(message?.isNotEmpty == true ? message : 'Feed failed');
+    }
+
+    final data = body['data'] as Map<String, dynamic>? ?? {};
+    final postsJson = (data['posts'] as List?) ?? const [];
+    final posts = postsJson
+        .whereType<Map>()
+        .map((j) => Post.fromJson(Map<String, dynamic>.from(j)))
+        .toList();
+    final nextCursor = data['nextCursor']?.toString();
+
+    return FeedResult(posts: posts, nextCursor: nextCursor);
   }
 
   /// Get a single post by ID
@@ -63,7 +74,7 @@ class FeedService {
       final res = json.decode(response.body) as Map<String, dynamic>;
       final data = res['data'];
       if (data is Map<String, dynamic>) {
-        return _mapBackendPost(data);
+        return Post.fromJson(data);
       }
       return null;
     }
@@ -84,85 +95,26 @@ class FeedService {
     final body = json.encode({
       'title': title.isNotEmpty ? title : null,
       'body': request.content,
-      'mediaUrls': [if (request.imageUrl != null) request.imageUrl!],
-      'tags': request.tags,
+      'mediaUrls': [
+        if (request.imageUrl != null && request.imageUrl!.trim().isNotEmpty)
+          request.imageUrl!.trim(),
+      ],
+      // For API v2+ this must be tag UUIDs
+      'tagIds': request.tags,
+      // createPost UI doesn't supply createdAt; server will set it.
+      // If needed for offline sync, include it here.
+      'createdAt': _formatBackendCreatedAt(DateTime.now()),
     });
     final response = await _api.post(uri, body: body);
     if (response.statusCode == 201 || response.statusCode == 200) {
       final res = json.decode(response.body) as Map<String, dynamic>;
       final data = res['data'];
       if (data is Map<String, dynamic>) {
-        return _mapBackendPost(data);
+        return Post.fromJson(data);
       }
-      // If backend returns different shape, create local from request
-      return Post(
-        id:
-            res['id']?.toString() ??
-            DateTime.now().millisecondsSinceEpoch.toString(),
-        userId: 'current_user',
-        userName: 'Anonymous',
-        content: request.content,
-        imageUrl: request.imageUrl,
-        tags: request.tags,
-        likeCount: 0,
-        commentCount: 0,
-        shareCount: 0,
-        isLiked: false,
-        isSaved: false,
-        createdAt: DateTime.now(),
-      );
+      throw Exception('Create post returned unexpected payload');
     }
     throw Exception('Failed to create post: ${response.statusCode}');
-  }
-
-  Post _mapBackendPost(Map<String, dynamic> j) {
-    final title = j['title']?.toString();
-    final body = j['body']?.toString();
-    final content = (title != null && title.isNotEmpty)
-        ? '$title\n\n${body ?? ''}'
-        : (body ?? '');
-    final mediaUrls =
-        (j['mediaUrls'] as List?)?.map((e) => e.toString()).toList() ??
-        const [];
-    // Filter out empty/invalid URLs
-    final validMediaUrls = mediaUrls
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
-    final imageUrl = validMediaUrls.isNotEmpty ? validMediaUrls.first : null;
-
-    // Parse createdAt in format "DD-MM-YYYYHH:MM:SS"
-    DateTime createdAt = DateTime.now();
-    final createdRaw = j['createdAt']?.toString();
-    if (createdRaw != null) {
-      final re = RegExp(r'^(\d{2})-(\d{2})-(\d{4})(\d{2}):(\d{2}):(\d{2})$');
-      final m = re.firstMatch(createdRaw);
-      if (m != null) {
-        final d = int.tryParse(m.group(1)!) ?? 1;
-        final mo = int.tryParse(m.group(2)!) ?? 1;
-        final y = int.tryParse(m.group(3)!) ?? 1970;
-        final h = int.tryParse(m.group(4)!) ?? 0;
-        final mi = int.tryParse(m.group(5)!) ?? 0;
-        final s = int.tryParse(m.group(6)!) ?? 0;
-        createdAt = DateTime(y, mo, d, h, mi, s);
-      }
-    }
-
-    return Post(
-      id: j['id']?.toString() ?? '',
-      userId: j['authorId']?.toString() ?? '',
-      userName: j['authorName']?.toString() ?? 'Unknown User',
-      userAvatarUrl: j['authorProfilePicUrl']?.toString(),
-      content: content,
-      imageUrl: imageUrl,
-      tags: (j['tags'] as List?)?.map((e) => e.toString()).toList() ?? const [],
-      likeCount: (j['likeCount'] as num?)?.toInt() ?? 0,
-      commentCount: (j['commentCount'] as num?)?.toInt() ?? 0,
-      shareCount: (j['shareCount'] as num?)?.toInt() ?? 0,
-      isLiked: j['isLikedByMe'] == true,
-      isSaved: false,
-      createdAt: createdAt,
-    );
   }
 
   /// Update a post
@@ -176,17 +128,21 @@ class FeedService {
         ? request.content.substring(0, 60)
         : request.content;
     final body = json.encode({
+      'id': postId,
       'title': title.isNotEmpty ? title : null,
       'body': request.content,
-      'mediaUrls': [if (request.imageUrl != null) request.imageUrl!],
-      'tags': request.tags,
+      'mediaUrls': [
+        if (request.imageUrl != null && request.imageUrl!.trim().isNotEmpty)
+          request.imageUrl!.trim(),
+      ],
+      'tagIds': request.tags,
     });
     final response = await _api.put(uri, body: body);
     if (response.statusCode == 200) {
       final res = json.decode(response.body) as Map<String, dynamic>;
       final data = res['data'];
       if (data is Map<String, dynamic>) {
-        return _mapBackendPost(data);
+        return Post.fromJson(data);
       }
       throw Exception('Update returned unexpected payload');
     }
@@ -221,7 +177,7 @@ class FeedService {
         final postJson = (data['post'] is Map<String, dynamic>)
             ? (data['post'] as Map<String, dynamic>)
             : data;
-        return _mapBackendPost(postJson);
+        return Post.fromJson(postJson);
       }
       throw Exception('Like returned unexpected payload');
     }
@@ -243,7 +199,7 @@ class FeedService {
         final postJson = (data['post'] is Map<String, dynamic>)
             ? (data['post'] as Map<String, dynamic>)
             : data;
-        return _mapBackendPost(postJson);
+        return Post.fromJson(postJson);
       }
       throw Exception('Unlike returned unexpected payload');
     }
@@ -251,51 +207,61 @@ class FeedService {
   }
 
   /// Save a post
-  /// TODO: Implement actual API call
-  /// Example: POST /api/posts/:id/save
   Future<Post> savePost(String postId) async {
-    // TODO: Replace with actual HTTP request
-    // final response = await _httpClient.post(Uri.parse('$baseUrl/posts/$postId/save'));
-    // if (response.statusCode == 200) {
-    //   return Post.fromJson(json.decode(response.body));
-    // }
-    // throw Exception('Failed to save post');
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId/save',
+    );
 
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 200));
-
-    final index = _dummyPosts.indexWhere((post) => post.id == postId);
-    if (index != -1) {
-      final updatedPost = _dummyPosts[index].copyWith(isSaved: true);
-      _dummyPosts[index] = updatedPost;
-      return updatedPost;
+    final response = await _api.post(uri);
+    if (response.statusCode != 200) {
+      throw Exception('Failed to save post: ${response.statusCode}');
     }
 
-    throw Exception('Post not found');
+    final res = json.decode(response.body) as Map<String, dynamic>;
+    final data = res['data'];
+
+    Map<String, dynamic>? postJson;
+    if (data is Map<String, dynamic> && data['post'] is Map) {
+      postJson = (data['post'] as Map).cast<String, dynamic>();
+    } else if (data is Map<String, dynamic> && data.containsKey('id')) {
+      postJson = data;
+    }
+
+    if (postJson != null) return Post.fromJson(postJson);
+
+    final refreshed = await getPostById(postId);
+    if (refreshed != null) return refreshed;
+
+    throw Exception('Save post returned unexpected payload');
   }
 
   /// Unsave a post
-  /// TODO: Implement actual API call
-  /// Example: DELETE /api/posts/:id/save
   Future<Post> unsavePost(String postId) async {
-    // TODO: Replace with actual HTTP request
-    // final response = await _httpClient.delete(Uri.parse('$baseUrl/posts/$postId/save'));
-    // if (response.statusCode == 200) {
-    //   return Post.fromJson(json.decode(response.body));
-    // }
-    // throw Exception('Failed to unsave post');
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId/save',
+    );
 
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 200));
-
-    final index = _dummyPosts.indexWhere((post) => post.id == postId);
-    if (index != -1) {
-      final updatedPost = _dummyPosts[index].copyWith(isSaved: false);
-      _dummyPosts[index] = updatedPost;
-      return updatedPost;
+    final response = await _api.delete(uri);
+    if (response.statusCode != 200) {
+      throw Exception('Failed to unsave post: ${response.statusCode}');
     }
 
-    throw Exception('Post not found');
+    final res = json.decode(response.body) as Map<String, dynamic>;
+    final data = res['data'];
+
+    Map<String, dynamic>? postJson;
+    if (data is Map<String, dynamic> && data['post'] is Map) {
+      postJson = (data['post'] as Map).cast<String, dynamic>();
+    } else if (data is Map<String, dynamic> && data.containsKey('id')) {
+      postJson = data;
+    }
+
+    if (postJson != null) return Post.fromJson(postJson);
+
+    final refreshed = await getPostById(postId);
+    if (refreshed != null) return refreshed;
+
+    throw Exception('Unsave post returned unexpected payload');
   }
 
   /// Get comments for a post
@@ -361,24 +327,13 @@ class FeedService {
   }
 
   /// Share a post
-  /// TODO: Implement actual API call
-  /// Example: POST /api/posts/:id/share
   Future<void> sharePost(String postId) async {
-    // TODO: Replace with actual HTTP request
-    // final response = await _httpClient.post(Uri.parse('$baseUrl/posts/$postId/share'));
-    // if (response.statusCode != 200) {
-    //   throw Exception('Failed to share post');
-    // }
-
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 200));
-
-    // Update share count
-    final index = _dummyPosts.indexWhere((post) => post.id == postId);
-    if (index != -1) {
-      final post = _dummyPosts[index];
-      _dummyPosts[index] = post.copyWith(shareCount: post.shareCount + 1);
-    }
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId/share',
+    );
+    final response = await _api.post(uri);
+    if (response.statusCode == 200 || response.statusCode == 201) return;
+    throw Exception('Failed to share post: ${response.statusCode}');
   }
 
   /// Report a post
@@ -397,38 +352,70 @@ class FeedService {
   }
 
   /// Get saved posts
-  /// TODO: Implement actual API call
-  /// Example: GET /api/posts/saved
   Future<List<Post>> getSavedPosts() async {
-    // TODO: Replace with actual HTTP request
-    // final response = await _httpClient.get(Uri.parse('$baseUrl/posts/saved'));
-    // if (response.statusCode == 200) {
-    //   final List<dynamic> jsonList = json.decode(response.body)['posts'];
-    //   return jsonList.map((json) => Post.fromJson(json)).toList();
-    // }
-    // throw Exception('Failed to load saved posts');
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/saved/list',
+    ).replace(queryParameters: const {'page': '1', 'limit': '20'});
 
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
+    final response = await _api.get(uri);
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load saved posts: ${response.statusCode}');
+    }
 
-    return _dummyPosts.where((post) => post.isSaved).toList();
+    final res = json.decode(response.body) as Map<String, dynamic>;
+    if (res['success'] != true) {
+      final message = res['message']?.toString();
+      throw Exception(
+        message?.isNotEmpty == true ? message : 'Saved posts failed',
+      );
+    }
+
+    final data = res['data'];
+    List<dynamic> postsJson = const [];
+    if (data is Map<String, dynamic>) {
+      final raw = data['posts'] ?? data['items'] ?? data['savedPosts'];
+      if (raw is List) postsJson = raw;
+    } else if (data is List) {
+      postsJson = data;
+    }
+
+    return postsJson
+        .whereType<Map>()
+        .map((j) => Post.fromJson(Map<String, dynamic>.from(j)))
+        .toList();
   }
 
   /// Get user's posts
-  /// TODO: Implement actual API call
-  /// Example: GET /api/users/:userId/posts
   Future<List<Post>> getUserPosts(String userId) async {
-    // TODO: Replace with actual HTTP request
-    // final response = await _httpClient.get(Uri.parse('$baseUrl/users/$userId/posts'));
-    // if (response.statusCode == 200) {
-    //   final List<dynamic> jsonList = json.decode(response.body)['posts'];
-    //   return jsonList.map((json) => Post.fromJson(json)).toList();
-    // }
-    // throw Exception('Failed to load user posts');
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/user/$userId',
+    ).replace(queryParameters: const {'page': '1', 'limit': '20'});
 
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
+    final response = await _api.get(uri);
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load user posts: ${response.statusCode}');
+    }
 
-    return _dummyPosts.where((post) => post.userId == userId).toList();
+    final res = json.decode(response.body) as Map<String, dynamic>;
+    if (res['success'] != true) {
+      final message = res['message']?.toString();
+      throw Exception(
+        message?.isNotEmpty == true ? message : 'User posts failed',
+      );
+    }
+
+    final data = res['data'];
+    List<dynamic> postsJson = const [];
+    if (data is Map<String, dynamic>) {
+      final raw = data['posts'] ?? data['items'] ?? data['data'];
+      if (raw is List) postsJson = raw;
+    } else if (data is List) {
+      postsJson = data;
+    }
+
+    return postsJson
+        .whereType<Map>()
+        .map((j) => Post.fromJson(Map<String, dynamic>.from(j)))
+        .toList();
   }
 }

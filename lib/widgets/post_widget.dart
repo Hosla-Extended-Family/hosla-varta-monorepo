@@ -16,8 +16,8 @@ class _PostWidgetState extends State<PostWidget>
     with SingleTickerProviderStateMixin {
   bool _isExpanded = false;
   bool _isLiked = false;
-  int _likeCount = 42;
-  int _commentCount = 8;
+  int _likeCount = 0;
+  int _commentCount = 0;
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -531,20 +531,6 @@ class _PostWidgetState extends State<PostWidget>
   }
 
   void _showCommentsBottomSheet(BuildContext context) {
-    // Create a mock post if none is provided
-    final postData =
-        widget.post ??
-        Post(
-          id: 'mock_post_1',
-          userId: 'user_1',
-          userName: 'Hosla',
-          content: 'This is a sample post content.',
-          createdAt: DateTime.now(),
-          tags: ['#Event', '#Community', '#Support'],
-          likeCount: _likeCount,
-          commentCount: _commentCount,
-        );
-
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,

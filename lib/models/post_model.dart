@@ -48,6 +48,33 @@ class Post {
     this.savedAt,
   });
 
+  static String _extractTagName(dynamic raw) {
+    if (raw == null) return '';
+
+    if (raw is String) return raw;
+
+    if (raw is Map) {
+      // Most common shape from API: { id: ..., name: ... }
+      final directName =
+          raw['name'] ??
+          raw['tagName'] ??
+          raw['displayName'] ??
+          raw['label'] ??
+          raw['title'] ??
+          raw['value'];
+      if (directName != null) return directName.toString();
+
+      // Sometimes nested: { tag: { name: ... } }
+      final nested = raw['tag'];
+      if (nested is Map) {
+        final nestedName = nested['name'] ?? nested['tagName'];
+        if (nestedName != null) return nestedName.toString();
+      }
+    }
+
+    return raw.toString();
+  }
+
   static DateTime _parseBackendDate(dynamic raw) {
     if (raw == null) return DateTime.now();
     final s = raw.toString().trim();
@@ -113,9 +140,17 @@ class Post {
 
     final imageUrl = _extractFirstMediaUrl(json['mediaUrls'], json['imageUrl']);
 
+    // Parse tags - API may return tag objects; we only store tag names.
+    // Also strip a leading '#' to keep display consistent.
     final tagsRaw = json['tags'];
     final tags = tagsRaw is List
-        ? tagsRaw.map((e) => e.toString()).toList()
+        ? tagsRaw
+              .map(_extractTagName)
+              .map((s) => s.trim())
+              .where((s) => s.isNotEmpty)
+              .map((s) => s.startsWith('#') ? s.substring(1).trim() : s)
+              .where((s) => s.isNotEmpty)
+              .toList()
         : <String>[];
 
     final mediaUrlsRaw = json['mediaUrls'];

@@ -325,7 +325,7 @@ class PostActions {
         postId: post.id,
         content: content,
         imageUrl: imageUrl,
-        tags: tags,
+        tagIds: tags, // Note: tags should be tag IDs (UUIDs) for API v2+
       );
 
       if (result['success'] == true && result['data'] != null) {
@@ -349,7 +349,7 @@ class PostActions {
             'postId': post.id,
             'content': content,
             'imageUrl': imageUrl,
-            'tags': tags,
+            'tagIds': tags,
           },
         );
         return {'success': false, 'message': result['message']};
@@ -362,7 +362,7 @@ class PostActions {
           'postId': post.id,
           'content': content,
           'imageUrl': imageUrl,
-          'tags': tags,
+          'tagIds': tags,
         },
       );
       return {'success': false, 'message': 'Network error: ${e.toString()}'};

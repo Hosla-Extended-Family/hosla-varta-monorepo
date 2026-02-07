@@ -431,7 +431,11 @@ class _PostCardState extends ConsumerState<PostCard>
                 spacing: 8,
                 runSpacing: 8,
                 children: displayTags.map((tag) {
-                  final isEmergency = tag.toLowerCase() == 'emergency';
+                  final normalized = tag.trim();
+                  final plain = normalized.startsWith('#')
+                      ? normalized.substring(1).trim()
+                      : normalized;
+                  final isEmergency = plain.toLowerCase() == 'emergency';
                   return Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -458,13 +462,19 @@ class _PostCardState extends ConsumerState<PostCard>
                               size: 16,
                             ),
                           ),
-                        Text(
-                          '#$tag',
-                          style: TextThemes.getBodySmallStyle(context).copyWith(
-                            color: isEmergency
-                                ? Colors.red
-                                : ThemeColors.primaryColor,
-                            fontWeight: FontWeight.w600,
+                        Flexible(
+                          child: Text(
+                            '#$plain',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: false,
+                            style: TextThemes.getBodySmallStyle(context)
+                                .copyWith(
+                                  color: isEmergency
+                                      ? Colors.red
+                                      : ThemeColors.primaryColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
                           ),
                         ),
                       ],
@@ -479,7 +489,7 @@ class _PostCardState extends ConsumerState<PostCard>
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12.0),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(0),
                 child: AspectRatio(
                   aspectRatio: 16 / 9,
                   child: Image.network(
