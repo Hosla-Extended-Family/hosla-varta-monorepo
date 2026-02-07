@@ -64,7 +64,7 @@ class MainApp extends ConsumerWidget {
           return UpdatePasswordPage(phoneNumber: args);
         }, */
       },
-      home: LoginPage(),
+      home: Homepage(),
     );
   }
 }

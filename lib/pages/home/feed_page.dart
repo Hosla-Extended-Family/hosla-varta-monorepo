@@ -108,7 +108,7 @@ class _FeedPageState extends ConsumerState<FeedPage>
                       shaderCallback: (bounds) => LinearGradient(
                         colors: [
                           ThemeColors.primaryColor,
-                          ThemeColors.primaryColor.withBlue(200),
+                          ThemeColors.primaryColor
                         ],
                       ).createShader(bounds),
                       child: Text(
@@ -144,7 +144,7 @@ class _FeedPageState extends ConsumerState<FeedPage>
                       ),
                     ),
                     child: const Icon(
-                      Icons.add_to_photos,
+                      Icons.post_add,
                       color: Colors.white,
                       size: 25,
                     ),
@@ -188,15 +188,13 @@ class _FeedPageState extends ConsumerState<FeedPage>
                           ),
                         )
                       : Container(
-                          padding: const EdgeInsets.all(2),
+                          padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              colors: [
-                                ThemeColors.primaryColor.withValues(alpha: 0.3),
-                                ThemeColors.primaryColor.withValues(alpha: 0.1),
-                              ],
-                            ),
+                            color: ThemeColors.getSurfaceColor(context),
+                            border: Border.all(
+                              color: ThemeColors.primaryColor,
+                              width: 2, )
                           ),
                           child: Icon(
                             Icons.person_rounded,

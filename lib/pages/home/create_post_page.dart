@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:hosla/core/constants/api_constants.dart';
+import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pro_image_editor/pro_image_editor.dart';
@@ -8,6 +10,7 @@ import 'package:hosla/services/post_service.dart';
 import 'package:hosla/services/database_helper.dart';
 import 'package:hosla/models/post_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hosla/widgets/tag_selection_widget.dart';
 
 class CreatePostPage extends StatefulWidget {
   const CreatePostPage({super.key});
@@ -18,7 +21,6 @@ class CreatePostPage extends StatefulWidget {
 
 class _CreatePostPageState extends State<CreatePostPage> {
   final TextEditingController _captionController = TextEditingController();
-  final TextEditingController _tagController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   final PostService _postService = PostService();
   bool _isLoading = false;
@@ -28,7 +30,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
   @override
   void dispose() {
     _captionController.dispose();
-    _tagController.dispose();
     _postService.dispose();
     super.dispose();
   }
@@ -531,100 +532,14 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
             // Tags Section
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                'Tags',
-                style: TextStyle(
-                  fontFamily: 'Quicksand',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: ThemeColors.getTextColor(context),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: ThemeColors.getSurfaceColor(context),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: ThemeColors.getBorderColor(context)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextField(
-                    controller: _tagController,
-                    style: TextStyle(
-                      fontFamily: 'Quicksand',
-                      fontSize: 15,
-                      color: ThemeColors.getTextColor(context),
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Add a tag (e.g., fun, mood)',
-                      hintStyle: TextStyle(
-                        fontFamily: 'Quicksand',
-                        color: ThemeColors.getSecondaryTextColor(context),
-                      ),
-                      border: InputBorder.none,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          Icons.add_circle,
-                          color: ThemeColors.primaryColor,
-                        ),
-                        onPressed: () {
-                          final tag = _tagController.text.trim();
-                          if (tag.isNotEmpty && !_tags.contains(tag)) {
-                            setState(() {
-                              _tags.add(tag);
-                              _tagController.clear();
-                            });
-                          }
-                        },
-                      ),
-                    ),
-                    onSubmitted: (value) {
-                      final tag = value.trim();
-                      if (tag.isNotEmpty && !_tags.contains(tag)) {
-                        setState(() {
-                          _tags.add(tag);
-                          _tagController.clear();
-                        });
-                      }
-                    },
-                  ),
-                  if (_tags.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _tags.map((tag) {
-                        return Chip(
-                          label: Text(
-                            tag,
-                            style: const TextStyle(
-                              fontFamily: 'Quicksand',
-                              fontSize: 13,
-                              color: Colors.white,
-                            ),
-                          ),
-                          backgroundColor: ThemeColors.primaryColor,
-                          deleteIcon: const Icon(
-                            Icons.close,
-                            size: 18,
-                            color: Colors.white,
-                          ),
-                          onDeleted: () {
-                            setState(() {
-                              _tags.remove(tag);
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ],
+              padding: Constants.defaultPadding,
+              child: TagSelectionWidget(
+                onTagsChanged: (selectedTagIds, selectedTagNames) {
+                  setState(() {
+                    _tags = selectedTagNames;
+                  });
+                },
+                initialSelectedTags: _tags,
               ),
             ),
 
