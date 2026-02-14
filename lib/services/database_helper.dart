@@ -26,7 +26,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -64,6 +64,7 @@ class DatabaseHelper {
         shareCount INTEGER NOT NULL DEFAULT 0,
         isLiked INTEGER NOT NULL DEFAULT 0,
         isSaved INTEGER NOT NULL DEFAULT 0,
+        visibility TEXT NOT NULL DEFAULT 'PUBLIC',
         createdAt TEXT NOT NULL,
         updatedAt TEXT,
         fetchedAt TEXT NOT NULL,
@@ -236,6 +237,12 @@ class DatabaseHelper {
       );
       await db.execute(
         'CREATE INDEX IF NOT EXISTS idx_action_queue_createdAt ON action_queue(createdAt)',
+      );
+    }
+
+    if (oldVersion < 3) {
+      await db.execute(
+        "ALTER TABLE posts ADD COLUMN visibility TEXT NOT NULL DEFAULT 'PUBLIC'",
       );
     }
   }
@@ -603,6 +610,7 @@ class DatabaseHelper {
       'shareCount': post.shareCount,
       'isLiked': post.isLiked ? 1 : 0,
       'isSaved': post.isSaved ? 1 : 0,
+      'visibility': post.visibility,
       'createdAt': post.createdAt.toIso8601String(),
       'updatedAt': post.updatedAt?.toIso8601String(),
       'fetchedAt': now,
@@ -630,6 +638,7 @@ class DatabaseHelper {
         'shareCount': post.shareCount,
         'isLiked': post.isLiked ? 1 : 0,
         'isSaved': post.isSaved ? 1 : 0,
+        'visibility': post.visibility,
         'createdAt': post.createdAt.toIso8601String(),
         'updatedAt': post.updatedAt?.toIso8601String(),
         'fetchedAt': now,
@@ -682,6 +691,7 @@ class DatabaseHelper {
       shareCount: map['shareCount'] as int,
       isLiked: (map['isLiked'] as int) == 1,
       isSaved: (map['isSaved'] as int) == 1,
+      visibility: map['visibility']?.toString().toUpperCase() ?? 'PUBLIC',
       createdAt: DateTime.parse(map['createdAt'] as String),
       updatedAt: map['updatedAt'] != null
           ? DateTime.parse(map['updatedAt'] as String)

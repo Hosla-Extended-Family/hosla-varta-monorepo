@@ -19,6 +19,7 @@ class Post {
   final bool canEdit;
   final bool canDelete;
   final bool canReport;
+  final String visibility;
   final DateTime createdAt;
   final DateTime? updatedAt;
   final DateTime? savedAt;
@@ -43,6 +44,7 @@ class Post {
     this.canEdit = false,
     this.canDelete = false,
     this.canReport = false,
+    this.visibility = 'PUBLIC',
     required this.createdAt,
     this.updatedAt,
     this.savedAt,
@@ -172,6 +174,11 @@ class Post {
     final shareCount = (json['shareCount'] as num?)?.toInt() ?? 0;
 
     final isLiked = json['isLikedByMe'] == true || json['isLiked'] == true;
+    final visibility =
+        (json['visibility'] ?? json['postVisibility'])
+            ?.toString()
+            .toUpperCase() ??
+        'PUBLIC';
 
     return Post(
       id: json['id'] ?? '',
@@ -193,6 +200,7 @@ class Post {
       canEdit: json['canEdit'] == true,
       canDelete: json['canDelete'] == true,
       canReport: json['canReport'] == true,
+      visibility: visibility,
       createdAt: _parseBackendDate(json['createdAt']),
       updatedAt: json['updatedAt'] != null
           ? _parseBackendDate(json['updatedAt'])
@@ -225,6 +233,7 @@ class Post {
       'canEdit': canEdit,
       'canDelete': canDelete,
       'canReport': canReport,
+      'visibility': visibility,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'savedAt': savedAt?.toIso8601String(),
@@ -252,6 +261,7 @@ class Post {
     bool? canEdit,
     bool? canDelete,
     bool? canReport,
+    String? visibility,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? savedAt,
@@ -276,6 +286,7 @@ class Post {
       canEdit: canEdit ?? this.canEdit,
       canDelete: canDelete ?? this.canDelete,
       canReport: canReport ?? this.canReport,
+      visibility: visibility ?? this.visibility,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       savedAt: savedAt ?? this.savedAt,

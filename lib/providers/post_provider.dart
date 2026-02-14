@@ -399,6 +399,44 @@ class PostActions {
     }
   }
 
+  /// Update visibility (hide/show)
+  Future<bool> setVisibility(Post post, String visibility) async {
+    final updated = post.copyWith(
+      visibility: visibility,
+      updatedAt: DateTime.now(),
+    );
+
+    await localRepo.savePost(updated);
+    _updatePostInProviders(updated);
+
+    try {
+      final result = await postService.updateVisibility(
+        postId: post.id,
+        visibility: visibility,
+      );
+
+      if (result['success'] == true && result['data'] != null) {
+        final data = result['data'];
+        Map<String, dynamic>? postJson;
+        if (data is Map<String, dynamic> && data['post'] is Map) {
+          postJson = (data['post'] as Map).cast<String, dynamic>();
+        } else if (data is Map<String, dynamic>) {
+          postJson = data;
+        }
+
+        if (postJson != null) {
+          final serverPost = Post.fromJson(postJson);
+          await localRepo.savePost(serverPost);
+          _updatePostInProviders(serverPost);
+        }
+      }
+
+      return result['success'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Add a comment to a post
   Future<bool> addComment({
     required Post post,

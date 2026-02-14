@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/models/post_model.dart';
+import 'package:hosla/pages/home/user_profile_view_page.dart';
 import 'package:hosla/providers/post_provider.dart';
 import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/widgets/comments_bottom_sheet.dart';
@@ -177,6 +178,19 @@ class _PostCardState extends ConsumerState<PostCard>
     Share.share(text, subject: 'Post by ${_post.userName}');
   }
 
+  void _openProfile() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => UserProfileViewPage(
+          userId: _post.userId,
+          initialName: _post.userName,
+          initialAvatarUrl: _post.userAvatarUrl,
+        ),
+      ),
+    );
+  }
+
   void _showPostMenu() {
     final currentUser = ref.read(currentUserProfileProvider);
     final isOwner = currentUser?.id == _post.userId;
@@ -199,6 +213,50 @@ class _PostCardState extends ConsumerState<PostCard>
                   onTap: () {
                     Navigator.pop(context);
                     widget.onEdit?.call();
+                  },
+                ),
+                ListTile(
+                  leading: Icon(
+                    _post.visibility.toUpperCase() == 'ONLY_ME'
+                        ? Icons.visibility
+                        : Icons.visibility_off,
+                  ),
+                  title: Text(
+                    _post.visibility.toUpperCase() == 'ONLY_ME'
+                        ? 'Reshow Post'
+                        : 'Hide from Profile',
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final postActions = ref.read(postActionsProvider);
+                    final target = _post.visibility.toUpperCase() == 'ONLY_ME'
+                        ? 'PUBLIC'
+                        : 'ONLY_ME';
+                    final messenger = ScaffoldMessenger.of(context);
+
+                    final ok = await postActions.setVisibility(_post, target);
+
+                    if (!mounted) return;
+                    if (ok) {
+                      setState(() {
+                        _post = _post.copyWith(visibility: target);
+                      });
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            target == 'PUBLIC'
+                                ? 'Post is visible again'
+                                : 'Post hidden from feed/profile',
+                          ),
+                        ),
+                      );
+                    } else {
+                      messenger.showSnackBar(
+                        const SnackBar(
+                          content: Text('Could not update visibility'),
+                        ),
+                      );
+                    }
                   },
                 ),
                 ListTile(
@@ -322,10 +380,10 @@ class _PostCardState extends ConsumerState<PostCard>
         .toList();
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: hasEmergencyTag
-            ? (isDark ? Colors.red.shade900 : Colors.red.shade50)
+            ? ThemeColors.getCardColor(context)
             : ThemeColors.getCardColor(context),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
@@ -355,29 +413,48 @@ class _PostCardState extends ConsumerState<PostCard>
             padding: const EdgeInsets.all(16.0),
             child: Row(
               children: [
-                // Profile Picture
-                ProfilePic(radius: 24, imageUrl: _post.userAvatarUrl ?? ''),
-                const SizedBox(width: 12),
-                // User Info
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _post.userName,
-                        style: TextThemes.getTitleStyle(
-                          context,
-                        ).copyWith(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _post.getRelativeTime(),
-                        style: TextThemes.getBodySmallStyle(context).copyWith(
-                          color: ThemeColors.getSecondaryTextColor(context),
-                          fontSize: 12,
+                  child: InkWell(
+                    onTap: _openProfile,
+                    borderRadius: BorderRadius.circular(32),
+                    child: Row(
+                      children: [
+                        // Profile Picture
+                        ProfilePic(
+                          radius: 24,
+                          imageUrl: _post.userAvatarUrl ?? '',
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 12),
+                        // User Info
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _post.userName,
+                                style: TextThemes.getTitleStyle(context)
+                                    .copyWith(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _post.getRelativeTime(),
+                                style: TextThemes.getBodySmallStyle(context)
+                                    .copyWith(
+                                      color: ThemeColors.getSecondaryTextColor(
+                                        context,
+                                      ),
+                                      fontSize: 12,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 // Three-dot menu

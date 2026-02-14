@@ -6,7 +6,7 @@ import 'package:hosla/pages/authentication/create_profile_page.dart';
 import 'package:hosla/pages/authentication/login_page.dart';
 import 'package:hosla/pages/authentication/otp_verification_page.dart';
 import 'package:hosla/pages/authentication/signup_page.dart';
-import 'package:hosla/pages/homePage.dart';
+import 'package:hosla/pages/home_page.dart';
 import 'package:hosla/providers/theme_provider.dart';
 import 'package:hosla/services/auth_service.dart';
 
@@ -64,7 +64,7 @@ class MainApp extends ConsumerWidget {
           return UpdatePasswordPage(phoneNumber: args);
         }, */
       },
-      home: LoginPage(),
+      home: Homepage(),
     );
   }
 }

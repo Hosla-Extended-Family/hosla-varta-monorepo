@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/pages/home/edit_profile_page.dart';
+import 'package:hosla/pages/home/friends_page.dart';
 import 'package:hosla/pages/home/user_posts_page.dart';
 import 'package:hosla/pages/home/saved_posts_page.dart';
 import 'package:hosla/pages/home/settings_page.dart';
@@ -394,6 +395,19 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     userName: currentUser?.name ?? 'User',
                   ),
                 ),
+              );
+            },
+          ),
+          _buildMenuItem(
+            context,
+            icon: Icons.group_outlined,
+            iconColor: ThemeColors.secondaryColor,
+            title: 'Friends & Requests',
+            subtitle: 'Manage connections',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FriendsPage()),
               );
             },
           ),

@@ -20,7 +20,9 @@ class FeedPage extends ConsumerStatefulWidget {
 class _FeedPageState extends ConsumerState<FeedPage>
     with SingleTickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
+  final ScrollController _friendScrollController = ScrollController();
   bool _showTitle = false;
+  late TabController _tabController;
 
   // Stories data - Commented out for now
   // final List<Map<String, String>> _stories = [
@@ -53,6 +55,8 @@ class _FeedPageState extends ConsumerState<FeedPage>
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _friendScrollController.addListener(_onFriendScroll);
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   void _onScroll() {
@@ -72,9 +76,21 @@ class _FeedPageState extends ConsumerState<FeedPage>
     }
   }
 
+  void _onFriendScroll() {
+    if (_friendScrollController.position.pixels >=
+        _friendScrollController.position.maxScrollExtent - 200) {
+      final notifier = ref.read(feedPostsProvider.notifier);
+      if (notifier.hasMore) {
+        notifier.loadMorePosts();
+      }
+    }
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
+    _friendScrollController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -89,7 +105,7 @@ class _FeedPageState extends ConsumerState<FeedPage>
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60),
+        preferredSize: const Size.fromHeight(108),
         child: ClipRRect(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -99,6 +115,51 @@ class _FeedPageState extends ConsumerState<FeedPage>
                 context,
               ).withValues(alpha: 0.8),
               elevation: 0,
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(48),
+                child: Container(
+                  color: ThemeColors.getNavBarColor(
+                    context,
+                  ).withValues(alpha: 0.8),
+                  child: TabBar(
+                    controller: _tabController,
+                    indicatorColor: ThemeColors.primaryColor,
+                    indicatorWeight: 3,
+                    labelColor: ThemeColors.primaryColor,
+                    unselectedLabelColor: ThemeColors.getSecondaryTextColor(
+                      context,
+                    ),
+                    labelStyle: TextThemes.getBodyMediumStyle(
+                      context,
+                    ).copyWith(fontWeight: FontWeight.bold, fontSize: 15),
+                    unselectedLabelStyle: TextThemes.getBodyMediumStyle(
+                      context,
+                    ).copyWith(fontSize: 15),
+                    tabs: const [
+                      Tab(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.public, size: 20),
+                            SizedBox(width: 6),
+                            Text('Global'),
+                          ],
+                        ),
+                      ),
+                      Tab(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.people_alt_outlined, size: 20),
+                            SizedBox(width: 6),
+                            Text('Friends'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               title: AnimatedOpacity(
                 opacity: _showTitle ? 1.0 : 1.0,
                 duration: const Duration(milliseconds: 200),
@@ -108,7 +169,7 @@ class _FeedPageState extends ConsumerState<FeedPage>
                       shaderCallback: (bounds) => LinearGradient(
                         colors: [
                           ThemeColors.primaryColor,
-                          ThemeColors.primaryColor
+                          ThemeColors.primaryColor,
                         ],
                       ).createShader(bounds),
                       child: Text(
@@ -194,7 +255,8 @@ class _FeedPageState extends ConsumerState<FeedPage>
                             color: ThemeColors.getSurfaceColor(context),
                             border: Border.all(
                               color: ThemeColors.primaryColor,
-                              width: 2, )
+                              width: 2,
+                            ),
                           ),
                           child: Icon(
                             Icons.person_rounded,
@@ -208,94 +270,215 @@ class _FeedPageState extends ConsumerState<FeedPage>
           ),
         ),
       ),
-      body: RefreshIndicator(
-        onRefresh: _handleRefresh,
-        color: ThemeColors.primaryColor,
-        backgroundColor: ThemeColors.getSurfaceColor(context),
-        child: CustomScrollView(
-          controller: _scrollController,
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(child: SizedBox(height: 125)),
-            // Stories Section - Commented out for now
-            // SliverToBoxAdapter(
-            //   child: Container(
-            //     height: 110,
-            //     margin: const EdgeInsets.symmetric(vertical: 8),
-            //     child: ListView.builder(
-            //       scrollDirection: Axis.horizontal,
-            //       physics: const BouncingScrollPhysics(),
-            //       padding: const EdgeInsets.symmetric(horizontal: 12),
-            //       itemCount: _stories.length,
-            //       itemBuilder: (context, index) {
-            //         final story = _stories[index];
-            //         final isAddStory = story['isAddStory'] == 'true';
-            //         return _buildStoryItem(
-            //           name: story['name']!,
-            //           imageUrl: story['imageUrl']!,
-            //           isAddStory: isAddStory,
-            //         );
-            //       },
-            //     ),
-            //   ),
-            // ),
-            // Posts Section (from network feed)
-            Consumer(
-              builder: (context, ref, _) {
-                final feed = ref.watch(feedPostsProvider);
-                return feed.when(
-                  data: (posts) {
-                    if (posts.isEmpty) {
-                      return SliverToBoxAdapter(
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          // Global Feed Tab
+          RefreshIndicator(
+            onRefresh: _handleRefresh,
+            color: ThemeColors.primaryColor,
+            backgroundColor: ThemeColors.getSurfaceColor(context),
+            child: CustomScrollView(
+              controller: _scrollController,
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(child: SizedBox(height: 170)),
+                // Stories Section - Commented out for now
+                // SliverToBoxAdapter(
+                //   child: Container(
+                //     height: 110,
+                //     margin: const EdgeInsets.symmetric(vertical: 8),
+                //     child: ListView.builder(
+                //       scrollDirection: Axis.horizontal,
+                //       physics: const BouncingScrollPhysics(),
+                //       padding: const EdgeInsets.symmetric(horizontal: 12),
+                //       itemCount: _stories.length,
+                //       itemBuilder: (context, index) {
+                //         final story = _stories[index];
+                //         final isAddStory = story['isAddStory'] == 'true';
+                //         return _buildStoryItem(
+                //           name: story['name']!,
+                //           imageUrl: story['imageUrl']!,
+                //           isAddStory: isAddStory,
+                //         );
+                //       },
+                //     ),
+                //   ),
+                // ),
+                // Posts Section (from network feed)
+                Consumer(
+                  builder: (context, ref, _) {
+                    final feed = ref.watch(feedPostsProvider);
+                    return feed.when(
+                      data: (posts) {
+                        final globalPosts = posts.where((p) {
+                          final vis = p.visibility.toUpperCase();
+                          return vis != 'FRIENDS' && vis != 'ONLY_ME';
+                        }).toList();
+
+                        if (globalPosts.isEmpty) {
+                          return SliverToBoxAdapter(
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 40,
+                                ),
+                                child: Text(
+                                  'No posts yet',
+                                  style: TextThemes.getBodyMediumStyle(context),
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                        return SliverPadding(
+                          padding: const EdgeInsets.only(top: 8),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final post = globalPosts[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: PostCard(post: post),
+                              );
+                            }, childCount: globalPosts.length),
+                          ),
+                        );
+                      },
+                      loading: () => const SliverToBoxAdapter(
+                        child: Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 40),
+                            child: LoadingWidget(message: 'Loading posts...'),
+                          ),
+                        ),
+                      ),
+                      error: (e, _) => SliverToBoxAdapter(
                         child: Center(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 40),
                             child: Text(
-                              'No posts yet',
+                              'Failed to load feed',
                               style: TextThemes.getBodyMediumStyle(context),
                             ),
                           ),
                         ),
-                      );
-                    }
-                    return SliverPadding(
-                      padding: const EdgeInsets.only(top: 8),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate((context, index) {
-                          final post = posts[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: PostCard(post: post),
-                          );
-                        }, childCount: posts.length),
                       ),
                     );
                   },
-                  loading: () => const SliverToBoxAdapter(
-                    child: Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 40),
-                        child: LoadingWidget(message: 'Loading posts...'),
-                      ),
-                    ),
-                  ),
-                  error: (e, _) => SliverToBoxAdapter(
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 40),
-                        child: Text(
-                          'Failed to load feed',
-                          style: TextThemes.getBodyMediumStyle(context),
+                ),
+                SliverToBoxAdapter(child: SizedBox(height: 80)),
+              ],
+            ),
+          ),
+          // Friends Feed Tab
+          RefreshIndicator(
+            onRefresh: _handleRefresh,
+            color: ThemeColors.primaryColor,
+            backgroundColor: ThemeColors.getSurfaceColor(context),
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              controller: _friendScrollController,
+              slivers: [
+                SliverToBoxAdapter(child: SizedBox(height: 170)),
+                Consumer(
+                  builder: (context, ref, _) {
+                    final feed = ref.watch(feedPostsProvider);
+                    return feed.when(
+                      data: (posts) {
+                        final friendPosts = posts
+                            .where(
+                              (p) => p.visibility.toUpperCase() == 'FRIENDS',
+                            )
+                            .toList();
+
+                        if (friendPosts.isEmpty) {
+                          return SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.people_outline,
+                                    size: 72,
+                                    color: ThemeColors.getSecondaryTextColor(
+                                      context,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'No friends-only posts yet',
+                                    style: TextThemes.getTitleStyle(
+                                      context,
+                                    ).copyWith(fontSize: 20),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 40,
+                                    ),
+                                    child: Text(
+                                      'Add friends to start seeing their posts here.',
+                                      textAlign: TextAlign.center,
+                                      style:
+                                          TextThemes.getBodyMediumStyle(
+                                            context,
+                                          ).copyWith(
+                                            color:
+                                                ThemeColors.getSecondaryTextColor(
+                                                  context,
+                                                ),
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+
+                        return SliverPadding(
+                          padding: const EdgeInsets.only(top: 8),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final post = friendPosts[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: PostCard(post: post),
+                              );
+                            }, childCount: friendPosts.length),
+                          ),
+                        );
+                      },
+                      loading: () => const SliverFillRemaining(
+                        child: Center(
+                          child: LoadingWidget(message: 'Loading posts...'),
                         ),
                       ),
-                    ),
-                  ),
-                );
-              },
+                      error: (e, _) => SliverFillRemaining(
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 40),
+                            child: Text(
+                              'Failed to load friends feed',
+                              style: TextThemes.getBodyMediumStyle(context),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
-            SliverToBoxAdapter(child: SizedBox(height: 80)),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

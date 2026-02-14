@@ -265,6 +265,44 @@ class PostService {
     }
   }
 
+  /// Update only the visibility of a post (PUBLIC | FRIENDS | ONLY_ME)
+  Future<Map<String, dynamic>> updateVisibility({
+    required String postId,
+    required String visibility,
+  }) async {
+    try {
+      final url = Uri.parse(
+        '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId',
+      );
+
+      final response = await _api
+          .put(url, body: jsonEncode({'visibility': visibility}))
+          .timeout(ApiConstants.timeout);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return {
+          'success': responseData['success'] == true,
+          'message': responseData['message'] ?? 'Visibility updated',
+          'data': responseData['data'],
+        };
+      }
+
+      final errorData = jsonDecode(response.body);
+      return {
+        'success': false,
+        'message': errorData['message'] ?? 'Failed to update visibility',
+        'data': null,
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Network error: ${e.toString()}',
+        'data': null,
+      };
+    }
+  }
+
   /// Delete a post
   ///
   /// Permanently deletes a post
