@@ -878,10 +878,15 @@ class _CreatePostPageState extends State<CreatePostPage> {
                     padding: Constants.defaultPadding,
                     child: TagSelectionWidget(
                       onTagsChanged: (selectedTagIds, selectedTagNames) {
+                        debugPrint(
+                          '[CreatePost] onTagsChanged received '
+                          'ids=$selectedTagIds names=$selectedTagNames',
+                        );
                         setState(() {
                           _tagIds = selectedTagIds;
                           _tagNames = selectedTagNames;
                         });
+                        debugPrint('[CreatePost] _tagIds updated to: $_tagIds');
                       },
                       initialSelectedTags: _tagNames,
                     ),

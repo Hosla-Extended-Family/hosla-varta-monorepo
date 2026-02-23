@@ -1,6 +1,6 @@
 class ApiConstants {
   static const String baseUrl =
-      'https://logan-ground-dating-cars.trycloudflare.com';
+      'https://southampton-develops-red-belief.trycloudflare.com';
 
   /// Resolves API-provided URLs that may be absolute or relative.
   ///

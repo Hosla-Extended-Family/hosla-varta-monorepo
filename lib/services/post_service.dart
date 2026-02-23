@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:dio/dio.dart' as dio;
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:hosla/core/constants/api_constants.dart';
@@ -17,7 +16,7 @@ class PostService {
 
   static String _formatBackendCreatedAt(DateTime dt) {
     String two(int v) => v.toString().padLeft(2, '0');
-    return '${two(dt.day)}-${two(dt.month)}-${dt.year}${two(dt.hour)}:${two(dt.minute)}:${two(dt.second)}';
+    return '${two(dt.day)}-${two(dt.month)}-${dt.year} ${two(dt.hour)}:${two(dt.minute)}:${two(dt.second)}';
   }
 
   String _getClientPlatform() {
@@ -115,6 +114,24 @@ class PostService {
       payload.removeWhere((_, v) => v == null);
       final requestBody = jsonEncode(payload);
 
+      // ── DEBUG: log full outgoing JSON request ──────────────────────────────
+      debugPrint(
+        '╔══ [CreatePost JSON] REQUEST ══════════════════════════════',
+      );
+      debugPrint('║  URL     : $primaryUrl');
+      debugPrint('║  Method  : POST');
+      debugPrint(
+        '║  Headers : Content-Type=application/json, '
+        'Authorization=Bearer ${accessToken.length > 8 ? '${accessToken.substring(0, 8)}…' : '***'}',
+      );
+      debugPrint('║  Body    :');
+      // Pretty-print each field on its own line for readability.
+      payload.forEach((k, v) => debugPrint('║    $k = $v'));
+      debugPrint(
+        '╚════════════════════════════════════════════════════════════',
+      );
+      // ──────────────────────────────────────────────────────────────────────
+
       Future<http.Response> send(Uri u) =>
           _api.post(u, body: requestBody).timeout(ApiConstants.timeout);
 
@@ -123,6 +140,17 @@ class PostService {
         // Retry against the non-/api route if the backend is configured that way.
         response = await send(fallbackUrl);
       }
+
+      // ── DEBUG: log full response ───────────────────────────────────────────
+      debugPrint(
+        '╔══ [CreatePost JSON] RESPONSE ══════════════════════════════',
+      );
+      debugPrint('║  Status  : ${response.statusCode}');
+      debugPrint('║  Body    : ${response.body}');
+      debugPrint(
+        '╚════════════════════════════════════════════════════════════',
+      );
+      // ──────────────────────────────────────────────────────────────────────
 
       Map<String, dynamic>? decoded;
       try {
@@ -387,80 +415,91 @@ class PostService {
       final effectiveCreatedAt = createdAt ?? DateTime.now();
 
       Future<http.Response> send(Uri url) async {
-        // We need to send tagIds as a real multipart array.
-        // `http.MultipartRequest.fields` is a Map and cannot represent repeated
-        // keys (tagIds=...&tagIds=...), so we use Dio's FormData which supports
-        // duplicate field names.
-        final formData = dio.FormData();
+        final request = http.MultipartRequest('POST', url);
+        request.headers['Authorization'] = 'Bearer $accessToken';
+        request.headers['X-Client-Platform'] = _getClientPlatform();
 
         if (id != null && id.trim().isNotEmpty) {
-          formData.fields.add(MapEntry('id', id.trim()));
+          request.fields['id'] = id.trim();
         }
         if (resolvedTitle.isNotEmpty) {
-          formData.fields.add(MapEntry('title', resolvedTitle));
+          request.fields['title'] = resolvedTitle;
         }
 
-        formData.fields.add(MapEntry('body', content));
-        formData.fields.add(MapEntry('visibility', normalizedVisibility));
-        formData.fields.add(
-          MapEntry('createdAt', _formatBackendCreatedAt(effectiveCreatedAt)),
+        // Match API spec fields.
+        request.fields['body'] = content;
+        request.fields['visibility'] = normalizedVisibility;
+        request.fields['createdAt'] = _formatBackendCreatedAt(
+          effectiveCreatedAt,
         );
-        formData.fields.add(MapEntry('authorId', userId));
-        formData.fields.add(MapEntry('authorName', userName));
+        request.fields['authorId'] = userId;
+        request.fields['authorName'] = userName;
         if (userAvatarUrl != null && userAvatarUrl.trim().isNotEmpty) {
-          formData.fields.add(
-            MapEntry('authorProfilePicUrl', userAvatarUrl.trim()),
-          );
+          request.fields['authorProfilePicUrl'] = userAvatarUrl.trim();
         }
 
-        // Backend API expects: tagIds: ["uuid1", "uuid2", ...]
-        // In multipart/form-data, the most commonly parsed representation is
-        // repeating the same key for each element.
+        // Send each tagId as a separate repeated multipart field.
+        // This is the standard multipart array encoding:
+        //   Content-Disposition: form-data; name="tagIds"  → uuid1
+        //   Content-Disposition: form-data; name="tagIds"  → uuid2
+        // Most backends (NestJS/Spring/Express) parse this as tagIds=[uuid1,uuid2].
         for (final tagId in normalizedTagIds) {
-          formData.fields.add(MapEntry('tagIds', tagId));
+          request.files.add(http.MultipartFile.fromString('tagIds', tagId));
         }
 
-        debugPrint(
-          '[CreatePostMultipart] tagIdsCount=${normalizedTagIds.length} '
-          'tagIds=$normalizedTagIds mediaCount=${normalizedMediaPaths.length}',
-        );
-
+        // Backend expects multipart files under the `mediaUrls` field name.
         for (final path in normalizedMediaPaths) {
-          formData.files.add(
-            MapEntry('mediaUrls', await dio.MultipartFile.fromFile(path)),
+          request.files.add(
+            await http.MultipartFile.fromPath('mediaUrls', path),
           );
         }
 
-        final client = dio.Dio(
-          dio.BaseOptions(
-            connectTimeout: ApiConstants.timeout,
-            sendTimeout: ApiConstants.timeout,
-            receiveTimeout: ApiConstants.timeout,
-            validateStatus: (status) => status != null && status < 600,
-          ),
+        // ── DEBUG: log full outgoing multipart request ─────────────────────
+        debugPrint(
+          '╔══ [CreatePostMultipart] REQUEST ═══════════════════════════',
         );
+        debugPrint('║  URL     : $url');
+        debugPrint('║  Method  : POST multipart/form-data');
+        debugPrint('║  Headers :');
+        request.headers.forEach((k, v) {
+          final display = k.toLowerCase() == 'authorization'
+              ? 'Bearer ${v.length > 15 ? '${v.substring(7, 15)}…' : '***'}'
+              : v;
+          debugPrint('║    $k = $display');
+        });
+        debugPrint('║  Fields  :');
+        request.fields.forEach((k, v) => debugPrint('║    $k = $v'));
+        debugPrint('║  Files   :');
+        for (final f in request.files) {
+          debugPrint(
+            '║    name=${f.field}  '
+            'filename=${f.filename ?? '(inline)'}  '
+            'contentType=${f.contentType}  '
+            'length=${f.length}b',
+          );
+        }
+        debugPrint(
+          '╚════════════════════════════════════════════════════════════',
+        );
+        // ──────────────────────────────────────────────────────────────────
 
-        final response = await client.postUri(
-          url,
-          data: formData,
-          options: dio.Options(
-            headers: {
-              'Authorization': 'Bearer $accessToken',
-              'X-Client-Platform': _getClientPlatform(),
-            },
-            contentType: 'multipart/form-data',
-            responseType: dio.ResponseType.plain,
-          ),
+        final streamedResponse = await request.send().timeout(
+          ApiConstants.timeout,
         );
+        final resp = await http.Response.fromStream(streamedResponse);
 
-        return http.Response(
-          response.data?.toString() ?? '',
-          response.statusCode ?? 0,
-          headers: {
-            for (final e in response.headers.map.entries)
-              e.key: e.value.join(','),
-          },
+        // ── DEBUG: log full response ───────────────────────────────────────
+        debugPrint(
+          '╔══ [CreatePostMultipart] RESPONSE ══════════════════════════',
         );
+        debugPrint('║  Status  : ${resp.statusCode}');
+        debugPrint('║  Body    : ${resp.body}');
+        debugPrint(
+          '╚════════════════════════════════════════════════════════════',
+        );
+        // ──────────────────────────────────────────────────────────────────
+
+        return resp;
       }
 
       var response = await send(primaryUrl);

@@ -42,6 +42,7 @@ class _TagSelectionWidgetState extends State<TagSelectionWidget> {
 
   /// Fetch tags from API on component load
   Future<void> _fetchTags() async {
+    debugPrint('[TagSelection] _fetchTags() called');
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -49,6 +50,10 @@ class _TagSelectionWidgetState extends State<TagSelectionWidget> {
 
     try {
       final tags = await _tagService.fetchTags();
+      debugPrint(
+        '[TagSelection] fetched ${tags.length} tags: '
+        '${tags.map((t) => '${t.name}(${t.id.substring(0, 8)}…)').toList()}',
+      );
 
       setState(() {
         _availableTags = tags;
@@ -56,6 +61,10 @@ class _TagSelectionWidgetState extends State<TagSelectionWidget> {
 
         // Pre-select tags if initial values provided
         if (widget.initialSelectedTags.isNotEmpty) {
+          debugPrint(
+            '[TagSelection] pre-selecting from initialSelectedTags='
+            '${widget.initialSelectedTags}',
+          );
           for (final tag in tags) {
             if (widget.initialSelectedTags.contains(tag.name)) {
               _selectedTagIds.add(tag.id);
@@ -65,6 +74,7 @@ class _TagSelectionWidgetState extends State<TagSelectionWidget> {
         }
       });
     } catch (e) {
+      debugPrint('[TagSelection] _fetchTags ERROR: $e');
       setState(() {
         _isLoading = false;
         _errorMessage = e.toString().replaceFirst('Exception: ', '');
@@ -77,8 +87,10 @@ class _TagSelectionWidgetState extends State<TagSelectionWidget> {
     setState(() {
       if (_selectedTagIds.contains(tag.id)) {
         _selectedTagIds.remove(tag.id);
+        debugPrint('[TagSelection] DESELECTED tag: ${tag.name} (${tag.id})');
       } else {
         _selectedTagIds.add(tag.id);
+        debugPrint('[TagSelection] SELECTED tag: ${tag.name} (${tag.id})');
       }
     });
     _notifyParent();
@@ -92,6 +104,10 @@ class _TagSelectionWidgetState extends State<TagSelectionWidget> {
         .map((tag) => tag.name)
         .toList();
 
+    debugPrint(
+      '[TagSelection] _notifyParent → selectedIds=$selectedIds '
+      'selectedNames=$selectedNames',
+    );
     widget.onTagsChanged(selectedIds, selectedNames);
   }
 

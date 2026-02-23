@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:hosla/core/constants/api_constants.dart';
 import 'package:hosla/models/tag_model.dart';
 import 'package:hosla/services/api_client.dart';
@@ -16,6 +17,7 @@ class TagService {
       final url = Uri.parse(
         '${ApiConstants.baseUrl}${ApiConstants.tagsEndpoint}',
       );
+      debugPrint('[TagService] fetchTags() → GET $url');
 
       final response = await _api
           .get(url)
@@ -23,6 +25,11 @@ class TagService {
             ApiConstants.timeout,
             onTimeout: () => throw Exception('Request timed out'),
           );
+
+      debugPrint(
+        '[TagService] response status=${response.statusCode} '
+        'body=${response.body}',
+      );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
@@ -33,6 +40,7 @@ class TagService {
           final tagsList = data?['tags'] as List?;
 
           if (tagsList != null) {
+            debugPrint('[TagService] parsed ${tagsList.length} tags');
             // Parse each tag from JSON
             return tagsList
                 .map((tagJson) => Tag.fromJson(tagJson as Map<String, dynamic>))
@@ -47,6 +55,7 @@ class TagService {
         throw Exception('Failed to load tags: ${response.statusCode}');
       }
     } catch (e) {
+      debugPrint('[TagService] fetchTags ERROR: $e');
       // Re-throw with context
       throw Exception('Error fetching tags: $e');
     }
