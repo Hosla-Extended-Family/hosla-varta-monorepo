@@ -347,6 +347,7 @@ class UserService {
         json['profilePicUrl'] ??
         json['profilePictureUrl'] ??
         json['avatarUrl'];
+    final resolvedAvatarUrl = ApiConstants.resolveUrl(avatarUrl?.toString());
     final lastSeenRaw = json['lastSeen']?.toString();
     DateTime? lastSeen;
     if (lastSeenRaw != null && lastSeenRaw.isNotEmpty) {
@@ -361,7 +362,7 @@ class UserService {
           json['userId']?.toString() ??
           'current_user',
       name: json['name']?.toString() ?? 'User',
-      avatarUrl: avatarUrl?.toString(),
+      avatarUrl: resolvedAvatarUrl,
       bio: json['bio']?.toString(),
       email: json['email']?.toString(),
       phone: json['phone']?.toString() ?? json['phoneNumber']?.toString(),

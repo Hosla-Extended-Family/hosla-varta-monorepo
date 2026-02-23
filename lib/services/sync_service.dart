@@ -128,7 +128,7 @@ class SyncService {
           final result = await _postService.updatePost(
             postId: postId,
             content: content,
-            imageUrl: imageUrl,
+            mediaUrls: [if (imageUrl != null && imageUrl.isNotEmpty) imageUrl],
             tagIds: tagIds ?? [],
           );
           return result['success'] ?? false;

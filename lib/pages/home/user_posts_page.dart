@@ -5,11 +5,10 @@ import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/models/post_model.dart';
 import 'package:hosla/providers/post_provider.dart';
 import 'package:hosla/providers/user_provider.dart';
+import 'package:hosla/pages/home/edit_post_page.dart';
 import 'package:hosla/widgets/post_card.dart';
-import 'package:hosla/widgets/edit_post_dialog.dart';
 import 'package:hosla/widgets/comments_bottom_sheet.dart';
 import 'package:hosla/widgets/loading_widget.dart';
-import 'dart:ui';
 
 /// Page for viewing all posts by a specific user
 class UserPostsPage extends ConsumerStatefulWidget {
@@ -196,7 +195,13 @@ class _UserPostsPageState extends ConsumerState<UserPostsPage> {
           // Content
           postsAsyncValue.when(
             data: (posts) {
-              if (posts.isEmpty) {
+              final visiblePosts = isOwnProfile
+                  ? posts
+                  : posts
+                        .where((p) => p.visibility.toUpperCase() == 'PUBLIC')
+                        .toList(growable: false);
+
+              if (visiblePosts.isEmpty) {
                 return SliverFillRemaining(
                   child: _buildEmptyState(context, isOwnProfile),
                 );
@@ -214,16 +219,20 @@ class _UserPostsPageState extends ConsumerState<UserPostsPage> {
                           childAspectRatio: 1,
                         ),
                     delegate: SliverChildBuilderDelegate(
-                      (context, index) =>
-                          _buildGridItem(context, posts[index], posts, index),
-                      childCount: posts.length,
+                      (context, index) => _buildGridItem(
+                        context,
+                        visiblePosts[index],
+                        visiblePosts,
+                        index,
+                      ),
+                      childCount: visiblePosts.length,
                     ),
                   ),
                 );
               } else {
                 return SliverList(
                   delegate: SliverChildBuilderDelegate((context, index) {
-                    final post = posts[index];
+                    final post = visiblePosts[index];
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: PostCard(
@@ -232,7 +241,7 @@ class _UserPostsPageState extends ConsumerState<UserPostsPage> {
                         onComment: () => _showComments(context, post),
                       ),
                     );
-                  }, childCount: posts.length),
+                  }, childCount: visiblePosts.length),
                 );
               }
             },
@@ -482,9 +491,9 @@ class _UserPostsPageState extends ConsumerState<UserPostsPage> {
   }
 
   void _showEditDialog(BuildContext context, Post post) {
-    showDialog(
-      context: context,
-      builder: (context) => EditPostDialog(post: post),
+    Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => EditPostPage(post: post)),
     );
   }
 

@@ -4,8 +4,8 @@ import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/models/post_model.dart';
 import 'package:hosla/providers/post_provider.dart';
+import 'package:hosla/pages/home/edit_post_page.dart';
 import 'package:hosla/widgets/post_card.dart';
-import 'package:hosla/widgets/edit_post_dialog.dart';
 import 'package:hosla/widgets/comments_bottom_sheet.dart';
 import 'package:hosla/widgets/loading_widget.dart';
 
@@ -465,9 +465,9 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
   }
 
   void _showEditDialog(BuildContext context, Post post) {
-    showDialog(
-      context: context,
-      builder: (context) => EditPostDialog(post: post),
+    Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => EditPostPage(post: post)),
     );
   }
 

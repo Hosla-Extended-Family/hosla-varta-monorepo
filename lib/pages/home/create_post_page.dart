@@ -23,9 +23,66 @@ class _CreatePostPageState extends State<CreatePostPage> {
   final ImagePicker _picker = ImagePicker();
   final PostService _postService = PostService();
   bool _isLoading = false;
-  XFile? _selectedImage;
+  List<XFile> _selectedImages = [];
+  int _activeImageIndex = 0;
   List<String> _tagIds = []; // Tag UUIDs for API submission
   List<String> _tagNames = []; // Tag names for display
+  String _visibility = 'PUBLIC';
+
+  static const _allowedVisibilities = <String>['PUBLIC', 'FRIENDS', 'ONLY_ME'];
+
+  String _visibilityLabel(String value) {
+    switch (value.toUpperCase()) {
+      case 'PUBLIC':
+        return 'Public';
+      case 'FRIENDS':
+        return 'Friends';
+      case 'ONLY_ME':
+        return 'Only me';
+      default:
+        return value;
+    }
+  }
+
+  IconData _visibilityIcon(String value) {
+    switch (value.toUpperCase()) {
+      case 'PUBLIC':
+        return Icons.public;
+      case 'FRIENDS':
+        return Icons.group;
+      case 'ONLY_ME':
+        return Icons.lock;
+      default:
+        return Icons.visibility;
+    }
+  }
+
+  Widget _sectionCard({
+    required BuildContext context,
+    required Widget child,
+    EdgeInsets margin = const EdgeInsets.symmetric(horizontal: 16),
+    EdgeInsets padding = const EdgeInsets.all(16),
+  }) {
+    return Container(
+      margin: margin,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: ThemeColors.getSurfaceColor(context),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: ThemeColors.getBorderColor(context).withValues(alpha: 0.7),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: ThemeColors.getOverlayColor(context, opacity: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
 
   @override
   void dispose() {
@@ -34,10 +91,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
     super.dispose();
   }
 
-  Future<String> _handleCreatePost() async {
+  Future<({bool success, String message})> _handleCreatePost() async {
     final caption = _captionController.text.trim();
-    if (_selectedImage == null && caption.isEmpty) {
-      return "Please add an image or caption.";
+    if (_selectedImages.isEmpty && caption.isEmpty) {
+      return (success: false, message: 'Please add an image or caption.');
     }
 
     try {
@@ -48,28 +105,51 @@ class _CreatePostPageState extends State<CreatePostPage> {
       final userAvatarUrl = prefs.getString('user_avatar');
 
       if (userId.isEmpty) {
-        return "User not authenticated. Please login again.";
+        return (
+          success: false,
+          message: 'User not authenticated. Please login again.',
+        );
       }
 
-      // Upload image if selected
-      String? imageUrl;
-      if (_selectedImage != null) {
-        imageUrl = await _postService.uploadImage(_selectedImage!.path);
-        if (imageUrl == null) {
-          // If upload fails, use local path as fallback
-          imageUrl = _selectedImage!.path;
-        }
-      }
-
-      // Create post via API
-      final result = await _postService.createPost(
-        userId: userId,
-        userName: userName,
-        userAvatarUrl: userAvatarUrl,
-        content: caption,
-        imageUrl: imageUrl,
-        tagIds: _tagIds,
+      // Debug log: user attempted to create a post.
+      // Intentionally avoids logging tokens; caption is truncated.
+      final truncatedCaption = caption.length <= 80
+          ? caption
+          : '${caption.substring(0, 80)}…';
+      debugPrint(
+        '[CreatePost] attempt userId=$userId '
+        'captionLen=${caption.length} caption="$truncatedCaption" '
+        'images=${_selectedImages.length} tagIds=${_tagIds.length} '
+        'visibility=${_visibility.toUpperCase()}',
       );
+
+      Map<String, dynamic> result;
+
+      // If an image is selected, prefer using the default create-post API
+      // to upload the picture along with the post (multipart).
+      if (_selectedImages.isNotEmpty) {
+        result = await _postService.createPostWithMediaFiles(
+          userId: userId,
+          userName: userName,
+          userAvatarUrl: userAvatarUrl,
+          content: caption,
+          mediaPaths: _selectedImages
+              .map((e) => e.path)
+              .toList(growable: false),
+          tagIds: _tagIds,
+          visibility: _visibility,
+        );
+      } else {
+        // No image: normal JSON create post.
+        result = await _postService.createPost(
+          userId: userId,
+          userName: userName,
+          userAvatarUrl: userAvatarUrl,
+          content: caption,
+          tagIds: _tagIds,
+          visibility: _visibility,
+        );
+      }
 
       if (result['success'] == true) {
         // Save post to local database
@@ -85,22 +165,36 @@ class _CreatePostPageState extends State<CreatePostPage> {
             userName: userName,
             userAvatarUrl: userAvatarUrl,
             content: caption,
-            imageUrl: imageUrl,
             tags: _tagNames,
+            visibility: _visibility,
             createdAt: DateTime.now(),
           );
           await DatabaseHelper.instance.upsertPost(localPost);
         }
-        return result['message'] ?? "Post created successfully!";
+        return (
+          success: true,
+          message: (result['message']?.toString().trim().isNotEmpty == true)
+              ? result['message'].toString()
+              : 'Post created successfully!',
+        );
       } else {
-        return result['message'] ?? "Failed to create post.";
+        return (
+          success: false,
+          message: (result['message']?.toString().trim().isNotEmpty == true)
+              ? result['message'].toString()
+              : 'Failed to create post.',
+        );
       }
     } catch (e) {
-      return "Failed to create post: ${e.toString()}";
+      return (
+        success: false,
+        message: 'Failed to create post: ${e.toString()}',
+      );
     }
   }
 
   Future<void> _pickImage() async {
+    final messenger = ScaffoldMessenger.of(context);
     try {
       // Show option to pick from gallery or camera
       final ImageSource? source = await showDialog<ImageSource>(
@@ -155,44 +249,60 @@ class _CreatePostPageState extends State<CreatePostPage> {
       );
 
       if (source != null) {
-        final XFile? image = await _picker.pickImage(
-          source: source,
-          maxWidth: 1920,
-          maxHeight: 1920,
-          imageQuality: 85,
-        );
+        if (source == ImageSource.camera) {
+          final XFile? image = await _picker.pickImage(
+            source: source,
+            maxWidth: 1920,
+            maxHeight: 1920,
+            imageQuality: 85,
+          );
 
-        if (image != null) {
-          // Open image editor
-          await _openImageEditor(image);
+          if (image != null) {
+            // Open image editor for a single capture.
+            await _openImageEditor(image);
+          }
+        } else {
+          final List<XFile> images = await _picker.pickMultiImage(
+            maxWidth: 1920,
+            maxHeight: 1920,
+            imageQuality: 85,
+          );
+
+          if (images.isNotEmpty) {
+            if (images.length == 1) {
+              await _openImageEditor(images.first);
+            } else if (mounted) {
+              setState(() {
+                _selectedImages = images;
+                _activeImageIndex = 0;
+              });
+            }
+          }
         }
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Failed to pick image: $e',
-              style: const TextStyle(fontFamily: 'Quicksand'),
-            ),
-            backgroundColor: ThemeColors.errorColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to pick image: $e',
+            style: const TextStyle(fontFamily: 'Quicksand'),
           ),
-        );
-      }
+          backgroundColor: ThemeColors.errorColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
     }
   }
 
-  Future<void> _openImageEditor(XFile imageFile) async {
+  Future<void> _openImageEditor(XFile imageFile, {int? replaceIndex}) async {
+    final BuildContext currentContext = context;
+    final messenger = ScaffoldMessenger.of(currentContext);
     try {
       final bytes = await imageFile.readAsBytes();
 
-      if (!mounted) return;
-
-      final BuildContext currentContext = context;
+      if (!currentContext.mounted) return;
 
       final editedImage = await Navigator.push<Uint8List>(
         currentContext,
@@ -200,8 +310,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
           builder: (context) => ProImageEditor.memory(
             bytes,
             callbacks: ProImageEditorCallbacks(
-              onImageEditingComplete: (Uint8List bytes) async {
-                Navigator.pop(context, bytes);
+              onImageEditingComplete: (Uint8List bytes) {
+                Navigator.pop(currentContext, bytes);
+                return Future.value();
               },
             ),
           ),
@@ -217,30 +328,36 @@ class _CreatePostPageState extends State<CreatePostPage> {
         await tempFile.writeAsBytes(editedImage);
 
         setState(() {
-          _selectedImage = XFile(tempFile.path);
+          final edited = XFile(tempFile.path);
+          if (replaceIndex != null &&
+              replaceIndex >= 0 &&
+              replaceIndex < _selectedImages.length) {
+            _selectedImages[replaceIndex] = edited;
+            _activeImageIndex = replaceIndex;
+          } else {
+            _selectedImages = [edited];
+            _activeImageIndex = 0;
+          }
         });
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Failed to edit image: $e',
-              style: const TextStyle(fontFamily: 'Quicksand'),
-            ),
-            backgroundColor: ThemeColors.errorColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to edit image: $e',
+            style: const TextStyle(fontFamily: 'Quicksand'),
           ),
-        );
-      }
+          backgroundColor: ThemeColors.errorColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
     }
   }
 
   void _createPost() async {
-    if (_selectedImage == null && _captionController.text.trim().isEmpty) {
+    if (_selectedImages.isEmpty && _captionController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text(
@@ -260,7 +377,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
     });
 
     try {
-      final message = await _handleCreatePost();
+      final result = await _handleCreatePost();
+      final message = result.message;
 
       if (!mounted) return;
 
@@ -268,7 +386,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
         _isLoading = false;
       });
 
-      final isSuccess = message.contains('success');
+      final isSuccess = result.success;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -310,295 +428,468 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final canSubmit =
+        !_isLoading &&
+        (_selectedImages.isNotEmpty ||
+            _captionController.text.trim().isNotEmpty);
+
+    final hasMedia = _selectedImages.isNotEmpty;
+    final activeIndex = (!hasMedia)
+        ? 0
+        : (_activeImageIndex < _selectedImages.length ? _activeImageIndex : 0);
+    final activeImage = hasMedia ? _selectedImages[activeIndex] : null;
+
     return Scaffold(
       backgroundColor: ThemeColors.getBackgroundColor(context),
       appBar: AppBar(
-        backgroundColor: ThemeColors.getSurfaceColor(context),
-        elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.close, color: ThemeColors.getTextColor(context)),
+          icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          'Create Post',
-          style: TextStyle(
-            fontFamily: 'Quicksand',
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: ThemeColors.getTextColor(context),
-          ),
-        ),
-        centerTitle: true,
+        title: Text('Create Post'),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12.0),
-            child: TextButton(
-              onPressed: _isLoading ? null : _createPost,
-              style: TextButton.styleFrom(
+            child: FilledButton(
+              onPressed: canSubmit ? _createPost : null,
+              style: FilledButton.styleFrom(
                 backgroundColor: ThemeColors.primaryColor,
-                foregroundColor: Colors.white,
+                foregroundColor: colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
+                  horizontal: 18,
+                  vertical: 10,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                disabledBackgroundColor: ThemeColors.primaryColor.withValues(
-                  alpha: 0.5,
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
               child: _isLoading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          colorScheme.onPrimary,
+                        ),
                       ),
                     )
                   : const Text(
-                      'Share',
+                      'Post',
                       style: TextStyle(
                         fontFamily: 'Quicksand',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
             ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image Selection Area
-            GestureDetector(
-              onTap: _pickImage,
-              child: Container(
-                width: double.infinity,
-                height: 400,
-                margin: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: ThemeColors.getSurfaceColor(context),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: ThemeColors.getBorderColor(context),
-                    width: 2,
-                    style: BorderStyle.solid,
-                  ),
-                ),
-                child: _selectedImage != null
-                    ? Stack(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 12, bottom: 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Media card
+                _sectionCard(
+                  context: context,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: Image.file(
-                              File(_selectedImage!.path),
-                              width: double.infinity,
-                              height: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.black54,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.edit,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
-                                    onPressed: () =>
-                                        _openImageEditor(_selectedImage!),
-                                    tooltip: 'Edit Image',
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.close,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _selectedImage = null;
-                                      });
-                                    },
-                                    tooltip: 'Remove Image',
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: ThemeColors.primaryColor.withValues(
-                                alpha: 0.1,
-                              ),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.add_photo_alternate_outlined,
-                              size: 64,
-                              color: ThemeColors.primaryColor,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
                           Text(
-                            'Add Photo',
+                            'Media',
                             style: TextStyle(
                               fontFamily: 'Quicksand',
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
                               color: ThemeColors.getTextColor(context),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Tap to select from camera or gallery',
-                            style: TextStyle(
-                              fontFamily: 'Quicksand',
-                              fontSize: 14,
-                              color: ThemeColors.getSecondaryTextColor(context),
+                          const Spacer(),
+                          if (hasMedia)
+                            IconButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : () => _openImageEditor(
+                                      activeImage!,
+                                      replaceIndex: activeIndex,
+                                    ),
+                              tooltip: 'Edit',
+                              icon: Icon(
+                                Icons.tune,
+                                color: ThemeColors.getSecondaryTextColor(
+                                  context,
+                                ),
+                              ),
+                            ),
+                          if (hasMedia)
+                            IconButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : () {
+                                      setState(() {
+                                        _selectedImages.removeAt(activeIndex);
+                                        if (_selectedImages.isEmpty) {
+                                          _activeImageIndex = 0;
+                                        } else if (_activeImageIndex >=
+                                            _selectedImages.length) {
+                                          _activeImageIndex =
+                                              _selectedImages.length - 1;
+                                        }
+                                      });
+                                    },
+                              tooltip: 'Remove',
+                              icon: Icon(
+                                Icons.delete_outline,
+                                color: ThemeColors.getSecondaryTextColor(
+                                  context,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      GestureDetector(
+                        onTap: _isLoading ? null : _pickImage,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: ThemeColors.getCardColor(context),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: ThemeColors.getBorderColor(context),
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(18),
+                            child: AspectRatio(
+                              aspectRatio: 4 / 3,
+                              child: !hasMedia
+                                  ? Center(
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(14),
+                                            decoration: BoxDecoration(
+                                              color: ThemeColors.primaryColor
+                                                  .withValues(alpha: 0.12),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons
+                                                  .add_photo_alternate_outlined,
+                                              size: 28,
+                                              color: ThemeColors.primaryColor,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            'Add photos',
+                                            style: TextStyle(
+                                              fontFamily: 'Quicksand',
+                                              fontWeight: FontWeight.w700,
+                                              color: ThemeColors.getTextColor(
+                                                context,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Camera or gallery',
+                                            style: TextStyle(
+                                              fontFamily: 'Quicksand',
+                                              color:
+                                                  ThemeColors.getSecondaryTextColor(
+                                                    context,
+                                                  ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : Image.file(
+                                      File(activeImage!.path),
+                                      fit: BoxFit.cover,
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (_selectedImages.length > 1) ...[
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          height: 64,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _selectedImages.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 10),
+                            itemBuilder: (context, index) {
+                              final img = _selectedImages[index];
+                              final isActive = index == activeIndex;
+                              return GestureDetector(
+                                onTap: _isLoading
+                                    ? null
+                                    : () {
+                                        setState(() {
+                                          _activeImageIndex = index;
+                                        });
+                                      },
+                                child: Container(
+                                  width: 64,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: isActive
+                                          ? ThemeColors.primaryColor
+                                          : ThemeColors.getBorderColor(context),
+                                      width: isActive ? 2 : 1,
+                                    ),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(13),
+                                    child: Image.file(
+                                      File(img.path),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _isLoading ? null : _pickImage,
+                              icon: const Icon(Icons.photo_library_outlined),
+                              label: Text(
+                                hasMedia ? 'Change' : 'Add photos',
+                                style: const TextStyle(fontFamily: 'Quicksand'),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: ThemeColors.getTextColor(
+                                  context,
+                                ),
+                                side: BorderSide(
+                                  color: ThemeColors.getBorderColor(context),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                              ),
                             ),
                           ),
                         ],
                       ),
-              ),
-            ),
-
-            // Caption Input
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                'Caption',
-                style: TextStyle(
-                  fontFamily: 'Quicksand',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: ThemeColors.getTextColor(context),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: ThemeColors.getSurfaceColor(context),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: ThemeColors.getBorderColor(context)),
-              ),
-              child: TextField(
-                controller: _captionController,
-                maxLines: 5,
-                maxLength: 500,
-                style: TextStyle(
-                  fontFamily: 'Quicksand',
-                  fontSize: 15,
-                  color: ThemeColors.getTextColor(context),
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Write a caption...',
-                  hintStyle: TextStyle(
-                    fontFamily: 'Quicksand',
-                    color: ThemeColors.getSecondaryTextColor(context),
-                  ),
-                  border: InputBorder.none,
-                  counterStyle: TextStyle(
-                    fontFamily: 'Quicksand',
-                    color: ThemeColors.getSecondaryTextColor(context),
+                    ],
                   ),
                 ),
-              ),
-            ),
 
-            const SizedBox(height: 24),
+                const SizedBox(height: 14),
 
-            // Tags Section
-            Padding(
-              padding: Constants.defaultPadding,
-              child: TagSelectionWidget(
-                onTagsChanged: (selectedTagIds, selectedTagNames) {
-                  setState(() {
-                    _tagIds = selectedTagIds;
-                    _tagNames = selectedTagNames;
-                  });
-                },
-                initialSelectedTags: _tagNames,
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            /* // Additional Options
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                'Add to your post',
-                style: TextStyle(
-                  fontFamily: 'Quicksand',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: ThemeColors.getTextColor(context),
+                // Caption card
+                _sectionCard(
+                  context: context,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Caption',
+                            style: TextStyle(
+                              fontFamily: 'Quicksand',
+                              fontWeight: FontWeight.w700,
+                              color: ThemeColors.getTextColor(context),
+                            ),
+                          ),
+                          const Spacer(),
+                          Icon(
+                            Icons.short_text,
+                            color: ThemeColors.getSecondaryTextColor(context),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _captionController,
+                        maxLines: 6,
+                        maxLength: 500,
+                        enabled: !_isLoading,
+                        style: const TextStyle(fontFamily: 'Quicksand'),
+                        onChanged: (_) {
+                          // Update submit button enabled state
+                          if (mounted) setState(() {});
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Write something…',
+                          hintStyle: TextStyle(
+                            fontFamily: 'Quicksand',
+                            color: ThemeColors.getSecondaryTextColor(context),
+                          ),
+                          filled: true,
+                          fillColor: ThemeColors.getCardColor(context),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: ThemeColors.getBorderColor(context),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: ThemeColors.getBorderColor(context),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: const BorderSide(
+                              color: ThemeColors.primaryColor,
+                              width: 2,
+                            ),
+                          ),
+                          counterStyle: TextStyle(
+                            fontFamily: 'Quicksand',
+                            color: ThemeColors.getSecondaryTextColor(context),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 12), */
 
-            /*             _buildOptionTile(
-              context: context,
-              icon: Icons.location_on_outlined,
-              title: 'Add Location',
-              color: Colors.red,
-              onTap: () {
-                // TODO: Add location
-              },
+                const SizedBox(height: 14),
+
+                // Visibility card
+                _sectionCard(
+                  context: context,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Visibility',
+                            style: TextStyle(
+                              fontFamily: 'Quicksand',
+                              fontWeight: FontWeight.w700,
+                              color: ThemeColors.getTextColor(context),
+                            ),
+                          ),
+                          const Spacer(),
+                          Row(
+                            children: [
+                              Icon(
+                                _visibilityIcon(_visibility),
+                                size: 18,
+                                color: ThemeColors.getSecondaryTextColor(
+                                  context,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                _visibilityLabel(_visibility),
+                                style: TextStyle(
+                                  fontFamily: 'Quicksand',
+                                  fontWeight: FontWeight.w600,
+                                  color: ThemeColors.getSecondaryTextColor(
+                                    context,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: _allowedVisibilities
+                            .map((v) {
+                              final selected = _visibility == v;
+                              return ChoiceChip(
+                                selected: selected,
+                                label: Text(
+                                  _visibilityLabel(v),
+                                  style: TextStyle(
+                                    fontFamily: 'Quicksand',
+                                    fontWeight: FontWeight.w700,
+                                    color: selected
+                                        ? colorScheme.onPrimary
+                                        : ThemeColors.getTextColor(context),
+                                  ),
+                                ),
+                                avatar: Icon(
+                                  _visibilityIcon(v),
+                                  size: 18,
+                                  color: selected
+                                      ? colorScheme.onPrimary
+                                      : ThemeColors.getSecondaryTextColor(
+                                          context,
+                                        ),
+                                ),
+                                selectedColor: ThemeColors.primaryColor,
+                                backgroundColor: ThemeColors.getCardColor(
+                                  context,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(999),
+                                  side: BorderSide(
+                                    color: selected
+                                        ? ThemeColors.primaryColor
+                                        : ThemeColors.getBorderColor(context),
+                                  ),
+                                ),
+                                onSelected: _isLoading
+                                    ? null
+                                    : (_) {
+                                        setState(() {
+                                          _visibility = v;
+                                        });
+                                      },
+                              );
+                            })
+                            .toList(growable: false),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                // Tags card
+                _sectionCard(
+                  context: context,
+                  padding: EdgeInsets.zero,
+                  child: Padding(
+                    padding: Constants.defaultPadding,
+                    child: TagSelectionWidget(
+                      onTagsChanged: (selectedTagIds, selectedTagNames) {
+                        setState(() {
+                          _tagIds = selectedTagIds;
+                          _tagNames = selectedTagNames;
+                        });
+                      },
+                      initialSelectedTags: _tagNames,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            _buildOptionTile(
-              context: context,
-              icon: Icons.person_add_outlined,
-              title: 'Tag People',
-              color: Colors.blue,
-              onTap: () {
-                // TODO: Tag people
-              },
-            ),
-            _buildOptionTile(
-              context: context,
-              icon: Icons.mood_outlined,
-              title: 'Feeling/Activity',
-              color: Colors.orange,
-              onTap: () {
-                // TODO: Add feeling
-              },
-            ),
-            _buildOptionTile(
-              context: context,
-              icon: Icons.music_note_outlined,
-              title: 'Add Music',
-              color: Colors.purple,
-              onTap: () {
-                // TODO: Add music
-              },
-            ),*/
-            const SizedBox(height: 32),
-          ],
+          ),
         ),
       ),
     );

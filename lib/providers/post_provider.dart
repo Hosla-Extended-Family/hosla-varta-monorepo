@@ -300,23 +300,68 @@ class PostActions {
     required Post post,
     required String content,
     String? imageUrl,
-    required List<String> tags,
+    List<String> mediaUrls = const [],
+    List<String> tagIds = const [],
+    List<String> tagNames = const [],
+    String? visibility,
   }) async {
-    // Optimistic update in local DB
-    await localRepo.updatePost(
-      postId: post.id,
-      content: content,
-      imageUrl: imageUrl,
-      tags: tags,
-    );
+    final normalizedMediaUrls = (mediaUrls.isNotEmpty)
+        ? mediaUrls
+              .map((e) => e.trim())
+              .where((e) => e.isNotEmpty)
+              .toList(growable: false)
+        : <String>[];
+
+    final normalizedTagIds = tagIds
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList(growable: false);
+
+    final normalizedTagNames = tagNames
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList(growable: false);
+
+    // Local UI/display should generally use tag NAMES.
+    // API should generally use tag IDs.
+    final effectiveTagNames = normalizedTagNames.isNotEmpty
+        ? normalizedTagNames
+        : post.tags;
+
+    final effectiveVisibility =
+        (visibility == null || visibility.trim().isEmpty)
+        ? post.visibility
+        : visibility.trim().toUpperCase();
+
+    // If caller provided a single imageUrl but no mediaUrls, map it.
+    final effectiveMediaUrls = normalizedMediaUrls.isNotEmpty
+        ? normalizedMediaUrls
+        : (imageUrl != null && imageUrl.trim().isNotEmpty)
+        ? [imageUrl.trim()]
+        : (post.mediaUrls.isNotEmpty)
+        ? post.mediaUrls
+        : (post.imageUrl != null && post.imageUrl!.trim().isNotEmpty)
+        ? [post.imageUrl!.trim()]
+        : const <String>[];
+
+    final effectiveImageUrl = (imageUrl != null && imageUrl.trim().isNotEmpty)
+        ? imageUrl.trim()
+        : (effectiveMediaUrls.isNotEmpty
+              ? effectiveMediaUrls.first
+              : post.imageUrl);
 
     // Update UI immediately
     final updatedPost = post.copyWith(
       content: content,
-      imageUrl: imageUrl,
-      tags: tags,
+      imageUrl: effectiveImageUrl,
+      mediaUrls: effectiveMediaUrls,
+      tags: effectiveTagNames,
+      visibility: effectiveVisibility,
       updatedAt: DateTime.now(),
     );
+
+    // Persist full post locally (visibility + timestamps live here too).
+    await localRepo.savePost(updatedPost);
     _updatePostInProviders(updatedPost);
 
     // Try to sync with server
@@ -324,13 +369,19 @@ class PostActions {
       final result = await postService.updatePost(
         postId: post.id,
         content: content,
-        imageUrl: imageUrl,
-        tagIds: tags, // Note: tags should be tag IDs (UUIDs) for API v2+
+        mediaUrls: effectiveMediaUrls,
+        tagIds: normalizedTagIds.isNotEmpty
+            ? normalizedTagIds
+            : (normalizedTagNames.isNotEmpty ? normalizedTagNames : post.tags),
+        visibility: effectiveVisibility,
       );
 
       if (result['success'] == true && result['data'] != null) {
         // Server returned updated post data
-        final serverPost = Post.fromJson(result['data']);
+        final dynamic raw = result['data'];
+        final serverPost = (raw is Map<String, dynamic>)
+            ? Post.fromJson(raw)
+            : Post.fromJson((raw as Map).cast<String, dynamic>());
         await localRepo.savePost(serverPost);
         _updatePostInProviders(serverPost);
         return {'success': true, 'message': result['message']};
@@ -348,8 +399,14 @@ class PostActions {
           payload: {
             'postId': post.id,
             'content': content,
-            'imageUrl': imageUrl,
-            'tagIds': tags,
+            'imageUrl': effectiveImageUrl,
+            'mediaUrls': effectiveMediaUrls,
+            'tagIds': normalizedTagIds.isNotEmpty
+                ? normalizedTagIds
+                : (normalizedTagNames.isNotEmpty
+                      ? normalizedTagNames
+                      : post.tags),
+            'visibility': effectiveVisibility,
           },
         );
         return {'success': false, 'message': result['message']};
@@ -361,8 +418,14 @@ class PostActions {
         payload: {
           'postId': post.id,
           'content': content,
-          'imageUrl': imageUrl,
-          'tagIds': tags,
+          'imageUrl': effectiveImageUrl,
+          'mediaUrls': effectiveMediaUrls,
+          'tagIds': normalizedTagIds.isNotEmpty
+              ? normalizedTagIds
+              : (normalizedTagNames.isNotEmpty
+                    ? normalizedTagNames
+                    : post.tags),
+          'visibility': effectiveVisibility,
         },
       );
       return {'success': false, 'message': 'Network error: ${e.toString()}'};

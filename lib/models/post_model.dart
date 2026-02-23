@@ -1,3 +1,5 @@
+import 'package:hosla/core/constants/api_constants.dart';
+
 /// Model class for representing a post in the feed
 class Post {
   final String id;
@@ -140,7 +142,9 @@ class Post {
     final body = json['body']?.toString();
     final content = json['content']?.toString();
 
-    final imageUrl = _extractFirstMediaUrl(json['mediaUrls'], json['imageUrl']);
+    final imageUrl = ApiConstants.resolveUrl(
+      _extractFirstMediaUrl(json['mediaUrls'], json['imageUrl']),
+    );
 
     // Parse tags - API may return tag objects; we only store tag names.
     // Also strip a leading '#' to keep display consistent.
@@ -158,9 +162,10 @@ class Post {
     final mediaUrlsRaw = json['mediaUrls'];
     final mediaUrls = mediaUrlsRaw is List
         ? mediaUrlsRaw
-              .map((e) => e.toString())
+              .map((e) => ApiConstants.resolveUrl(e?.toString()))
+              .whereType<String>()
               .where((s) => s.isNotEmpty)
-              .toList()
+              .toList(growable: false)
         : <String>[];
 
     final likeCount =
@@ -184,7 +189,7 @@ class Post {
       id: json['id'] ?? '',
       userId: authorId?.toString() ?? '',
       userName: authorName?.toString() ?? 'Unknown User',
-      userAvatarUrl: authorProfilePicUrl?.toString(),
+      userAvatarUrl: ApiConstants.resolveUrl(authorProfilePicUrl?.toString()),
       title: title,
       content: _combineTitleBody(title: title, body: body, content: content),
       imageUrl: imageUrl,

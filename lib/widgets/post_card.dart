@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/models/post_model.dart';
+import 'package:hosla/pages/home/edit_post_page.dart';
 import 'package:hosla/pages/home/user_profile_view_page.dart';
 import 'package:hosla/providers/post_provider.dart';
 import 'package:hosla/providers/user_provider.dart';
@@ -210,9 +211,31 @@ class _PostCardState extends ConsumerState<PostCard>
                 ListTile(
                   leading: const Icon(Icons.edit),
                   title: const Text('Edit Post'),
-                  onTap: () {
+                  onTap: () async {
                     Navigator.pop(context);
-                    widget.onEdit?.call();
+                    if (widget.onEdit != null) {
+                      widget.onEdit!.call();
+                      return;
+                    }
+
+                    final changed = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EditPostPage(post: _post),
+                      ),
+                    );
+
+                    if (changed == true) {
+                      // Refresh from local DB to reflect latest cached post.
+                      try {
+                        final localRepo = ref.read(localPostRepositoryProvider);
+                        final latest = await localRepo.getPostById(_post.id);
+                        if (!mounted) return;
+                        if (latest != null) {
+                          setState(() => _post = latest);
+                        }
+                      } catch (_) {}
+                    }
                   },
                 ),
                 ListTile(

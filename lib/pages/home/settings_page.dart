@@ -6,6 +6,7 @@ import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/pages/home/edit_profile_page.dart';
 import 'package:hosla/pages/home/verify_email_page.dart';
 import 'package:hosla/pages/home/blocked_users_page.dart';
+import 'package:hosla/pages/home/friends_page.dart';
 import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/providers/theme_provider.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
@@ -162,6 +163,19 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         title: 'Verify Email',
                         subtitle: 'Add or verify your email address',
                         onTap: _navigateToVerifyEmail,
+                      ),
+                      _buildDivider(),
+                      _buildSettingsTile(
+                        icon: Icons.people_outline_rounded,
+                        iconColor: const Color(0xFF42A5F5),
+                        title: 'Friends',
+                        subtitle: 'View friends, requests, and add users',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const FriendsPage(),
+                          ),
+                        ),
                       ),
                     ],
                   ),

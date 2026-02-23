@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/models/friend_model.dart';
+import 'package:hosla/pages/home/user_profile_view_page.dart';
 import 'package:hosla/providers/friend_provider.dart';
 import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/widgets/loading_widget.dart';
@@ -17,6 +18,17 @@ class FriendsPage extends ConsumerStatefulWidget {
 class _FriendsPageState extends ConsumerState<FriendsPage> {
   final TextEditingController _userIdController = TextEditingController();
   bool _isSending = false;
+
+  void _logError(String contextLabel, Object error, StackTrace stackTrace) {
+    debugPrint('FriendsPage:$contextLabel error: $error');
+    debugPrint(stackTrace.toString());
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
 
   @override
   void dispose() {
@@ -102,27 +114,45 @@ class _FriendsPageState extends ConsumerState<FriendsPage> {
             ),
           ),
           const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _isSending ? null : _sendRequest,
-              icon: const Icon(Icons.person_add_alt_1),
-              label: _isSending
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Send Request'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ThemeColors.primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _isSending ? null : _sendRequest,
+                  icon: const Icon(Icons.person_add_alt_1),
+                  label: _isSending
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Send Request'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ThemeColors.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: 10),
+              OutlinedButton.icon(
+                onPressed: _viewUserById,
+                icon: const Icon(Icons.person_search_rounded, size: 18),
+                label: const Text('View'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -176,10 +206,17 @@ class _FriendsPageState extends ConsumerState<FriendsPage> {
               }
               return Column(
                 children: requests.map((req) {
-                  final isIncoming = req.receiverId == currentUserId;
-                  final other = isIncoming ? req.requester : req.receiver;
+                  final isIncoming = req.receiverId.isEmpty
+                      ? true
+                      : req.receiverId == currentUserId;
+                  final other = isIncoming
+                      ? (req.requester ?? req.receiver)
+                      : (req.receiver ?? req.requester);
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
+                    onTap: (other?.id.isNotEmpty == true)
+                        ? () => _openUserProfile(other!.id, other.name)
+                        : null,
                     leading: CircleAvatar(
                       backgroundColor: ThemeColors.primaryColor.withValues(
                         alpha: 0.15,
@@ -214,12 +251,15 @@ class _FriendsPageState extends ConsumerState<FriendsPage> {
               );
             },
             loading: () => const LoadingWidget(message: 'Loading requests...'),
-            error: (e, _) => Text(
-              'Failed to load: $e',
-              style: TextThemes.getBodyMediumStyle(
-                context,
-              ).copyWith(color: ThemeColors.errorColor),
-            ),
+            error: (e, st) {
+              _logError('load_requests', e, st);
+              return Text(
+                'Unable to load requests. Please try again.',
+                style: TextThemes.getBodyMediumStyle(
+                  context,
+                ).copyWith(color: ThemeColors.errorColor),
+              );
+            },
           ),
         ],
       ),
@@ -276,6 +316,9 @@ class _FriendsPageState extends ConsumerState<FriendsPage> {
                   final other = edge.otherParty(currentUserId);
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
+                    onTap: (other?.id.isNotEmpty == true)
+                        ? () => _openUserProfile(other!.id, other.name)
+                        : null,
                     leading: CircleAvatar(
                       backgroundColor: ThemeColors.primaryColor.withValues(
                         alpha: 0.15,
@@ -298,12 +341,15 @@ class _FriendsPageState extends ConsumerState<FriendsPage> {
               );
             },
             loading: () => const LoadingWidget(message: 'Loading friends...'),
-            error: (e, _) => Text(
-              'Failed to load: $e',
-              style: TextThemes.getBodyMediumStyle(
-                context,
-              ).copyWith(color: ThemeColors.errorColor),
-            ),
+            error: (e, st) {
+              _logError('load_friends', e, st);
+              return Text(
+                'Unable to load friends. Please try again.',
+                style: TextThemes.getBodyMediumStyle(
+                  context,
+                ).copyWith(color: ThemeColors.errorColor),
+              );
+            },
           ),
         ],
       ),
@@ -323,21 +369,53 @@ class _FriendsPageState extends ConsumerState<FriendsPage> {
       );
       _userIdController.clear();
       await ref.read(friendRequestsProvider.notifier).refresh();
-    } catch (e) {
+    } catch (e, st) {
+      _logError('send_request', e, st);
       messenger.showSnackBar(
-        SnackBar(content: Text('Failed to send request: $e')),
+        const SnackBar(
+          content: Text('Failed to send request. Please try again.'),
+        ),
       );
     } finally {
       if (mounted) setState(() => _isSending = false);
     }
   }
 
+  void _viewUserById() {
+    final userId = _userIdController.text.trim();
+    if (userId.isEmpty) {
+      _showErrorSnackBar('Enter a user ID first');
+      return;
+    }
+    _openUserProfile(userId, null);
+  }
+
+  void _openUserProfile(String userId, String? initialName) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            UserProfileViewPage(userId: userId, initialName: initialName),
+      ),
+    );
+  }
+
   Future<void> _accept(String friendshipId) async {
-    await ref.read(friendActionsProvider).accept(friendshipId);
+    try {
+      await ref.read(friendActionsProvider).accept(friendshipId);
+    } catch (e, st) {
+      _logError('accept_request', e, st);
+      _showErrorSnackBar('Failed to accept request. Please try again.');
+    }
   }
 
   Future<void> _reject(String friendshipId) async {
-    await ref.read(friendActionsProvider).reject(friendshipId);
+    try {
+      await ref.read(friendActionsProvider).reject(friendshipId);
+    } catch (e, st) {
+      _logError('reject_request', e, st);
+      _showErrorSnackBar('Failed to reject request. Please try again.');
+    }
   }
 
   void _showFriendOptions(String friendshipId) {
@@ -356,9 +434,18 @@ class _FriendsPageState extends ConsumerState<FriendsPage> {
               title: const Text('Remove friend'),
               onTap: () async {
                 Navigator.pop(context);
-                await ref
-                    .read(friendActionsProvider)
-                    .removeFriend(friendshipId);
+                try {
+                  await ref
+                      .read(friendActionsProvider)
+                      .removeFriend(friendshipId);
+                } catch (e, st) {
+                  _logError('remove_friend', e, st);
+                  if (mounted) {
+                    _showErrorSnackBar(
+                      'Failed to remove friend. Please try again.',
+                    );
+                  }
+                }
               },
             ),
             ListTile(

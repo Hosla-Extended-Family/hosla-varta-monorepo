@@ -60,7 +60,7 @@ class _EditPostDialogState extends ConsumerState<EditPostDialog> {
       post: widget.post,
       content: content,
       imageUrl: imageUrl.isEmpty ? null : imageUrl,
-      tags: tags,
+      tagNames: tags,
     );
 
     setState(() {

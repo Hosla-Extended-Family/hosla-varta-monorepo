@@ -220,49 +220,53 @@ class _FeedPageState extends ConsumerState<FeedPage>
                       ),
                     );
                   },
-                  icon: currentUser?.avatarUrl != null
-                      ? Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: ThemeColors.primaryColor,
-                              width: 2,
-                            ),
-                          ),
-                          child: ClipOval(
-                            child: Image.network(
-                              currentUser!.avatarUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: ThemeColors.getSurfaceColor(context),
-                                  child: Icon(
-                                    Icons.person,
-                                    size: 25,
-                                    color: ThemeColors.getTextColor(context),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        )
-                      : Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: ThemeColors.getSurfaceColor(context),
-                            border: Border.all(
-                              color: ThemeColors.primaryColor,
-                              width: 2,
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.person_rounded,
-                            color: ThemeColors.getTextColor(context),
+                  icon: () {
+                    final avatarUrl = currentUser?.avatarUrl;
+                    if (avatarUrl != null && avatarUrl.isNotEmpty) {
+                      return Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: ThemeColors.primaryColor,
+                            width: 2,
                           ),
                         ),
+                        child: ClipOval(
+                          child: Image.network(
+                            avatarUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: ThemeColors.getSurfaceColor(context),
+                                child: Icon(
+                                  Icons.person,
+                                  size: 25,
+                                  color: ThemeColors.getTextColor(context),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      );
+                    }
+                    return Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: ThemeColors.getSurfaceColor(context),
+                        border: Border.all(
+                          color: ThemeColors.primaryColor,
+                          width: 2,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.person_rounded,
+                        color: ThemeColors.getTextColor(context),
+                      ),
+                    );
+                  }(),
                 ),
                 const SizedBox(width: 8),
               ],
@@ -278,6 +282,7 @@ class _FeedPageState extends ConsumerState<FeedPage>
             onRefresh: _handleRefresh,
             color: ThemeColors.primaryColor,
             backgroundColor: ThemeColors.getSurfaceColor(context),
+            edgeOffset: 170 + MediaQuery.of(context).padding.top,
             child: CustomScrollView(
               controller: _scrollController,
               physics: const BouncingScrollPhysics(),
@@ -355,7 +360,7 @@ class _FeedPageState extends ConsumerState<FeedPage>
                           ),
                         ),
                       ),
-                      error: (e, _) => SliverToBoxAdapter(
+                      error: (e, _) => SliverFillRemaining(
                         child: Center(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 40),
@@ -378,6 +383,7 @@ class _FeedPageState extends ConsumerState<FeedPage>
             onRefresh: _handleRefresh,
             color: ThemeColors.primaryColor,
             backgroundColor: ThemeColors.getSurfaceColor(context),
+            edgeOffset: 170 + MediaQuery.of(context).padding.top,
             child: CustomScrollView(
               physics: const BouncingScrollPhysics(),
               controller: _friendScrollController,
