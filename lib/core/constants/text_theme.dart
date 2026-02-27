@@ -55,6 +55,7 @@ class TextThemes {
   }
 
   static TextStyle getButtonStyle(BuildContext context) {
-    return button.copyWith(color: ThemeColors.getTextColor(context));
+    return button.copyWith(color: Colors.black);
+    //ThemeColors.getTextColor(context));
   }
 }

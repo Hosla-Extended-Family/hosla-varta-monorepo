@@ -16,11 +16,11 @@ class Button extends StatelessWidget {
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: ThemeColors.primaryColor,
-          foregroundColor: Colors.white,
+          foregroundColor: Colors.black,
           disabledBackgroundColor: ThemeColors.primaryColor.withValues(
             alpha: 0.5,
           ),
-          disabledForegroundColor: Colors.white.withValues(alpha: 0.7),
+          disabledForegroundColor: Colors.black.withValues(alpha: 0.5),
           elevation: 0,
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(
