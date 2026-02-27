@@ -24,36 +24,36 @@ class FriendshipStatusState {
 
 /// Per-user friendship status provider that derives from the friends &
 /// requests lists and exposes action methods with optimistic updates.
-final friendshipStatusProvider = StateNotifierProvider.autoDispose
-    .family<
-      FriendshipStatusNotifier,
-      AsyncValue<FriendshipStatusState>,
-      String
-    >((ref, targetUserId) {
-      final currentUser = ref.watch(currentUserProfileProvider);
-      final friendsAsync = ref.watch(friendsListProvider);
-      final requestsAsync = ref.watch(friendRequestsProvider);
+///
+/// Uses ref.listen (not ref.watch) for friends/requests so the notifier is
+/// NOT recreated every time those lists reload.  This preserves optimistic
+/// state (e.g. "Request Sent") across navigation and list refreshes.
+final friendshipStatusProvider = StateNotifierProvider.family<
+    FriendshipStatusNotifier,
+    AsyncValue<FriendshipStatusState>,
+    String>((ref, targetUserId) {
+  final currentUser = ref.watch(currentUserProfileProvider);
 
-      final notifier = FriendshipStatusNotifier(
-        ref: ref,
-        targetUserId: targetUserId,
-        currentUserId: currentUser?.id ?? '',
-      );
+  final notifier = FriendshipStatusNotifier(
+    ref: ref,
+    targetUserId: targetUserId,
+    currentUserId: currentUser?.id ?? '',
+  );
 
-      // Resolve initial state from existing provider data
-      final friends = friendsAsync.maybeWhen(
-        data: (d) => d,
-        orElse: () => const <FriendshipEdge>[],
-      );
-      final requests = requestsAsync.maybeWhen(
-        data: (d) => d,
-        orElse: () => const <FriendshipEdge>[],
-      );
+  // Listen (not watch) so the notifier object is stable.
+  ref.listen<AsyncValue<List<FriendshipEdge>>>(friendsListProvider, (_, __) {
+    notifier._syncFromProviders();
+  });
+  ref.listen<AsyncValue<List<FriendshipEdge>>>(friendRequestsProvider,
+      (_, __) {
+    notifier._syncFromProviders();
+  });
 
-      notifier.resolveFromLists(friends, requests);
+  // Initial resolve from whatever data is already available.
+  notifier._syncFromProviders();
 
-      return notifier;
-    });
+  return notifier;
+});
 
 class FriendshipStatusNotifier
     extends StateNotifier<AsyncValue<FriendshipStatusState>> {
@@ -66,6 +66,22 @@ class FriendshipStatusNotifier
     required this.targetUserId,
     required this.currentUserId,
   }) : super(const AsyncValue.loading());
+
+  /// Re-derive state from the current friends & requests providers.
+  /// Only resolves when BOTH providers have loaded data; otherwise keeps
+  /// whatever state we already have (preserving optimistic updates).
+  void _syncFromProviders() {
+    final friendsAsync = ref.read(friendsListProvider);
+    final requestsAsync = ref.read(friendRequestsProvider);
+
+    final friends = friendsAsync.whenOrNull(data: (d) => d);
+    final requests = requestsAsync.whenOrNull(data: (d) => d);
+
+    if (friends != null && requests != null) {
+      resolveFromLists(friends, requests);
+    }
+    // If either list is still loading, keep the current state untouched.
+  }
 
   /// Derive friendship state from the already-loaded friends + requests lists.
   void resolveFromLists(

@@ -505,12 +505,16 @@ class DatabaseHelper {
 
   // ============== UTILITY METHODS ==============
 
-  /// Clear all data from database
+  /// Clear all data from database (used on logout)
   Future<void> clearAllData() async {
     final db = await database;
     await db.delete('users');
     await db.delete('messages');
     await db.delete('chats');
+    await db.delete('posts');
+    await db.delete('comments');
+    await db.delete('saved_posts');
+    await db.delete('action_queue');
   }
 
   /// Close database connection

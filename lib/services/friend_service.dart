@@ -150,6 +150,33 @@ class FriendService {
     throw Exception('Failed to load requests');
   }
 
+  /// Search users by name / query string.
+  ///
+  /// GET /api/users/search?q=<query>&page=<page>&limit=<limit>
+  Future<SearchUsersResponse> searchUsers(
+    String query, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.usersEndpoint}/search'
+      '?q=${Uri.encodeQueryComponent(query)}&page=$page&limit=$limit',
+    );
+    final fallback = Uri.parse(
+      '${ApiConstants.baseUrl}/users/search'
+      '?q=${Uri.encodeQueryComponent(query)}&page=$page&limit=$limit',
+    );
+
+    final response = await _getWithFallback(uri, fallback);
+
+    if (response.statusCode == 200) {
+      final body = json.decode(response.body) as Map<String, dynamic>;
+      return SearchUsersResponse.fromJson(body);
+    }
+
+    throw Exception('Failed to search users');
+  }
+
   /// Fetch a user's profile honoring visibility
   Future<UserProfileVisibilityResult> getUserProfile(String userId) async {
     final uri = Uri.parse(

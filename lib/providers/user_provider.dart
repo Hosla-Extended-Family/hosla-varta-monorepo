@@ -164,14 +164,14 @@ class UserProfileNotifier extends StateNotifier<User?> {
     }
   }
 
-  /// Logout user
+  /// Logout user — always clears in-memory state regardless of API result.
   Future<void> logout() async {
     try {
-      // TODO: Implement API call
       await _userService.logout();
-      state = null;
     } catch (e) {
-      print('Error during logout: $e');
+      print('Logout service error (local cleanup continues): $e');
+    } finally {
+      state = null;
     }
   }
 }

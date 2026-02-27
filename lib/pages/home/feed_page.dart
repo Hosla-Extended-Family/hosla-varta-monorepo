@@ -8,7 +8,7 @@ import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/providers/feed_provider.dart';
 import 'package:hosla/widgets/post_card.dart';
 import 'package:hosla/widgets/loading_widget.dart';
-import 'dart:ui';
+import 'package:hosla/widgets/glass_container.dart';
 
 class FeedPage extends ConsumerStatefulWidget {
   const FeedPage({super.key});
@@ -106,172 +106,162 @@ class _FeedPageState extends ConsumerState<FeedPage>
       extendBodyBehindAppBar: true,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(108),
-        child: ClipRRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: AppBar(
-              centerTitle: false,
-              automaticallyImplyLeading: false,
-              backgroundColor: ThemeColors.getNavBarColor(
-                context,
-              ).withValues(alpha: 0.8),
-              elevation: 0,
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(48),
-                child: Container(
-                  color: ThemeColors.getNavBarColor(
-                    context,
-                  ).withValues(alpha: 0.8),
-                  child: TabBar(
-                    controller: _tabController,
-                    indicatorColor: ThemeColors.primaryColor,
-                    indicatorWeight: 3,
-                    labelColor: ThemeColors.primaryColor,
-                    unselectedLabelColor: ThemeColors.getSecondaryTextColor(
-                      context,
+        child: GlassContainer(
+          blurSigma: 20,
+          opacity: 0.7,
+          child: AppBar(
+            centerTitle: false,
+            automaticallyImplyLeading: false,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(48),
+              child: TabBar(
+                controller: _tabController,
+                indicatorColor: ThemeColors.primaryColor,
+                indicatorWeight: 3,
+                labelColor: ThemeColors.primaryColor,
+                unselectedLabelColor: ThemeColors.getSecondaryTextColor(
+                  context,
+                ),
+                labelStyle: TextThemes.getBodyMediumStyle(
+                  context,
+                ).copyWith(fontWeight: FontWeight.bold, fontSize: 15),
+                unselectedLabelStyle: TextThemes.getBodyMediumStyle(
+                  context,
+                ).copyWith(fontSize: 15),
+                dividerColor: Colors.transparent,
+                tabs: const [
+                  Tab(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.public, size: 20),
+                        SizedBox(width: 6),
+                        Text('Global'),
+                      ],
                     ),
-                    labelStyle: TextThemes.getBodyMediumStyle(
-                      context,
-                    ).copyWith(fontWeight: FontWeight.bold, fontSize: 15),
-                    unselectedLabelStyle: TextThemes.getBodyMediumStyle(
-                      context,
-                    ).copyWith(fontSize: 15),
-                    tabs: const [
-                      Tab(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.public, size: 20),
-                            SizedBox(width: 6),
-                            Text('Global'),
-                          ],
-                        ),
-                      ),
-                      Tab(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.people_alt_outlined, size: 20),
-                            SizedBox(width: 6),
-                            Text('Friends'),
-                          ],
-                        ),
-                      ),
+                  ),
+                  Tab(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.people_alt_outlined, size: 20),
+                        SizedBox(width: 6),
+                        Text('Friends'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            title: Row(
+              children: [
+                ShaderMask(
+                  shaderCallback: (bounds) => LinearGradient(
+                    colors: [
+                      ThemeColors.primaryColor,
+                      ThemeColors.primaryColor,
                     ],
-                  ),
-                ),
-              ),
-              title: AnimatedOpacity(
-                opacity: _showTitle ? 1.0 : 1.0,
-                duration: const Duration(milliseconds: 200),
-                child: Row(
-                  children: [
-                    ShaderMask(
-                      shaderCallback: (bounds) => LinearGradient(
-                        colors: [
-                          ThemeColors.primaryColor,
-                          ThemeColors.primaryColor,
-                        ],
-                      ).createShader(bounds),
-                      child: Text(
-                        'Varta Wall',
-                        style: TextThemes.getTitleStyle(context).copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const CreatePostPage(),
-                      ),
-                    );
-                  },
-                  icon: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [
-                          ThemeColors.primaryColor,
-                          ThemeColors.primaryColor.withBlue(200),
-                        ],
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.post_add,
+                  ).createShader(bounds),
+                  child: Text(
+                    'Varta Wall',
+                    style: TextThemes.getTitleStyle(context).copyWith(
+                      fontWeight: FontWeight.bold,
                       color: Colors.white,
-                      size: 25,
                     ),
                   ),
                 ),
-                IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ProfilePage(),
-                      ),
-                    );
-                  },
-                  icon: () {
-                    final avatarUrl = currentUser?.avatarUrl;
-                    if (avatarUrl != null && avatarUrl.isNotEmpty) {
-                      return Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: ThemeColors.primaryColor,
-                            width: 2,
-                          ),
-                        ),
-                        child: ClipOval(
-                          child: Image.network(
-                            avatarUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                color: ThemeColors.getSurfaceColor(context),
-                                child: Icon(
-                                  Icons.person,
-                                  size: 25,
-                                  color: ThemeColors.getTextColor(context),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      );
-                    }
+              ],
+            ),
+            actions: [
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CreatePostPage(),
+                    ),
+                  );
+                },
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [
+                        ThemeColors.primaryColor,
+                        ThemeColors.primaryColor.withBlue(200),
+                      ],
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.post_add,
+                    color: Colors.white,
+                    size: 25,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProfilePage(),
+                    ),
+                  );
+                },
+                icon: () {
+                  final avatarUrl = currentUser?.avatarUrl;
+                  if (avatarUrl != null && avatarUrl.isNotEmpty) {
                     return Container(
-                      padding: const EdgeInsets.all(6),
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: ThemeColors.getSurfaceColor(context),
                         border: Border.all(
                           color: ThemeColors.primaryColor,
                           width: 2,
                         ),
                       ),
-                      child: Icon(
-                        Icons.person_rounded,
-                        color: ThemeColors.getTextColor(context),
+                      child: ClipOval(
+                        child: Image.network(
+                          avatarUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: ThemeColors.getSurfaceColor(context),
+                              child: Icon(
+                                Icons.person,
+                                size: 25,
+                                color: ThemeColors.getTextColor(context),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     );
-                  }(),
-                ),
-                const SizedBox(width: 8),
-              ],
-            ),
+                  }
+                  return Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: ThemeColors.getSurfaceColor(context),
+                      border: Border.all(
+                        color: ThemeColors.primaryColor,
+                        width: 2,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.person_rounded,
+                      color: ThemeColors.getTextColor(context),
+                    ),
+                  );
+                }(),
+              ),
+              const SizedBox(width: 8),
+            ],
           ),
         ),
       ),
@@ -319,7 +309,7 @@ class _FeedPageState extends ConsumerState<FeedPage>
                       data: (posts) {
                         final globalPosts = posts.where((p) {
                           final vis = p.visibility.toUpperCase();
-                          return vis != 'FRIENDS' && vis != 'ONLY_ME';
+                          return vis == 'PUBLIC';
                         }).toList();
 
                         if (globalPosts.isEmpty) {

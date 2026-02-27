@@ -172,4 +172,10 @@ class AuthService {
         await prefs.setString('refresh_token_expires', expires);
     }
   }
+
+  /// Clear all auth-related SharedPreferences.
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+  }
 }

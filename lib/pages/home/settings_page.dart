@@ -9,6 +9,10 @@ import 'package:hosla/pages/home/blocked_users_page.dart';
 import 'package:hosla/pages/home/friends_page.dart';
 import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/providers/theme_provider.dart';
+import 'package:hosla/providers/feed_provider.dart';
+import 'package:hosla/providers/friend_provider.dart';
+import 'package:hosla/providers/chat_provider.dart';
+import 'package:hosla/providers/event_provider.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
 
 /// Modern Settings page with enhanced UI matching app design language
@@ -930,9 +934,24 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         onPressed: () async {
                           Navigator.pop(context);
                           try {
+                            // 1. Clear user profile + call logout API + wipe DB & SharedPreferences
                             await ref
                                 .read(currentUserProfileProvider.notifier)
                                 .logout();
+
+                            // 2. Invalidate ALL cached provider state so a fresh
+                            //    login starts with a completely clean slate.
+                            ref.invalidate(feedPostsProvider);
+                            ref.invalidate(savedPostsProvider);
+                            ref.invalidate(friendsListProvider);
+                            ref.invalidate(friendRequestsProvider);
+                            ref.invalidate(appSettingsProvider);
+                            ref.invalidate(chatsProvider);
+                            ref.invalidate(usersProvider);
+                            ref.invalidate(currentUserProvider);
+                            ref.invalidate(eventsProvider);
+                            ref.invalidate(userEventPreferencesProvider);
+
                             if (mounted) {
                               Navigator.of(context).pushNamedAndRemoveUntil(
                                 '/login',
