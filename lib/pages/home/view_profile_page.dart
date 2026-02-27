@@ -295,7 +295,7 @@ class ViewProfilePage extends ConsumerWidget {
               label: const Text('Message'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: ThemeColors.primaryColor,
-                foregroundColor: Colors.white,
+                foregroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

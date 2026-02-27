@@ -275,29 +275,30 @@ class UserService {
   /// Header: Authorization: Bearer <access_token>
   /// Body: { "refreshToken": "..." }
   Future<void> logout() async {
+    // 1. Best-effort API call to invalidate refresh token on the backend.
     try {
-      // Call logout API
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        final refreshToken = prefs.getString('refresh_token');
-        final uri = Uri.parse('${ApiConstants.baseUrl}/auth/logout');
-        final body = json.encode({'refreshToken': refreshToken ?? ''});
+      final prefs = await SharedPreferences.getInstance();
+      final refreshToken = prefs.getString('refresh_token');
+      final uri = Uri.parse('${ApiConstants.baseUrl}/auth/logout');
+      final body = json.encode({'refreshToken': refreshToken ?? ''});
+      await _api.post(uri, body: body);
+    } catch (e) {
+      print('Logout API failed, continuing local cleanup: $e');
+    }
 
-        // API call with proper headers (handled by ApiClient automatically)
-        await _api.post(uri, body: body);
-      } catch (e) {
-        print('Logout API failed, continuing local cleanup: $e');
-      }
-
-      // Clear local database
+    // 2. Clear local database (independent try-catch so prefs clear always runs).
+    try {
       await _dbHelper.clearAllData();
+    } catch (e) {
+      print('DB clear failed during logout: $e');
+    }
 
-      // Clear SharedPreferences
+    // 3. Wipe ALL SharedPreferences — this MUST always execute.
+    try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
     } catch (e) {
-      print('Error during logout: $e');
-      rethrow;
+      print('SharedPreferences clear failed during logout: $e');
     }
   }
 

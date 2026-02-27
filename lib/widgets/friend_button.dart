@@ -290,7 +290,7 @@ class _PillButton extends StatelessWidget {
         ? primary
         : (muted ? ThemeColors.getSurfaceColor(context) : Colors.transparent);
     final fgColor = filled
-        ? Colors.white
+        ? Colors.black
         : (muted ? ThemeColors.getSecondaryTextColor(context) : primary);
     final borderColor = filled
         ? Colors.transparent

@@ -28,32 +28,39 @@ class FriendshipStatusState {
 /// Uses ref.listen (not ref.watch) for friends/requests so the notifier is
 /// NOT recreated every time those lists reload.  This preserves optimistic
 /// state (e.g. "Request Sent") across navigation and list refreshes.
-final friendshipStatusProvider = StateNotifierProvider.family<
-    FriendshipStatusNotifier,
-    AsyncValue<FriendshipStatusState>,
-    String>((ref, targetUserId) {
-  final currentUser = ref.watch(currentUserProfileProvider);
+final friendshipStatusProvider =
+    StateNotifierProvider.family<
+      FriendshipStatusNotifier,
+      AsyncValue<FriendshipStatusState>,
+      String
+    >((ref, targetUserId) {
+      final currentUser = ref.watch(currentUserProfileProvider);
 
-  final notifier = FriendshipStatusNotifier(
-    ref: ref,
-    targetUserId: targetUserId,
-    currentUserId: currentUser?.id ?? '',
-  );
+      final notifier = FriendshipStatusNotifier(
+        ref: ref,
+        targetUserId: targetUserId,
+        currentUserId: currentUser?.id ?? '',
+      );
 
-  // Listen (not watch) so the notifier object is stable.
-  ref.listen<AsyncValue<List<FriendshipEdge>>>(friendsListProvider, (_, __) {
-    notifier._syncFromProviders();
-  });
-  ref.listen<AsyncValue<List<FriendshipEdge>>>(friendRequestsProvider,
-      (_, __) {
-    notifier._syncFromProviders();
-  });
+      // Listen (not watch) so the notifier object is stable.
+      ref.listen<AsyncValue<List<FriendshipEdge>>>(friendsListProvider, (
+        _,
+        __,
+      ) {
+        notifier._syncFromProviders();
+      });
+      ref.listen<AsyncValue<List<FriendshipEdge>>>(friendRequestsProvider, (
+        _,
+        __,
+      ) {
+        notifier._syncFromProviders();
+      });
 
-  // Initial resolve from whatever data is already available.
-  notifier._syncFromProviders();
+      // Initial resolve from whatever data is already available.
+      notifier._syncFromProviders();
 
-  return notifier;
-});
+      return notifier;
+    });
 
 class FriendshipStatusNotifier
     extends StateNotifier<AsyncValue<FriendshipStatusState>> {

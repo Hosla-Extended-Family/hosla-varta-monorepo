@@ -205,7 +205,7 @@ class _EditPostDialogState extends ConsumerState<EditPostDialog> {
                       onPressed: _isSaving ? null : _savePost,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ThemeColors.primaryColor,
-                        foregroundColor: Colors.white,
+                        foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 24,
                           vertical: 12,

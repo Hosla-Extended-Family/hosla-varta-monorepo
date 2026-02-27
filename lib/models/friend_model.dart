@@ -169,7 +169,8 @@ class SearchUsersResponse {
           data['pagination'] as Map<String, dynamic>? ?? <String, dynamic>{};
     } else {
       // Flat fallback: { data: [...], pagination: {...} }
-      rawList = data as List<dynamic>? ?? json['users'] as List<dynamic>? ?? const [];
+      rawList =
+          data as List<dynamic>? ?? json['users'] as List<dynamic>? ?? const [];
       pagination =
           json['pagination'] as Map<String, dynamic>? ?? <String, dynamic>{};
     }
@@ -183,8 +184,7 @@ class SearchUsersResponse {
     final limit = pagination['limit'] as int? ?? json['limit'] as int? ?? 20;
     final total = pagination['total'] as int? ?? json['total'] as int? ?? 0;
     final totalPages = pagination['totalPages'] as int? ?? 1;
-    final hasMore =
-        pagination['hasMore'] as bool? ?? (page < totalPages);
+    final hasMore = pagination['hasMore'] as bool? ?? (page < totalPages);
 
     return SearchUsersResponse(
       users: users,

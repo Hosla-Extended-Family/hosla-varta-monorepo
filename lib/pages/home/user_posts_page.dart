@@ -402,7 +402,7 @@ class _UserPostsPageState extends ConsumerState<UserPostsPage> {
               label: const Text('Create Post'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: ThemeColors.primaryColor,
-                foregroundColor: Colors.white,
+                foregroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 12,
@@ -464,7 +464,7 @@ class _UserPostsPageState extends ConsumerState<UserPostsPage> {
             label: const Text('Try Again'),
             style: ElevatedButton.styleFrom(
               backgroundColor: ThemeColors.primaryColor,
-              foregroundColor: Colors.white,
+              foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),

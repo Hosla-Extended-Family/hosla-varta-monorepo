@@ -41,7 +41,7 @@ class AuthService {
       'phone': phone,
       'otp': otp,
       'device': {
-        //if (fcmToken != null) 
+        //if (fcmToken != null)
         'fcmToken': '123456',
         'platform': _getClientPlatform(),
         'model': deviceModel ?? 'unknown',

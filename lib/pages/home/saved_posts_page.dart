@@ -438,7 +438,7 @@ class _SavedPostsPageState extends ConsumerState<SavedPostsPage> {
             label: const Text('Try Again'),
             style: ElevatedButton.styleFrom(
               backgroundColor: ThemeColors.primaryColor,
-              foregroundColor: Colors.white,
+              foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
