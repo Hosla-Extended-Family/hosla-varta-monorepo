@@ -46,6 +46,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
     return Scaffold(
       backgroundColor: ThemeColors.getBackgroundColor(context),
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: ThemeColors.getNavBarColor(context),
         elevation: 0,
         title: Text(

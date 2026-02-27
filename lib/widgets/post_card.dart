@@ -8,6 +8,7 @@ import 'package:hosla/pages/home/user_profile_view_page.dart';
 import 'package:hosla/providers/post_provider.dart';
 import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/widgets/comments_bottom_sheet.dart';
+import 'package:hosla/widgets/friend_button.dart';
 import 'package:hosla/widgets/profile_pic.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
 import 'package:share_plus/share_plus.dart';
@@ -436,50 +437,52 @@ class _PostCardState extends ConsumerState<PostCard>
             padding: const EdgeInsets.all(16.0),
             child: Row(
               children: [
-                Expanded(
-                  child: InkWell(
-                    onTap: _openProfile,
-                    borderRadius: BorderRadius.circular(32),
-                    child: Row(
-                      children: [
-                        // Profile Picture
-                        ProfilePic(
-                          radius: 24,
-                          imageUrl: _post.userAvatarUrl ?? '',
-                        ),
-                        const SizedBox(width: 12),
-                        // User Info
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _post.userName,
-                                style: TextThemes.getTitleStyle(context)
-                                    .copyWith(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                _post.getRelativeTime(),
-                                style: TextThemes.getBodySmallStyle(context)
-                                    .copyWith(
-                                      color: ThemeColors.getSecondaryTextColor(
-                                        context,
-                                      ),
-                                      fontSize: 12,
-                                    ),
-                              ),
-                            ],
+                // Profile picture + user info (tappable)
+                InkWell(
+                  onTap: _openProfile,
+                  borderRadius: BorderRadius.circular(32),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Profile Picture
+                      ProfilePic(
+                        radius: 24,
+                        imageUrl: _post.userAvatarUrl ?? '',
+                      ),
+                      const SizedBox(width: 12),
+                      // User Info
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _post.userName,
+                            style: TextThemes.getTitleStyle(context).copyWith(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _post.getRelativeTime(),
+                            style: TextThemes.getBodySmallStyle(context)
+                                .copyWith(
+                                  color: ThemeColors.getSecondaryTextColor(
+                                    context,
+                                  ),
+                                  fontSize: 12,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
+                const SizedBox(width: 8),
+                // Friend button (compact, only for other users)
+                if (_post.userId != ref.watch(currentUserProfileProvider)?.id)
+                  FriendButton(targetUserId: _post.userId, compact: true),
+                const Spacer(),
                 // Three-dot menu
                 IconButton(
                   icon: const Icon(Icons.more_vert),

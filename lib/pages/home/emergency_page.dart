@@ -15,6 +15,7 @@ class _EmergencyPageState extends State<EmergencyPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text('Emergency', style: TextThemes.getTitleStyle(context)),
       ),
       body: SingleChildScrollView(

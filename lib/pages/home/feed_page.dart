@@ -111,6 +111,7 @@ class _FeedPageState extends ConsumerState<FeedPage>
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: AppBar(
               centerTitle: false,
+              automaticallyImplyLeading: false,
               backgroundColor: ThemeColors.getNavBarColor(
                 context,
               ).withValues(alpha: 0.8),

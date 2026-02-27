@@ -34,6 +34,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     return Scaffold(
       backgroundColor: ThemeColors.getBackgroundColor(context),
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: ThemeColors.getNavBarColor(context),
         elevation: 0,
         title: Text(
