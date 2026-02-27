@@ -46,8 +46,9 @@ class GlassContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final baseColor = ThemeColors.getNavBarColor(context);
-    final borderColor =
-        ThemeColors.getBorderColor(context).withValues(alpha: isDark ? 0.2 : 0.15);
+    final borderColor = ThemeColors.getBorderColor(
+      context,
+    ).withValues(alpha: isDark ? 0.2 : 0.15);
 
     return Container(
       margin: margin,
@@ -60,11 +61,7 @@ class GlassContainer extends StatelessWidget {
             decoration: BoxDecoration(
               color: baseColor.withValues(alpha: opacity),
               borderRadius: borderRadius,
-              border: border ??
-                  Border.all(
-                    color: borderColor,
-                    width: 0.5,
-                  ),
+              border: border ?? Border.all(color: borderColor, width: 0.5),
             ),
             child: child,
           ),
