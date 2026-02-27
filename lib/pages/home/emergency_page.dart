@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/core/constants/text_theme.dart';
+import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/widgets/button.dart';
+import 'package:hosla/widgets/glass_app_bar.dart';
 
 class EmergencyPage extends StatefulWidget {
   const EmergencyPage({super.key});
@@ -14,12 +16,19 @@ class _EmergencyPageState extends State<EmergencyPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      extendBodyBehindAppBar: true,
+      backgroundColor: ThemeColors.getBackgroundColor(context),
+      appBar: GlassAppBar(
         automaticallyImplyLeading: false,
-        title: Text('Emergency', style: TextThemes.getTitleStyle(context)),
+        titleText: 'Emergency',
       ),
       body: SingleChildScrollView(
-        padding: Constants.defaultPadding,
+        padding: EdgeInsets.only(
+          top: MediaQuery.of(context).padding.top + kToolbarHeight + 16,
+          left: Constants.defaultPadding.left,
+          right: Constants.defaultPadding.right,
+          bottom: Constants.defaultPadding.bottom,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

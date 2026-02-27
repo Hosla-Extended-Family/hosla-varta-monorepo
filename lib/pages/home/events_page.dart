@@ -7,6 +7,7 @@ import 'package:hosla/models/event_model.dart';
 import 'package:hosla/providers/event_provider.dart';
 import 'package:hosla/pages/event_detail_page.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
+import 'package:hosla/widgets/glass_app_bar.dart';
 
 /// Events page displaying upcoming events in a scrollable list
 class EventsPage extends ConsumerStatefulWidget {
@@ -44,17 +45,11 @@ class _EventsPageState extends ConsumerState<EventsPage> {
     final filteredEvents = _filterEvents(events);
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       backgroundColor: ThemeColors.getBackgroundColor(context),
-      appBar: AppBar(
+      appBar: GlassAppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: ThemeColors.getNavBarColor(context),
-        elevation: 0,
-        title: Text(
-          'Events',
-          style: TextThemes.getTitleStyle(
-            context,
-          ).copyWith(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
+        titleText: 'Events',
         actions: [
           IconButton(
             icon: Icon(
@@ -71,6 +66,11 @@ class _EventsPageState extends ConsumerState<EventsPage> {
         },
         child: Column(
           children: [
+            // Spacer for glass app bar
+            SizedBox(
+              height: MediaQuery.of(context).padding.top + kToolbarHeight + 16,
+            ),
+
             // Search bar - matching chat page style
             _buildSearchBar(),
 

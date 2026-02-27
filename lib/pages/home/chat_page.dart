@@ -7,6 +7,7 @@ import 'package:hosla/models/chat_model.dart';
 import 'package:hosla/providers/chat_provider.dart';
 import 'package:hosla/widgets/profile_pic.dart';
 import 'package:hosla/pages/chat_detail_page.dart';
+import 'package:hosla/widgets/glass_app_bar.dart';
 
 /// Chat page displaying list of recent chats with WhatsApp-like UI
 class ChatPage extends ConsumerStatefulWidget {
@@ -32,19 +33,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     final filteredChats = _filterChats(chats);
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       backgroundColor: ThemeColors.getBackgroundColor(context),
-      appBar: AppBar(
+      appBar: GlassAppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: ThemeColors.getNavBarColor(context),
-        elevation: 0,
-        title: Text(
-          'Chats',
-          style: TextThemes.getTitleStyle(context).copyWith(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: ThemeColors.getTextColor(context),
-          ),
-        ),
+        titleText: 'Chats',
         actions: [
           IconButton(
             icon: Icon(
@@ -57,6 +50,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       ),
       body: Column(
         children: [
+          // Spacer for glass app bar
+          SizedBox(
+            height: MediaQuery.of(context).padding.top + kToolbarHeight + 16,
+          ),
+
           // Search bar at the top
           GestureDetector(
             onTap: () {
@@ -409,7 +407,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             onPressed: () => _showNewChatOptions(context),
             style: ElevatedButton.styleFrom(
               backgroundColor: ThemeColors.primaryColor,
-              foregroundColor: Colors.white,
+              foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
