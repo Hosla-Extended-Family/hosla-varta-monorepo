@@ -1,15 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/models/event_model.dart';
 import 'package:hosla/providers/event_provider.dart';
 import 'package:hosla/pages/event_detail_page.dart';
-import 'package:hosla/widgets/snack_bar_widget.dart';
+import 'package:hosla/pages/home/friends_page.dart';
 import 'package:hosla/widgets/glass_app_bar.dart';
+import 'package:hosla/widgets/create_event_fab.dart';
 
-/// Events page displaying upcoming events in a scrollable list
+// ─────────────────────────────────────────────────────────────────────────────
+// EVENTS PAGE — Complete Redesign
+//
+// Design principles:
+//   • Clean, modern card-based layout consistent with Feed & Friends pages
+//   • Glassmorphic AppBar with "Add Friends" action
+//   • Horizontal category chips for quick filtering
+//   • Compact event cards with image, metadata, and quick-action buttons
+//   • Soft shadows, rounded corners, clear visual hierarchy
+//   • Proper empty + no-results states
+// ─────────────────────────────────────────────────────────────────────────────
+
 class EventsPage extends ConsumerStatefulWidget {
   const EventsPage({super.key});
 
@@ -22,7 +33,7 @@ class _EventsPageState extends ConsumerState<EventsPage> {
   String _searchQuery = '';
   String _selectedCategory = '';
 
-  final List<String> _categories = [
+  static const List<String> _categories = [
     'All',
     'Technology',
     'Community',
@@ -37,6 +48,8 @@ class _EventsPageState extends ConsumerState<EventsPage> {
     _searchController.dispose();
     super.dispose();
   }
+
+  // ───────────────────────────── BUILD ─────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -53,74 +66,109 @@ class _EventsPageState extends ConsumerState<EventsPage> {
         actions: [
           IconButton(
             icon: Icon(
-              Icons.filter_list,
+              Icons.person_add_alt_1_rounded,
+              color: ThemeColors.getNavBarIconColor(context),
+              size: 24,
+            ),
+            tooltip: 'Add Friends',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FriendsPage()),
+              );
+            },
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.filter_list_rounded,
               color: ThemeColors.getNavBarIconColor(context),
             ),
-            onPressed: () => _showFilterOptions(),
+            tooltip: 'Filters',
+            onPressed: _showFilterSheet,
           ),
+          const SizedBox(width: 4),
         ],
       ),
+      floatingActionButton: const CreateEventFab(),
       body: RefreshIndicator(
-        onRefresh: () async {
-          await ref.read(eventsProvider.notifier).loadEvents();
-        },
-        child: Column(
-          children: [
-            // Spacer for glass app bar
-            SizedBox(
-              height: MediaQuery.of(context).padding.top + kToolbarHeight + 16,
+        onRefresh: () => ref.read(eventsProvider.notifier).loadEvents(),
+        color: ThemeColors.primaryColor,
+        backgroundColor: ThemeColors.getSurfaceColor(context),
+        edgeOffset: MediaQuery.of(context).padding.top + kToolbarHeight + 16,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
+          slivers: [
+            // Top spacer behind the glass app bar
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: MediaQuery.of(context).padding.top + kToolbarHeight + 8,
+              ),
             ),
 
-            // Search bar - matching chat page style
-            _buildSearchBar(),
+            // Search bar
+            SliverToBoxAdapter(child: _buildSearchBar()),
 
-            // Category filter
-            _buildCategoryFilter(),
+            // Category chips
+            SliverToBoxAdapter(child: _buildCategoryChips()),
 
-            // Events list
-            Expanded(
-              child: events.isEmpty
-                  ? _buildEmptyState()
-                  : filteredEvents.isEmpty
-                  ? _buildNoResultsState()
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: filteredEvents.length,
-                      itemBuilder: (context, index) {
-                        final event = filteredEvents[index];
-                        final userStatus = userPreferences[event.id];
-                        return _buildEventCard(event, userStatus);
-                      },
-                    ),
-            ),
+            // Content
+            if (events.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _buildEmptyState(),
+              )
+            else if (filteredEvents.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _buildNoResultsState(),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final event = filteredEvents[index];
+                    final status = userPreferences[event.id];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _EventCard(
+                        event: event,
+                        userStatus: status,
+                        onTap: () => _openDetail(event),
+                        onToggleInterested: () =>
+                            _toggleInterested(event.id, status),
+                        onToggleGoing: () => _toggleGoing(event.id, status),
+                      ),
+                    );
+                  }, childCount: filteredEvents.length),
+                ),
+              ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showCreateEventDialog(),
-        backgroundColor: ThemeColors.primaryColor,
-        child: Icon(Icons.add, color: ThemeColors.getCardColor(context)),
       ),
     );
   }
 
-  /// Build search bar - matching chat page style
+  // ───────────────────────── SEARCH BAR ─────────────────────────
+
   Widget _buildSearchBar() {
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-      },
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Container(
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
         decoration: BoxDecoration(
           color: ThemeColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(30),
+          border: Border.all(
+            color: ThemeColors.getBorderColor(context).withValues(alpha: 0.3),
+          ),
         ),
         child: Row(
           children: [
             Icon(
-              Icons.search,
+              Icons.search_rounded,
               color: ThemeColors.getSecondaryTextColor(context),
               size: 22,
             ),
@@ -130,34 +178,28 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                 controller: _searchController,
                 style: TextThemes.getBodyMediumStyle(context),
                 decoration: InputDecoration(
-                  hintText: 'Search events...',
+                  hintText: 'Search events…',
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
                   hintStyle: TextThemes.getBodyMediumStyle(
                     context,
                   ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 ),
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value;
-                  });
-                },
-                onTapOutside: (event) {
-                  FocusScope.of(context).unfocus();
-                },
+                onChanged: (v) => setState(() => _searchQuery = v),
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
               ),
             ),
             if (_searchQuery.isNotEmpty)
               GestureDetector(
                 onTap: () {
                   _searchController.clear();
-                  setState(() {
-                    _searchQuery = '';
-                  });
+                  setState(() => _searchQuery = '');
                 },
                 child: Icon(
-                  Icons.clear,
+                  Icons.close_rounded,
                   color: ThemeColors.getSecondaryTextColor(context),
                   size: 20,
                 ),
@@ -168,51 +210,61 @@ class _EventsPageState extends ConsumerState<EventsPage> {
     );
   }
 
-  /// Build category filter
-  Widget _buildCategoryFilter() {
-    return Container(
-      height: 56,
-      margin: const EdgeInsets.symmetric(vertical: 12),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _categories.length,
-        itemBuilder: (context, index) {
-          final category = _categories[index];
-          final isSelected =
-              _selectedCategory == category ||
-              (category == 'All' && _selectedCategory.isEmpty);
+  // ──────────────────────── CATEGORY CHIPS ──────────────────────
 
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: FilterChip(
-              label: Text(category),
-              selected: isSelected,
-              onSelected: (selected) {
-                setState(() {
-                  _selectedCategory = category == 'All' ? '' : category;
-                });
-              },
-              elevation: isSelected ? 2 : 0,
-              backgroundColor: ThemeColors.getCardColor(context),
-              selectedColor: ThemeColors.primaryColor,
-              checkmarkColor: Colors.white,
-              labelStyle: TextThemes.getBodySmallStyle(context).copyWith(
+  Widget _buildCategoryChips() {
+    return SizedBox(
+      height: 52,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        itemCount: _categories.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final cat = _categories[index];
+          final isSelected =
+              _selectedCategory == cat ||
+              (cat == 'All' && _selectedCategory.isEmpty);
+
+          return GestureDetector(
+            onTap: () =>
+                setState(() => _selectedCategory = cat == 'All' ? '' : cat),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+              decoration: BoxDecoration(
                 color: isSelected
-                    ? Colors.white
-                    : ThemeColors.getSecondaryTextColor(context),
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-                side: BorderSide(
+                    ? ThemeColors.primaryColor
+                    : ThemeColors.getSurfaceColor(context),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
                   color: isSelected
                       ? ThemeColors.primaryColor
-                      : ThemeColors.getSecondaryTextColor(
+                      : ThemeColors.getBorderColor(
                           context,
-                        ).withValues(alpha: 0.2),
+                        ).withValues(alpha: 0.4),
                   width: 1.5,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: ThemeColors.primaryColor.withValues(
+                            alpha: 0.25,
+                          ),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : [],
+              ),
+              child: Text(
+                cat,
+                style: TextThemes.getBodySmallStyle(context).copyWith(
+                  color: isSelected
+                      ? Colors.black
+                      : ThemeColors.getSecondaryTextColor(context),
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  fontSize: 13,
                 ),
               ),
             ),
@@ -222,279 +274,304 @@ class _EventsPageState extends ConsumerState<EventsPage> {
     );
   }
 
-  /// Build event card
-  Widget _buildEventCard(Event event, EventStatus? userStatus) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 4,
-      shadowColor: ThemeColors.primaryColor.withValues(alpha: 0.15),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: InkWell(
-        onTap: () => _openEventDetail(event),
-        borderRadius: BorderRadius.circular(20),
+  // ───────────────────────── EMPTY STATES ───────────────────────
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                color: ThemeColors.primaryColor.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.event_note_rounded,
+                size: 64,
+                color: ThemeColors.primaryColor,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'No events yet',
+              style: TextThemes.getTitleStyle(context).copyWith(fontSize: 22),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Check back later for upcoming events in your community!',
+              textAlign: TextAlign.center,
+              style: TextThemes.getBodyMediumStyle(
+                context,
+              ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoResultsState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                color: ThemeColors.primaryColor.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.search_off_rounded,
+                size: 64,
+                color: ThemeColors.primaryColor,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'No matches',
+              style: TextThemes.getTitleStyle(context).copyWith(fontSize: 22),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Try adjusting your search or category filter.',
+              textAlign: TextAlign.center,
+              style: TextThemes.getBodyMediumStyle(
+                context,
+              ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
+            ),
+            const SizedBox(height: 20),
+            TextButton.icon(
+              onPressed: () {
+                _searchController.clear();
+                setState(() {
+                  _searchQuery = '';
+                  _selectedCategory = '';
+                });
+              },
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Clear filters'),
+              style: TextButton.styleFrom(
+                foregroundColor: ThemeColors.primaryColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ───────────────────────── FILTER SHEET ───────────────────────
+
+  void _showFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: ThemeColors.getCardColor(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: ThemeColors.getSecondaryTextColor(
+                      context,
+                    ).withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Filter Events',
+                style: TextThemes.getTitleStyle(context).copyWith(fontSize: 20),
+              ),
+              const SizedBox(height: 8),
+              const Divider(),
+              _filterTile(Icons.today_rounded, 'Today'),
+              _filterTile(Icons.date_range_rounded, 'This Week'),
+              _filterTile(Icons.location_on_rounded, 'Nearby'),
+              _filterTile(Icons.people_rounded, 'My Events'),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _filterTile(IconData icon, String label) {
+    return ListTile(
+      leading: Icon(icon, color: ThemeColors.primaryColor),
+      title: Text(label, style: TextThemes.getBodyMediumStyle(context)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      onTap: () {
+        Navigator.pop(context);
+        // TODO: Apply filter
+      },
+    );
+  }
+
+  // ───────────────────────── HELPERS ────────────────────────────
+
+  List<Event> _filterEvents(List<Event> events) {
+    var filtered = events.toList();
+
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      filtered = filtered.where((e) {
+        return e.title.toLowerCase().contains(q) ||
+            e.description.toLowerCase().contains(q) ||
+            e.location.toLowerCase().contains(q) ||
+            e.tags.any((t) => t.toLowerCase().contains(q));
+      }).toList();
+    }
+
+    if (_selectedCategory.isNotEmpty) {
+      filtered = filtered.where((e) {
+        return e.tags.any(
+          (t) => t.toLowerCase().contains(_selectedCategory.toLowerCase()),
+        );
+      }).toList();
+    }
+
+    filtered.sort((a, b) => a.startTime.compareTo(b.startTime));
+    return filtered;
+  }
+
+  void _openDetail(Event event) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => EventDetailPage(event: event)),
+    );
+  }
+
+  void _toggleInterested(String eventId, EventStatus? status) {
+    if (status == EventStatus.interested) {
+      ref.read(userEventPreferencesProvider.notifier).removeFromEvent(eventId);
+    } else {
+      ref.read(userEventPreferencesProvider.notifier).markInterested(eventId);
+    }
+  }
+
+  void _toggleGoing(String eventId, EventStatus? status) {
+    if (status == EventStatus.going) {
+      ref.read(userEventPreferencesProvider.notifier).removeFromEvent(eventId);
+    } else {
+      ref.read(userEventPreferencesProvider.notifier).markGoing(eventId);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EVENT CARD — Extracted to a self-contained widget for reuse
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _EventCard extends StatelessWidget {
+  final Event event;
+  final EventStatus? userStatus;
+  final VoidCallback onTap;
+  final VoidCallback onToggleInterested;
+  final VoidCallback onToggleGoing;
+
+  const _EventCard({
+    required this.event,
+    required this.userStatus,
+    required this.onTap,
+    required this.onToggleInterested,
+    required this.onToggleGoing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: ThemeColors.getCardColor(context),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: ThemeColors.getBorderColor(context).withValues(alpha: 0.15),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.3)
+                  : ThemeColors.primaryColor.withValues(alpha: 0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Event image
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(20),
-              ),
-              child: Stack(
-                children: [
-                  AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child: Image.network(
-                      event.imageUrl ?? '',
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                ThemeColors.primaryColor.withValues(alpha: 0.3),
-                                ThemeColors.primaryColor.withValues(alpha: 0.1),
-                              ],
-                            ),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.event,
-                                size: 56,
-                                color: ThemeColors.primaryColor,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Event Image',
-                                style: TextThemes.getBodyMediumStyle(context)
-                                    .copyWith(
-                                      color: ThemeColors.primaryColor,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  // Status badge overlay
-                  if (userStatus != null)
-                    Positioned(
-                      top: 12,
-                      right: 12,
-                      child: _buildUserStatusChip(userStatus),
-                    ),
-                ],
-              ),
-            ),
+            // ─── Image header ───
+            _buildImageHeader(context),
 
-            // Event content
+            // ─── Content body ───
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Event title
+                  // Title
                   Text(
                     event.title,
                     style: TextThemes.getBodyLargeStyle(
                       context,
-                    ).copyWith(fontWeight: FontWeight.bold, fontSize: 18),
+                    ).copyWith(fontWeight: FontWeight.bold, fontSize: 17),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-
-                  const SizedBox(height: 12),
-
-                  // Date and time
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: ThemeColors.primaryColor.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
-                          size: 18,
-                          color: ThemeColors.primaryColor,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            '${event.formattedDate} • ${event.formattedTime}',
-                            style: TextThemes.getBodySmallStyle(context)
-                                .copyWith(
-                                  color: ThemeColors.primaryColor,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
                   const SizedBox(height: 10),
 
-                  // Location
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.location_on,
-                        size: 18,
-                        color: ThemeColors.getSecondaryTextColor(context),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          event.location,
-                          style: TextThemes.getBodySmallStyle(context).copyWith(
-                            color: ThemeColors.getSecondaryTextColor(context),
-                            fontWeight: FontWeight.w500,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
+                  // Date + Time chip
+                  _buildDateChip(context),
+                  const SizedBox(height: 8),
 
-                  const SizedBox(height: 12),
+                  // Location
+                  _buildLocationRow(context),
+                  const SizedBox(height: 10),
 
                   // Description
                   Text(
                     event.description,
-                    style: TextThemes.getBodyMediumStyle(context),
+                    style: TextThemes.getBodySmallStyle(context).copyWith(
+                      fontSize: 13,
+                      height: 1.4,
+                      color: ThemeColors.getSecondaryTextColor(context),
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
 
+                  // Tags
+                  if (event.tags.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    _buildTags(context),
+                  ],
+
                   const SizedBox(height: 12),
 
-                  // Tags
-                  if (event.tags.isNotEmpty)
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      children: event.tags.take(3).map((tag) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                ThemeColors.primaryColor.withValues(
-                                  alpha: 0.15,
-                                ),
-                                ThemeColors.primaryColor.withValues(
-                                  alpha: 0.08,
-                                ),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: ThemeColors.primaryColor.withValues(
-                                alpha: 0.3,
-                              ),
-                              width: 1,
-                            ),
-                          ),
-                          child: Text(
-                            '#$tag',
-                            style: TextThemes.getBodySmallStyle(context)
-                                .copyWith(
-                                  color: ThemeColors.primaryColor,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-
-                  const SizedBox(height: 14),
-
-                  // Participants info and actions
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: ThemeColors.getSuccessColor(
-                            context,
-                          ).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.people,
-                              size: 16,
-                              color: ThemeColors.getSuccessColor(context),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${event.goingUserIds.length}',
-                              style: TextThemes.getBodySmallStyle(context)
-                                  .copyWith(
-                                    color: ThemeColors.getSuccessColor(context),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: ThemeColors.getWarningColor(
-                            context,
-                          ).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.star,
-                              size: 16,
-                              color: ThemeColors.getWarningColor(context),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${event.interestedUserIds.length}',
-                              style: TextThemes.getBodySmallStyle(context)
-                                  .copyWith(
-                                    color: ThemeColors.getWarningColor(context),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Spacer(),
-                      _buildQuickActionButtons(event, userStatus),
-                    ],
-                  ),
+                  // Footer — stats + quick actions
+                  _buildFooter(context),
                 ],
               ),
             ),
@@ -504,42 +581,255 @@ class _EventsPageState extends ConsumerState<EventsPage> {
     );
   }
 
-  /// Build user status chip
-  Widget _buildUserStatusChip(EventStatus? status) {
-    if (status == null) return const SizedBox.shrink();
+  // ───────────────── Image header ─────────────────
 
-    Color chipColor;
-    String label;
-    IconData icon;
+  Widget _buildImageHeader(BuildContext context) {
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      child: Stack(
+        children: [
+          AspectRatio(
+            aspectRatio: 2.2,
+            child: Image.network(
+              event.imageUrl ?? '',
+              fit: BoxFit.cover,
+              width: double.infinity,
+              errorBuilder: (_, __, ___) => Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      ThemeColors.primaryColor.withValues(alpha: 0.15),
+                      ThemeColors.primaryColor.withValues(alpha: 0.06),
+                    ],
+                  ),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.event_rounded,
+                    size: 48,
+                    color: ThemeColors.primaryColor.withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
+            ),
+          ),
 
-    switch (status) {
-      case EventStatus.going:
-        chipColor = ThemeColors.getSuccessColor(context);
-        label = 'Going';
-        icon = Icons.check_circle;
-        break;
-      case EventStatus.interested:
-        chipColor = ThemeColors.getWarningColor(context);
-        label = 'Interested';
-        icon = Icons.star;
-        break;
-      case EventStatus.notGoing:
-        chipColor = ThemeColors.getSecondaryTextColor(context);
-        label = 'Not Going';
-        icon = Icons.close;
-        break;
-    }
+          // Status badge
+          if (userStatus != null)
+            Positioned(
+              top: 10,
+              right: 10,
+              child: _StatusBadge(status: userStatus!),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ───────────────── Date chip ─────────────────
+
+  Widget _buildDateChip(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+      decoration: BoxDecoration(
+        color: ThemeColors.primaryColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.calendar_today_rounded,
+            size: 14,
+            color: ThemeColors.primaryColor,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '${event.formattedDate}  •  ${event.formattedTime}',
+            style: TextThemes.getBodySmallStyle(context).copyWith(
+              color: ThemeColors.primaryColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ───────────────── Location row ─────────────────
+
+  Widget _buildLocationRow(BuildContext context) {
+    return Row(
+      children: [
+        Icon(
+          Icons.location_on_outlined,
+          size: 16,
+          color: ThemeColors.getSecondaryTextColor(context),
+        ),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            event.location,
+            style: TextThemes.getBodySmallStyle(context).copyWith(
+              color: ThemeColors.getSecondaryTextColor(context),
+              fontWeight: FontWeight.w500,
+              fontSize: 12,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ───────────────── Tags ─────────────────
+
+  Widget _buildTags(BuildContext context) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
+      children: event.tags.take(3).map((tag) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: ThemeColors.primaryColor.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: ThemeColors.primaryColor.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Text(
+            '#$tag',
+            style: TextThemes.getBodySmallStyle(context).copyWith(
+              color: ThemeColors.primaryColor,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // ───────────────── Footer ─────────────────
+
+  Widget _buildFooter(BuildContext context) {
+    return Row(
+      children: [
+        // Going count
+        _StatChip(
+          icon: Icons.people_rounded,
+          label: '${event.goingUserIds.length}',
+          color: ThemeColors.getSuccessColor(context),
+        ),
+        const SizedBox(width: 8),
+
+        // Interested count
+        _StatChip(
+          icon: Icons.star_rounded,
+          label: '${event.interestedUserIds.length}',
+          color: ThemeColors.getWarningColor(context),
+        ),
+
+        const Spacer(),
+
+        // Quick action — Interested
+        _QuickActionButton(
+          icon: Icons.star_border_rounded,
+          isSelected: userStatus == EventStatus.interested,
+          onPressed: onToggleInterested,
+        ),
+        const SizedBox(width: 8),
+
+        // Quick action — Going
+        _QuickActionButton(
+          icon: Icons.check_circle_outline_rounded,
+          isSelected: userStatus == EventStatus.going,
+          onPressed: onToggleGoing,
+        ),
+      ],
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SMALL HELPER WIDGETS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Compact stat chip (e.g. "👤 12")
+class _StatChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextThemes.getBodySmallStyle(
+              context,
+            ).copyWith(color: color, fontWeight: FontWeight.bold, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Status badge shown on the event image
+class _StatusBadge extends StatelessWidget {
+  final EventStatus status;
+  const _StatusBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final (Color color, String text, IconData icon) = switch (status) {
+      EventStatus.going => (
+        ThemeColors.getSuccessColor(context),
+        'Going',
+        Icons.check_circle_rounded,
+      ),
+      EventStatus.interested => (
+        ThemeColors.getWarningColor(context),
+        'Interested',
+        Icons.star_rounded,
+      ),
+      EventStatus.notGoing => (
+        ThemeColors.getSecondaryTextColor(context),
+        'Not Going',
+        Icons.close_rounded,
+      ),
+    };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: chipColor, width: 2),
+        border: Border.all(color: color, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: chipColor.withValues(alpha: 0.3),
-            blurRadius: 8,
+            color: color.withValues(alpha: 0.25),
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
@@ -547,297 +837,76 @@ class _EventsPageState extends ConsumerState<EventsPage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: chipColor),
-          const SizedBox(width: 6),
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
           Text(
-            label,
-            style: TextThemes.getBodySmallStyle(context).copyWith(
-              color: chipColor,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+            text,
+            style: TextStyle(
+              fontFamily: 'Quicksand',
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: color,
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  /// Build quick action buttons
-  Widget _buildQuickActionButtons(Event event, EventStatus? userStatus) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildActionButton(
-          icon: Icons.star_border,
-          isSelected: userStatus == EventStatus.interested,
-          onPressed: () => _toggleInterested(event.id, userStatus),
-        ),
-        const SizedBox(width: 8),
-        _buildActionButton(
-          icon: Icons.check_circle_outline,
-          isSelected: userStatus == EventStatus.going,
-          onPressed: () => _toggleGoing(event.id, userStatus),
-        ),
-      ],
-    );
-  }
+/// Circular quick-action button used in the event card footer
+class _QuickActionButton extends StatelessWidget {
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onPressed;
 
-  /// Build action button
-  Widget _buildActionButton({
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onPressed,
-  }) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(24),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? ThemeColors.primaryColor
-              : ThemeColors.getCardColor(context),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
+  const _QuickActionButton({
+    required this.icon,
+    required this.isSelected,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(22),
+        splashColor: ThemeColors.primaryColor.withValues(alpha: 0.15),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
             color: isSelected
                 ? ThemeColors.primaryColor
-                : ThemeColors.getSecondaryTextColor(
-                    context,
-                  ).withValues(alpha: 0.3),
-            width: 2,
+                : ThemeColors.getSurfaceColor(context),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: isSelected
+                  ? ThemeColors.primaryColor
+                  : ThemeColors.getBorderColor(context).withValues(alpha: 0.3),
+              width: 1.5,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: ThemeColors.primaryColor.withValues(alpha: 0.25),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : [],
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: ThemeColors.primaryColor.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : [],
-        ),
-        child: Icon(
-          icon,
-          size: 22,
-          color: isSelected
-              ? Colors.white
-              : ThemeColors.getSecondaryTextColor(context),
-        ),
-      ),
-    );
-  }
-
-  /// Build empty state
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: ThemeColors.primaryColor.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.event_note,
-              size: 72,
-              color: ThemeColors.primaryColor,
-            ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: isSelected
+                ? Colors.black
+                : ThemeColors.getSecondaryTextColor(context),
           ),
-          const SizedBox(height: 24),
-          Text(
-            'No events available',
-            style: TextThemes.getBodyLargeStyle(context).copyWith(
-              color: ThemeColors.getTextColor(context),
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Check back later for upcoming events!',
-            style: TextThemes.getBodyMediumStyle(
-              context,
-            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Build no search results state
-  Widget _buildNoResultsState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: ThemeColors.primaryColor.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.search_off,
-              size: 72,
-              color: ThemeColors.primaryColor,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'No events found',
-            style: TextThemes.getBodyLargeStyle(context).copyWith(
-              color: ThemeColors.getTextColor(context),
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Try adjusting your search or filters',
-            style: TextThemes.getBodyMediumStyle(
-              context,
-            ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Filter events based on search and category
-  List<Event> _filterEvents(List<Event> events) {
-    List<Event> filtered = events;
-
-    // Filter by search query
-    if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((event) {
-        return event.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            event.description.toLowerCase().contains(
-              _searchQuery.toLowerCase(),
-            ) ||
-            event.location.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            event.tags.any(
-              (tag) => tag.toLowerCase().contains(_searchQuery.toLowerCase()),
-            );
-      }).toList();
-    }
-
-    // Filter by category
-    if (_selectedCategory.isNotEmpty) {
-      filtered = filtered.where((event) {
-        return event.tags.any(
-          (tag) => tag.toLowerCase().contains(_selectedCategory.toLowerCase()),
-        );
-      }).toList();
-    }
-
-    // Sort by start time
-    filtered.sort((a, b) => a.startTime.compareTo(b.startTime));
-
-    return filtered;
-  }
-
-  /// Show filter options
-  void _showFilterOptions() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Container(
-        padding: Constants.defaultPadding,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: ThemeColors.getSecondaryTextColor(
-                  context,
-                ).withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Text(
-              'Filter Events',
-              style: TextThemes.getBodyLargeStyle(
-                context,
-              ).copyWith(fontWeight: FontWeight.bold, fontSize: 20),
-            ),
-            const SizedBox(height: 16),
-            const Divider(),
-            ListTile(
-              leading: Icon(Icons.today, color: ThemeColors.primaryColor),
-              title: const Text('Today'),
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Filter by today
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.date_range, color: ThemeColors.primaryColor),
-              title: const Text('This Week'),
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Filter by this week
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.location_on, color: ThemeColors.primaryColor),
-              title: const Text('Nearby'),
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Filter by location
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.people, color: ThemeColors.primaryColor),
-              title: const Text('My Events'),
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Filter by user's events
-              },
-            ),
-            const SizedBox(height: 8),
-          ],
         ),
       ),
     );
-  }
-
-  /// Show create event dialog
-  void _showCreateEventDialog() {
-    // TODO: Implement create event dialog or navigate to create event page
-    SnackBarWidget.show(context, 'Create event feature coming soon!');
-  }
-
-  /// Open event detail page
-  void _openEventDetail(Event event) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => EventDetailPage(event: event)),
-    );
-  }
-
-  /// Toggle interested status
-  void _toggleInterested(String eventId, EventStatus? currentStatus) {
-    if (currentStatus == EventStatus.interested) {
-      ref.read(userEventPreferencesProvider.notifier).removeFromEvent(eventId);
-    } else {
-      ref.read(userEventPreferencesProvider.notifier).markInterested(eventId);
-    }
-  }
-
-  /// Toggle going status
-  void _toggleGoing(String eventId, EventStatus? currentStatus) {
-    if (currentStatus == EventStatus.going) {
-      ref.read(userEventPreferencesProvider.notifier).removeFromEvent(eventId);
-    } else {
-      ref.read(userEventPreferencesProvider.notifier).markGoing(eventId);
-    }
   }
 }

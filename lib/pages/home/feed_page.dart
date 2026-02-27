@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
-import 'package:hosla/pages/home/create_post_page.dart';
+import 'package:hosla/pages/home/friends_page.dart';
 import 'package:hosla/pages/home/profile_page.dart';
 import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/providers/feed_provider.dart';
 import 'package:hosla/widgets/post_card.dart';
 import 'package:hosla/widgets/loading_widget.dart';
 import 'package:hosla/widgets/glass_app_bar.dart';
+import 'package:hosla/widgets/create_post_fab.dart';
 
 class FeedPage extends ConsumerStatefulWidget {
   const FeedPage({super.key});
@@ -126,22 +127,15 @@ class _FeedPageState extends ConsumerState<FeedPage>
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const CreatePostPage()),
+                MaterialPageRoute(builder: (_) => const FriendsPage()),
               );
             },
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    ThemeColors.primaryColor,
-                    ThemeColors.primaryColor.withBlue(200),
-                  ],
-                ),
-              ),
-              child: const Icon(Icons.post_add, color: Colors.white, size: 25),
+            icon: Icon(
+              Icons.person_add_alt_1_rounded,
+              color: ThemeColors.getNavBarIconColor(context),
+              size: 24,
             ),
+            tooltip: 'Add Friends',
           ),
           IconButton(
             onPressed: () {
@@ -237,6 +231,7 @@ class _FeedPageState extends ConsumerState<FeedPage>
           ),
         ),
       ),
+      floatingActionButton: const CreatePostFab(),
       body: TabBarView(
         controller: _tabController,
         children: [
