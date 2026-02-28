@@ -7,6 +7,7 @@ import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/widgets/button.dart';
 import 'package:hosla/widgets/profile_pic.dart';
+import 'package:hosla/widgets/hosla_text_field.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
 import 'package:hosla/models/user_model.dart';
 import 'package:hosla/services/database_helper.dart';
@@ -381,45 +382,50 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
               ),
             ),
             const SizedBox(height: 24),
-            TextField(
+            HoslaTextField(
+              label: 'Name',
+              icon: Icons.person,
               controller: _nameController,
-              decoration: InputDecoration(
-                labelText: 'Name',
-                filled: true,
-                fillColor: ThemeColors.getSurfaceColor(context),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide(
-                    color: ThemeColors.primaryColor,
-                    width: 2.0,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20.0,
-                  vertical: 16.0,
-                ),
-              ),
+              hintText: 'Enter your name',
+              textCapitalization: TextCapitalization.words,
             ),
             const SizedBox(height: 16),
             // Date of Birth Field
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 10),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.cake_outlined,
+                    size: 20,
+                    color: ThemeColors.primaryColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Date of Birth',
+                    style: TextThemes.getBodyMediumStyle(context).copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: ThemeColors.getTextColor(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             GestureDetector(
               onTap: _selectDate,
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
+                  horizontal: 16,
+                  vertical: 14,
                 ),
                 decoration: BoxDecoration(
-                  color: ThemeColors.getSurfaceColor(context),
-                  borderRadius: BorderRadius.circular(16.0),
+                  color: ThemeColors.getCardColor(context),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: ThemeColors.getBorderColor(
+                      context,
+                    ).withValues(alpha: 0.25),
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -427,16 +433,22 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
                     Text(
                       _selectedDate != null
                           ? _formatDate(_selectedDate!)
-                          : 'Date of Birth',
+                          : 'Select date',
                       style: _selectedDate != null
-                          ? TextThemes.getBodyMediumStyle(context)
+                          ? TextThemes.getBodyMediumStyle(
+                              context,
+                            ).copyWith(fontSize: 15)
                           : TextThemes.getBodyMediumStyle(context).copyWith(
-                              color: ThemeColors.getSecondaryTextColor(context),
+                              color: ThemeColors.getSecondaryTextColor(
+                                context,
+                              ).withValues(alpha: 0.4),
+                              fontSize: 14,
                             ),
                     ),
                     Icon(
                       Icons.calendar_today,
-                      color: ThemeColors.getBorderColor(context),
+                      size: 18,
+                      color: ThemeColors.getSecondaryTextColor(context),
                     ),
                   ],
                 ),
@@ -478,106 +490,87 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
             ),
             const SizedBox(height: 16),
             // Email Field (Optional)
-            TextField(
+            HoslaTextField(
+              label: 'Email (Optional)',
+              icon: Icons.email_outlined,
               controller: _emailController,
+              hintText: 'Enter your email',
               keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                labelText: 'Email (Optional)',
-                filled: true,
-                fillColor: ThemeColors.getSurfaceColor(context),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide(
-                    color: ThemeColors.primaryColor,
-                    width: 2.0,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20.0,
-                  vertical: 16.0,
-                ),
-              ),
             ),
             const SizedBox(height: 16),
             // Gender Dropdown
-            DropdownButtonFormField<String>(
-              value: _selectedGender,
-              decoration: InputDecoration(
-                labelText: 'Gender',
-                filled: true,
-                fillColor: ThemeColors.getSurfaceColor(context),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide(
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 10),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.person_outline,
+                    size: 20,
                     color: ThemeColors.primaryColor,
-                    width: 2.0,
                   ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20.0,
-                  vertical: 16.0,
+                  const SizedBox(width: 8),
+                  Text(
+                    'Gender',
+                    style: TextThemes.getBodyMediumStyle(context).copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: ThemeColors.getTextColor(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: ThemeColors.getCardColor(context),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: ThemeColors.getBorderColor(
+                    context,
+                  ).withValues(alpha: 0.25),
                 ),
               ),
-              items: const [
-                DropdownMenuItem(value: 'Male', child: Text('Male')),
-                DropdownMenuItem(value: 'Female', child: Text('Female')),
-                DropdownMenuItem(value: 'Other', child: Text('Other')),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  _selectedGender = value;
-                });
-              },
+              child: DropdownButtonFormField<String>(
+                value: _selectedGender,
+                borderRadius: BorderRadius.circular(14),
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                ),
+                hint: Text(
+                  'Select gender',
+                  style: TextThemes.getBodyMediumStyle(context).copyWith(
+                    color: ThemeColors.getSecondaryTextColor(
+                      context,
+                    ).withValues(alpha: 0.4),
+                    fontSize: 14,
+                  ),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'Male', child: Text('Male')),
+                  DropdownMenuItem(value: 'Female', child: Text('Female')),
+                  DropdownMenuItem(value: 'Other', child: Text('Other')),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _selectedGender = value;
+                  });
+                },
+              ),
             ),
             const SizedBox(height: 16),
 
             // Bio Field
-            TextField(
+            HoslaTextField(
+              label: 'Bio',
+              icon: Icons.info_outline,
               controller: _bioController,
+              hintText: 'Tell us about yourself...',
               maxLength: 100,
               maxLines: 3,
-              decoration: InputDecoration(
-                labelText: 'Bio',
-                hintText: 'Tell us about yourself...',
-                filled: true,
-                fillColor: ThemeColors.getSurfaceColor(context),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide(
-                    color: ThemeColors.primaryColor,
-                    width: 2.0,
-                  ),
-                ),
-                alignLabelWithHint: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20.0,
-                  vertical: 16.0,
-                ),
-              ),
+              showCounter: true,
             ),
             const SizedBox(height: 24),
 

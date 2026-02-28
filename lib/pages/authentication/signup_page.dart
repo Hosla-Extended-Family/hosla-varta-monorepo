@@ -147,10 +147,37 @@ class _SignupPageState extends State<SignupPage> {
               style: TextThemes.getBodyLargeStyle(context),
             ),
             const SizedBox(height: 24),
+            // ── Label row ──
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 10),
+              child: Row(
+                children: [
+                  Icon(Icons.phone, size: 20, color: ThemeColors.primaryColor),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Phone Number',
+                    style: TextThemes.getBodyMediumStyle(context).copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: ThemeColors.getTextColor(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // ── Input row ──
             Row(
               children: [
-                SizedBox(
+                Container(
                   width: 100,
+                  decoration: BoxDecoration(
+                    color: ThemeColors.getCardColor(context),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: ThemeColors.getBorderColor(
+                        context,
+                      ).withValues(alpha: 0.25),
+                    ),
+                  ),
                   child: DropdownButtonFormField<String>(
                     borderRadius: BorderRadius.circular(16),
                     initialValue: '+91',
@@ -158,60 +185,49 @@ class _SignupPageState extends State<SignupPage> {
                       DropdownMenuItem(value: '+91', child: Text('+91')),
                     ],
                     onChanged: (_) {},
-                    decoration: InputDecoration(
-                      labelText: 'Code',
-                      filled: true,
-                      fillColor: ThemeColors.getSurfaceColor(context),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16.0),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16.0),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16.0),
-                        borderSide: BorderSide(
-                          color: ThemeColors.primaryColor,
-                          width: 2.0,
-                        ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12.0,
-                        vertical: 16.0,
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.phone,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: InputDecoration(
-                      labelText: 'Phone Number',
-                      filled: true,
-                      fillColor: ThemeColors.getSurfaceColor(context),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16.0),
-                        borderSide: BorderSide.none,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: ThemeColors.getCardColor(context),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: ThemeColors.getBorderColor(
+                          context,
+                        ).withValues(alpha: 0.25),
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16.0),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16.0),
-                        borderSide: BorderSide(
-                          color: ThemeColors.primaryColor,
-                          width: 2.0,
+                    ),
+                    child: TextField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      style: TextThemes.getBodyMediumStyle(
+                        context,
+                      ).copyWith(fontSize: 15),
+                      cursorColor: ThemeColors.primaryColor,
+                      decoration: InputDecoration(
+                        hintText: 'Enter phone number',
+                        hintStyle: TextThemes.getBodyMediumStyle(context)
+                            .copyWith(
+                              color: ThemeColors.getSecondaryTextColor(
+                                context,
+                              ).withValues(alpha: 0.4),
+                              fontSize: 14,
+                            ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
                         ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20.0,
-                        vertical: 16.0,
                       ),
                     ),
                   ),
