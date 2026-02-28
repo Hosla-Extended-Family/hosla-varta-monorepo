@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/providers/user_provider.dart';
+import 'package:hosla/widgets/hosla_text_field.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -144,42 +145,32 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                           const SizedBox(height: 16),
 
                           // Name Field
-                          _buildInputCard(
+                          HoslaTextField(
                             label: 'Full Name',
                             icon: Icons.person_outline_rounded,
-                            child: _buildTextField(
-                              controller: _nameController,
-                              hint: 'Enter your full name',
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Name is required';
-                                }
-                                if (value.trim().length < 2) {
-                                  return 'Name must be at least 2 characters';
-                                }
-                                return null;
-                              },
-                              onChanged: (_) => _markAsChanged(),
-                            ),
+                            controller: _nameController,
+                            hintText: 'Enter your full name',
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Name is required';
+                              }
+                              if (value.trim().length < 2) {
+                                return 'Name must be at least 2 characters';
+                              }
+                              return null;
+                            },
+                            onChanged: (_) => _markAsChanged(),
                           ),
 
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
 
                           // Gender
-                          _buildInputCard(
-                            label: 'Gender',
-                            icon: Icons.wc_rounded,
-                            child: _buildGenderDropdown(),
-                          ),
+                          _buildGenderSelector(),
 
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
 
                           // Date of Birth
-                          _buildInputCard(
-                            label: 'Date of Birth',
-                            icon: Icons.cake_rounded,
-                            child: _buildDatePicker(),
-                          ),
+                          _buildDateField(),
 
                           const SizedBox(height: 32),
 
@@ -188,26 +179,23 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                           const SizedBox(height: 16),
 
                           // Email Field
-                          _buildInputCard(
+                          HoslaTextField(
                             label: 'Email Address',
                             icon: Icons.email_outlined,
-                            isOptional: true,
-                            child: _buildTextField(
-                              controller: _emailController,
-                              hint: 'Enter your email',
-                              keyboardType: TextInputType.emailAddress,
-                              validator: (value) {
-                                if (value != null && value.isNotEmpty) {
-                                  if (!RegExp(
-                                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                                  ).hasMatch(value)) {
-                                    return 'Enter a valid email';
-                                  }
+                            controller: _emailController,
+                            hintText: 'Enter your email',
+                            keyboardType: TextInputType.emailAddress,
+                            validator: (value) {
+                              if (value != null && value.isNotEmpty) {
+                                if (!RegExp(
+                                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                                ).hasMatch(value)) {
+                                  return 'Enter a valid email';
                                 }
-                                return null;
-                              },
-                              onChanged: (_) => _markAsChanged(),
-                            ),
+                              }
+                              return null;
+                            },
+                            onChanged: (_) => _markAsChanged(),
                           ),
 
                           const SizedBox(height: 32),
@@ -217,16 +205,26 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
                           const SizedBox(height: 16),
 
                           // Bio Field
-                          _buildInputCard(
+                          HoslaTextField(
                             label: 'Bio',
                             icon: Icons.edit_note_rounded,
-                            isOptional: true,
-                            child: _buildTextField(
-                              controller: _bioController,
-                              hint: 'Tell us about yourself...',
-                              maxLines: 4,
-                              maxLength: 150,
-                              onChanged: (_) => _markAsChanged(),
+                            controller: _bioController,
+                            hintText: 'Tell us about yourself...',
+                            maxLines: 3,
+                            maxLength: 150,
+                            onChanged: (val) {
+                              _markAsChanged();
+                              setState(() {});
+                            },
+                            trailing: Text(
+                              '${_bioController.text.length}/150',
+                              style: TextThemes.getBodySmallStyle(context)
+                                  .copyWith(
+                                    color: ThemeColors.getSecondaryTextColor(
+                                      context,
+                                    ),
+                                    fontSize: 11,
+                                  ),
                             ),
                           ),
                         ],
@@ -310,24 +308,28 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
         child: Row(
           children: [
             // Back Button
-            IconButton(
-              onPressed: () {
-                if (_hasChanges) {
-                  _showDiscardDialog();
-                } else {
-                  Navigator.pop(context);
-                }
-              },
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: Colors.white,
-                  size: 18,
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: GestureDetector(
+                onTap: () {
+                  if (_hasChanges) {
+                    _showDiscardDialog();
+                  } else {
+                    Navigator.pop(context);
+                  }
+                },
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
               ),
             ),
@@ -487,203 +489,168 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage>
     );
   }
 
-  Widget _buildInputCard({
-    required String label,
-    required IconData icon,
-    required Widget child,
-    bool isOptional = false,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: ThemeColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.3)
-                : Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+  Widget _buildGenderSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 10),
+          child: Row(
+            children: [
+              Icon(Icons.wc_rounded, size: 18, color: ThemeColors.primaryColor),
+              const SizedBox(width: 8),
+              Text(
+                'Gender',
+                style: TextThemes.getBodyMediumStyle(context).copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: ThemeColors.getTextColor(context),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Label Row
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        ThemeColors.primaryColor.withValues(alpha: 0.15),
-                        ThemeColors.primaryColor.withValues(alpha: 0.05),
+        ),
+        Row(
+          children: _genderOptions.map((gender) {
+            final isSelected = _selectedGender == gender;
+            final genderIcon = gender == 'MALE'
+                ? Icons.male_rounded
+                : gender == 'FEMALE'
+                ? Icons.female_rounded
+                : Icons.transgender_rounded;
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  right: gender != _genderOptions.last ? 10 : 0,
+                ),
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() => _selectedGender = gender);
+                    _markAsChanged();
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? ThemeColors.primaryColor.withValues(alpha: 0.1)
+                          : ThemeColors.getCardColor(context),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isSelected
+                            ? ThemeColors.primaryColor
+                            : ThemeColors.getBorderColor(
+                                context,
+                              ).withValues(alpha: 0.25),
+                        width: isSelected ? 1.8 : 1,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          genderIcon,
+                          size: 24,
+                          color: isSelected
+                              ? ThemeColors.primaryColor
+                              : ThemeColors.getSecondaryTextColor(context),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          _capitalizeFirst(gender),
+                          style: TextThemes.getBodySmallStyle(context).copyWith(
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: isSelected
+                                ? ThemeColors.primaryColor
+                                : ThemeColors.getSecondaryTextColor(context),
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(icon, size: 18, color: ThemeColors.primaryColor),
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  label,
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // ── Label row (matches HoslaTextField) ──
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 10),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.cake_rounded,
+                size: 20,
+                color: ThemeColors.primaryColor,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Date of Birth',
                   style: TextThemes.getBodyMediumStyle(context).copyWith(
                     fontWeight: FontWeight.w600,
                     color: ThemeColors.getTextColor(context),
                   ),
                 ),
-                if (isOptional) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: ThemeColors.getSecondaryTextColor(
-                        context,
-                      ).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'Optional',
-                      style: TextThemes.getBodySmallStyle(context).copyWith(
-                        fontSize: 10,
-                        color: ThemeColors.getSecondaryTextColor(context),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          // Input Field
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: child,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hint,
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-    int maxLines = 1,
-    int? maxLength,
-    void Function(String)? onChanged,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      validator: validator,
-      maxLines: maxLines,
-      maxLength: maxLength,
-      onChanged: onChanged,
-      style: TextThemes.getBodyMediumStyle(context),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextThemes.getBodyMediumStyle(context).copyWith(
-          color: ThemeColors.getSecondaryTextColor(
-            context,
-          ).withValues(alpha: 0.5),
-        ),
-        border: InputBorder.none,
-        contentPadding: EdgeInsets.zero,
-        counterStyle: TextThemes.getBodySmallStyle(
-          context,
-        ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
-      ),
-    );
-  }
-
-  Widget _buildGenderDropdown() {
-    return DropdownButtonHideUnderline(
-      child: DropdownButton<String>(
-        value: _selectedGender,
-        hint: Text(
-          'Select gender',
-          style: TextThemes.getBodyMediumStyle(context).copyWith(
-            color: ThemeColors.getSecondaryTextColor(
-              context,
-            ).withValues(alpha: 0.5),
+              ),
+            ],
           ),
         ),
-        isExpanded: true,
-        icon: Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: ThemeColors.primaryColor,
-        ),
-        items: _genderOptions.map((gender) {
-          return DropdownMenuItem<String>(
-            value: gender,
-            child: Row(
-              children: [
-                Icon(
-                  gender == 'MALE'
-                      ? Icons.male_rounded
-                      : gender == 'FEMALE'
-                      ? Icons.female_rounded
-                      : Icons.transgender_rounded,
-                  size: 18,
-                  color: ThemeColors.primaryColor,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _capitalizeFirst(gender),
-                  style: TextThemes.getBodyMediumStyle(context),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-        onChanged: (value) {
-          setState(() {
-            _selectedGender = value;
-          });
-          _markAsChanged();
-        },
-      ),
-    );
-  }
 
-  Widget _buildDatePicker() {
-    return GestureDetector(
-      onTap: _selectDate,
-      child: AbsorbPointer(
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                _selectedDateOfBirth != null
-                    ? _formatDate(_selectedDateOfBirth!)
-                    : 'Select date',
-                style: TextThemes.getBodyMediumStyle(context).copyWith(
-                  color: _selectedDateOfBirth != null
-                      ? ThemeColors.getTextColor(context)
-                      : ThemeColors.getSecondaryTextColor(
-                          context,
-                        ).withValues(alpha: 0.5),
-                ),
+        // ── Input container (matches HoslaTextField) ──
+        GestureDetector(
+          onTap: _selectDate,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: ThemeColors.getCardColor(context),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: ThemeColors.getBorderColor(
+                  context,
+                ).withValues(alpha: 0.25),
               ),
             ),
-            Icon(
-              Icons.calendar_today_rounded,
-              size: 18,
-              color: ThemeColors.primaryColor,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _selectedDateOfBirth != null
+                        ? _formatDate(_selectedDateOfBirth!)
+                        : 'Select your date of birth',
+                    style: TextThemes.getBodyMediumStyle(context).copyWith(
+                      fontSize: 15,
+                      color: _selectedDateOfBirth != null
+                          ? ThemeColors.getTextColor(context)
+                          : ThemeColors.getSecondaryTextColor(
+                              context,
+                            ).withValues(alpha: 0.4),
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.calendar_today_rounded,
+                  size: 18,
+                  color: ThemeColors.getSecondaryTextColor(
+                    context,
+                  ).withValues(alpha: 0.5),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 

@@ -4,6 +4,7 @@ import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/models/post_model.dart';
 import 'package:hosla/providers/post_provider.dart';
+import 'package:hosla/widgets/hosla_text_field.dart';
 
 /// Dialog for editing a post
 class EditPostDialog extends ConsumerStatefulWidget {
@@ -143,16 +144,12 @@ class _EditPostDialogState extends ConsumerState<EditPostDialog> {
                 const SizedBox(height: 20),
 
                 // Content Field
-                TextFormField(
+                HoslaTextField(
+                  label: 'Content',
+                  icon: Icons.edit,
                   controller: _contentController,
+                  hintText: 'What\'s on your mind?',
                   maxLines: 5,
-                  decoration: InputDecoration(
-                    labelText: 'Content *',
-                    hintText: 'What\'s on your mind?',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Content cannot be empty';
@@ -163,30 +160,20 @@ class _EditPostDialogState extends ConsumerState<EditPostDialog> {
                 const SizedBox(height: 16),
 
                 // Image URL Field
-                TextFormField(
+                HoslaTextField(
+                  label: 'Image URL (optional)',
+                  icon: Icons.image,
                   controller: _imageUrlController,
-                  decoration: InputDecoration(
-                    labelText: 'Image URL (optional)',
-                    hintText: 'https://example.com/image.jpg',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Icon(Icons.image),
-                  ),
+                  hintText: 'https://example.com/image.jpg',
                 ),
                 const SizedBox(height: 16),
 
                 // Tags Field
-                TextFormField(
+                HoslaTextField(
+                  label: 'Tags (optional)',
+                  icon: Icons.tag,
                   controller: _tagsController,
-                  decoration: InputDecoration(
-                    labelText: 'Tags (optional)',
-                    hintText: 'tag1, tag2, tag3',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Icon(Icons.tag),
-                  ),
+                  hintText: 'tag1, tag2, tag3',
                 ),
                 const SizedBox(height: 24),
 

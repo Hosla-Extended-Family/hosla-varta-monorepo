@@ -4,6 +4,7 @@ import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/widgets/button.dart';
+import 'package:hosla/widgets/hosla_text_field.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
 import 'package:hosla/services/otp_service.dart';
 import 'package:hosla/services/database_helper.dart';
@@ -234,8 +235,6 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       backgroundColor: ThemeColors.getBackgroundColor(context),
       appBar: AppBar(
@@ -320,57 +319,12 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
 
             // Email Input Field
             if (!_isOTPSent) ...[
-              Container(
-                decoration: BoxDecoration(
-                  color: ThemeColors.getCardColor(context),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: ThemeColors.getBorderColor(
-                      context,
-                    ).withValues(alpha: 0.1),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: isDark
-                          ? Colors.black.withValues(alpha: 0.3)
-                          : ThemeColors.getOverlayColor(context, opacity: 0.08),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email Address',
-                    hintText: 'example@email.com',
-                    prefixIcon: Icon(
-                      Icons.email_outlined,
-                      color: ThemeColors.primaryColor,
-                    ),
-                    filled: false,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16.0),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16.0),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16.0),
-                      borderSide: BorderSide(
-                        color: ThemeColors.primaryColor,
-                        width: 2.0,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20.0,
-                      vertical: 16.0,
-                    ),
-                  ),
-                ),
+              HoslaTextField(
+                label: 'Email Address',
+                icon: Icons.email_outlined,
+                controller: _emailController,
+                hintText: 'example@email.com',
+                keyboardType: TextInputType.emailAddress,
               ),
 
               const SizedBox(height: 24),
@@ -384,62 +338,21 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
 
             // OTP Input Field
             if (_isOTPSent) ...[
-              Container(
-                decoration: BoxDecoration(
-                  color: ThemeColors.getCardColor(context),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: ThemeColors.getBorderColor(
-                      context,
-                    ).withValues(alpha: 0.1),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: isDark
-                          ? Colors.black.withValues(alpha: 0.3)
-                          : ThemeColors.getOverlayColor(context, opacity: 0.08),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  controller: _otpController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(6),
-                  ],
-                  textAlign: TextAlign.center,
-                  style: TextThemes.getBodyLargeStyle(context).copyWith(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 8,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: 'Enter 6-Digit Code',
-                    hintText: '000000',
-                    filled: false,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16.0),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16.0),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16.0),
-                      borderSide: BorderSide(
-                        color: ThemeColors.primaryColor,
-                        width: 2.0,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20.0,
-                      vertical: 16.0,
-                    ),
-                  ),
+              HoslaTextField(
+                label: 'Verification Code',
+                icon: Icons.lock_outline,
+                controller: _otpController,
+                hintText: '000000',
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(6),
+                ],
+                textStyle: TextThemes.getBodyLargeStyle(context).copyWith(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 8,
                 ),
               ),
 

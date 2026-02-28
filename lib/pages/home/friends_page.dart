@@ -12,6 +12,7 @@ import 'package:hosla/providers/friendship_status_provider.dart';
 import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/providers/user_search_provider.dart';
 import 'package:hosla/widgets/friend_button.dart';
+import 'package:hosla/widgets/glass_app_bar.dart';
 import 'package:hosla/widgets/user_card.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -96,14 +97,8 @@ class _FriendsPageState extends ConsumerState<FriendsPage>
 
     return Scaffold(
       backgroundColor: ThemeColors.getBackgroundColor(context),
-      appBar: AppBar(
-        backgroundColor: ThemeColors.getNavBarColor(context),
-        elevation: 0,
-        scrolledUnderElevation: 0.5,
-        title: Text(
-          'Friends',
-          style: TextThemes.getTitleStyle(context).copyWith(fontSize: 22),
-        ),
+      appBar: GlassAppBar(
+        titleText: 'Friends',
         bottom: TabBar(
           controller: _tabController,
           labelColor: ThemeColors.primaryColor,
