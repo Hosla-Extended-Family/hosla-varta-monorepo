@@ -319,20 +319,30 @@ class _EditPostPageState extends ConsumerState<EditPostPage> {
                   TextField(
                     controller: _captionController,
                     maxLines: 5,
+                    cursorColor: ThemeColors.primaryColor,
                     decoration: InputDecoration(
                       hintText: "What's on your mind?",
+                      hintStyle: TextStyle(
+                        color: ThemeColors.getSecondaryTextColor(
+                          context,
+                        ).withValues(alpha: 0.4),
+                      ),
                       filled: true,
-                      fillColor: ThemeColors.getBackgroundColor(context),
+                      fillColor: ThemeColors.getCardColor(context),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide(
-                          color: ThemeColors.getBorderColor(context),
+                          color: ThemeColors.getBorderColor(
+                            context,
+                          ).withValues(alpha: 0.25),
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide(
-                          color: ThemeColors.getBorderColor(context),
+                          color: ThemeColors.getBorderColor(
+                            context,
+                          ).withValues(alpha: 0.25),
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(

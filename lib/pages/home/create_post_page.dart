@@ -729,6 +729,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                         maxLength: 500,
                         enabled: !_isLoading,
                         style: const TextStyle(fontFamily: 'Quicksand'),
+                        cursorColor: ThemeColors.primaryColor,
                         onChanged: (_) {
                           // Update submit button enabled state
                           if (mounted) setState(() {});
@@ -737,27 +738,33 @@ class _CreatePostPageState extends State<CreatePostPage> {
                           hintText: 'Write something…',
                           hintStyle: TextStyle(
                             fontFamily: 'Quicksand',
-                            color: ThemeColors.getSecondaryTextColor(context),
+                            color: ThemeColors.getSecondaryTextColor(
+                              context,
+                            ).withValues(alpha: 0.4),
                           ),
                           filled: true,
                           fillColor: ThemeColors.getCardColor(context),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(14),
                             borderSide: BorderSide(
-                              color: ThemeColors.getBorderColor(context),
+                              color: ThemeColors.getBorderColor(
+                                context,
+                              ).withValues(alpha: 0.25),
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(14),
                             borderSide: BorderSide(
-                              color: ThemeColors.getBorderColor(context),
+                              color: ThemeColors.getBorderColor(
+                                context,
+                              ).withValues(alpha: 0.25),
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(14),
                             borderSide: const BorderSide(
                               color: ThemeColors.primaryColor,
-                              width: 2,
+                              width: 1.5,
                             ),
                           ),
                           counterStyle: TextStyle(
