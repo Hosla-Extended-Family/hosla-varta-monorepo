@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hosla/core/constants/app_theme.dart';
 import 'package:hosla/core/navigation/route_observer.dart';
@@ -11,9 +12,13 @@ import 'package:hosla/providers/theme_provider.dart';
 import 'package:hosla/services/auth_service.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  // Preserve the native splash screen until initialization completes
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   // Eagerly refresh tokens if access is near expiry
   await AuthService.instance.refreshIfExpiringSoon();
+  // Remove splash screen now that initialization is done
+  FlutterNativeSplash.remove();
   runApp(const ProviderScope(child: MainApp()));
 }
 
