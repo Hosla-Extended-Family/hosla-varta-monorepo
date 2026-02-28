@@ -574,44 +574,41 @@ class _CreateEventPageState extends ConsumerState<CreateEventPage> {
     void Function(String)? onChanged,
     String? Function(String?)? validator,
   }) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      maxLength: maxLength,
-      keyboardType: keyboardType,
-      textAlign: textAlign,
-      enabled: !_isLoading,
-      validator: validator,
-      style: TextThemes.getBodyMediumStyle(context),
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextThemes.getBodyMediumStyle(
+    return Container(
+      decoration: BoxDecoration(
+        color: ThemeColors.getSurfaceColor(context),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: ThemeColors.getBorderColor(context).withValues(alpha: 0.25),
+        ),
+      ),
+      child: TextFormField(
+        controller: controller,
+        maxLines: maxLines,
+        maxLength: maxLength,
+        keyboardType: keyboardType,
+        textAlign: textAlign,
+        enabled: !_isLoading,
+        validator: validator,
+        style: TextThemes.getBodyMediumStyle(
           context,
-        ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
-        filled: true,
-        fillColor: ThemeColors.getSurfaceColor(context),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: ThemeColors.getBorderColor(context)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: ThemeColors.getBorderColor(context)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: ThemeColors.primaryColor,
-            width: 2,
+        ).copyWith(fontSize: 15, height: maxLines > 1 ? 1.5 : null),
+        cursorColor: ThemeColors.primaryColor,
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextThemes.getBodyMediumStyle(context).copyWith(
+            color: ThemeColors.getSecondaryTextColor(
+              context,
+            ).withValues(alpha: 0.4),
+            fontSize: 14,
           ),
-        ),
-        counterStyle: TextThemes.getBodySmallStyle(
-          context,
-        ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 12,
+          border: InputBorder.none,
+          counterText: '',
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: maxLines > 1 ? 16 : 14,
+          ),
         ),
       ),
     );
