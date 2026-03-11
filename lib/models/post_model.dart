@@ -392,11 +392,7 @@ class LikeUser {
   final String name;
   final String? profilePicUrl;
 
-  const LikeUser({
-    required this.id,
-    required this.name,
-    this.profilePicUrl,
-  });
+  const LikeUser({required this.id, required this.name, this.profilePicUrl});
 
   factory LikeUser.fromJson(Map<String, dynamic> json) {
     return LikeUser(

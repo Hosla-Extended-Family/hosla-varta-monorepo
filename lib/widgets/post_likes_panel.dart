@@ -74,10 +74,9 @@ class PostLikesPanel extends ConsumerWidget {
                   children: [
                     Text(
                       'Liked by',
-                      style: TextThemes.getBodyLargeStyle(context).copyWith(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: TextThemes.getBodyLargeStyle(
+                        context,
+                      ).copyWith(fontSize: 18, fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(width: 8),
                     Container(
@@ -137,9 +136,10 @@ class PostLikesPanel extends ConsumerWidget {
                             'No likes yet',
                             style: TextThemes.getBodyMediumStyle(context)
                                 .copyWith(
-                              color:
-                                  ThemeColors.getSecondaryTextColor(context),
-                            ),
+                                  color: ThemeColors.getSecondaryTextColor(
+                                    context,
+                                  ),
+                                ),
                           ),
                         )
                       : ListView.separated(
@@ -184,8 +184,9 @@ class _LikeUserTile extends StatelessWidget {
           Expanded(
             child: Text(
               user.name,
-              style: TextThemes.getBodyMediumStyle(context)
-                  .copyWith(fontWeight: FontWeight.w600, fontSize: 14),
+              style: TextThemes.getBodyMediumStyle(
+                context,
+              ).copyWith(fontWeight: FontWeight.w600, fontSize: 14),
             ),
           ),
         ],
