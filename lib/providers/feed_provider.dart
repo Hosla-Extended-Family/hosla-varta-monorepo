@@ -26,6 +26,15 @@ final postCommentsProvider = FutureProvider.family<List<Comment>, String>((
   return await feedService.getPostComments(postId);
 });
 
+/// Provider for users who liked a post
+final postLikesProvider = FutureProvider.family<List<LikeUser>, String>((
+  ref,
+  postId,
+) async {
+  final feedService = ref.read(feedServiceProvider);
+  return await feedService.getPostLikes(postId);
+});
+
 /// Provider for saved posts
 final savedPostsProvider =
     StateNotifierProvider<SavedPostsNotifier, AsyncValue<List<Post>>>((ref) {

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:hosla/models/user_model.dart';
@@ -26,7 +27,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -112,6 +113,7 @@ class DatabaseHelper {
         userName TEXT NOT NULL,
         userAvatarUrl TEXT,
         content TEXT NOT NULL,
+        parentId TEXT,
         likeCount INTEGER NOT NULL DEFAULT 0,
         isLiked INTEGER NOT NULL DEFAULT 0,
         createdAt TEXT NOT NULL,
@@ -147,6 +149,9 @@ class DatabaseHelper {
     await db.execute('CREATE INDEX idx_posts_fetchedAt ON posts(fetchedAt)');
     await db.execute('CREATE INDEX idx_comments_postId ON comments(postId)');
     await db.execute('CREATE INDEX idx_comments_userId ON comments(userId)');
+    await db.execute(
+      'CREATE INDEX idx_comments_parentId ON comments(parentId)',
+    );
     await db.execute(
       'CREATE INDEX idx_comments_syncStatus ON comments(syncStatus)',
     );
@@ -245,12 +250,25 @@ class DatabaseHelper {
         "ALTER TABLE posts ADD COLUMN visibility TEXT NOT NULL DEFAULT 'PUBLIC'",
       );
     }
+
+    if (oldVersion < 4) {
+      // Add parentId column for comment threading
+      try {
+        await db.execute('ALTER TABLE comments ADD COLUMN parentId TEXT');
+        await db.execute(
+          'CREATE INDEX IF NOT EXISTS idx_comments_parentId ON comments(parentId)',
+        );
+      } catch (_) {
+        // Column may already exist
+      }
+    }
   }
 
   // ============== USER OPERATIONS ==============
 
   /// Insert or update user
   Future<void> upsertUser(User user) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.insert('users', {
       'id': user.id,
@@ -267,6 +285,7 @@ class DatabaseHelper {
 
   /// Insert or update multiple users
   Future<void> upsertUsers(List<User> users) async {
+    if (kIsWeb) return;
     final db = await database;
     final batch = db.batch();
 
@@ -289,6 +308,7 @@ class DatabaseHelper {
 
   /// Get user by ID
   Future<User?> getUserById(String id) async {
+    if (kIsWeb) return null;
     final db = await database;
     final results = await db.query('users', where: 'id = ?', whereArgs: [id]);
 
@@ -298,6 +318,7 @@ class DatabaseHelper {
 
   /// Get all users
   Future<List<User>> getAllUsers() async {
+    if (kIsWeb) return [];
     final db = await database;
     final results = await db.query('users', orderBy: 'name ASC');
     return results.map((map) => _userFromMap(map)).toList();
@@ -305,12 +326,14 @@ class DatabaseHelper {
 
   /// Delete user
   Future<void> deleteUser(String id) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.delete('users', where: 'id = ?', whereArgs: [id]);
   }
 
   /// Delete all users
   Future<void> deleteAllUsers() async {
+    if (kIsWeb) return;
     final db = await database;
     await db.delete('users');
   }
@@ -319,6 +342,7 @@ class DatabaseHelper {
 
   /// Insert or update message
   Future<void> upsertMessage(Message message) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.insert('messages', {
       'id': message.id,
@@ -335,6 +359,7 @@ class DatabaseHelper {
 
   /// Insert or update multiple messages
   Future<void> upsertMessages(List<Message> messages) async {
+    if (kIsWeb) return;
     final db = await database;
     final batch = db.batch();
 
@@ -357,6 +382,7 @@ class DatabaseHelper {
 
   /// Get messages for a chat
   Future<List<Message>> getMessagesByChatId(String chatId) async {
+    if (kIsWeb) return [];
     final db = await database;
     final results = await db.query(
       'messages',
@@ -372,6 +398,7 @@ class DatabaseHelper {
     String chatId, {
     int limit = 50,
   }) async {
+    if (kIsWeb) return [];
     final db = await database;
     final results = await db.query(
       'messages',
@@ -389,24 +416,28 @@ class DatabaseHelper {
 
   /// Delete message
   Future<void> deleteMessage(String id) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.delete('messages', where: 'id = ?', whereArgs: [id]);
   }
 
   /// Delete messages for a chat
   Future<void> deleteMessagesForChat(String chatId) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.delete('messages', where: 'chatId = ?', whereArgs: [chatId]);
   }
 
   /// Delete all messages
   Future<void> deleteAllMessages() async {
+    if (kIsWeb) return;
     final db = await database;
     await db.delete('messages');
   }
 
   /// Mark messages as read in a chat
   Future<void> markMessagesAsRead(String chatId) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.update(
       'messages',
@@ -420,6 +451,7 @@ class DatabaseHelper {
 
   /// Insert or update chat
   Future<void> upsertChat(Chat chat) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.insert('chats', {
       'id': chat.id,
@@ -437,6 +469,7 @@ class DatabaseHelper {
 
   /// Insert or update multiple chats
   Future<void> upsertChats(List<Chat> chats) async {
+    if (kIsWeb) return;
     final db = await database;
     final batch = db.batch();
 
@@ -460,6 +493,7 @@ class DatabaseHelper {
 
   /// Get all chats
   Future<List<Chat>> getAllChats() async {
+    if (kIsWeb) return [];
     final db = await database;
     final results = await db.query('chats', orderBy: 'lastActivity DESC');
 
@@ -473,6 +507,7 @@ class DatabaseHelper {
 
   /// Get chat by ID
   Future<Chat?> getChatById(String id) async {
+    if (kIsWeb) return null;
     final db = await database;
     final results = await db.query('chats', where: 'id = ?', whereArgs: [id]);
 
@@ -482,18 +517,21 @@ class DatabaseHelper {
 
   /// Delete chat
   Future<void> deleteChat(String id) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.delete('chats', where: 'id = ?', whereArgs: [id]);
   }
 
   /// Delete all chats
   Future<void> deleteAllChats() async {
+    if (kIsWeb) return;
     final db = await database;
     await db.delete('chats');
   }
 
   /// Update chat unread count
   Future<void> updateChatUnreadCount(String chatId, int count) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.update(
       'chats',
@@ -507,6 +545,7 @@ class DatabaseHelper {
 
   /// Clear all data from database (used on logout)
   Future<void> clearAllData() async {
+    if (kIsWeb) return;
     final db = await database;
     await db.delete('users');
     await db.delete('messages');
@@ -519,6 +558,7 @@ class DatabaseHelper {
 
   /// Close database connection
   Future<void> close() async {
+    if (kIsWeb) return;
     final db = await database;
     await db.close();
     _database = null;
@@ -599,6 +639,7 @@ class DatabaseHelper {
 
   /// Insert or update post
   Future<void> upsertPost(Post post) async {
+    if (kIsWeb) return;
     final db = await database;
     final now = DateTime.now().toIso8601String();
     await db.insert('posts', {
@@ -624,6 +665,7 @@ class DatabaseHelper {
 
   /// Insert or update multiple posts
   Future<void> upsertPosts(List<Post> posts) async {
+    if (kIsWeb) return;
     final db = await database;
     final batch = db.batch();
     final now = DateTime.now().toIso8601String();
@@ -655,6 +697,7 @@ class DatabaseHelper {
 
   /// Get post by ID
   Future<Post?> getPostById(String id) async {
+    if (kIsWeb) return null;
     final db = await database;
     final results = await db.query('posts', where: 'id = ?', whereArgs: [id]);
 
@@ -664,6 +707,7 @@ class DatabaseHelper {
 
   /// Get all posts
   Future<List<Post>> getAllPosts() async {
+    if (kIsWeb) return [];
     final db = await database;
     final results = await db.query('posts', orderBy: 'createdAt DESC');
     return results.map((map) => _postFromMap(map)).toList();
@@ -671,6 +715,7 @@ class DatabaseHelper {
 
   /// Delete post
   Future<void> deletePost(String id) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.delete('posts', where: 'id = ?', whereArgs: [id]);
   }
@@ -705,6 +750,7 @@ class DatabaseHelper {
 
   /// Get posts by user ID
   Future<List<Post>> getPostsByUserId(String userId) async {
+    if (kIsWeb) return [];
     final db = await database;
     final results = await db.query(
       'posts',
@@ -717,6 +763,7 @@ class DatabaseHelper {
 
   /// Get saved posts
   Future<List<Post>> getSavedPosts() async {
+    if (kIsWeb) return [];
     final db = await database;
     final results = await db.rawQuery('''
       SELECT p.* FROM posts p
@@ -733,6 +780,7 @@ class DatabaseHelper {
     String? imageUrl,
     required List<String> tags,
   }) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.update(
       'posts',
@@ -754,6 +802,7 @@ class DatabaseHelper {
     bool isLiked,
     int likeCount,
   ) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.update(
       'posts',
@@ -769,6 +818,7 @@ class DatabaseHelper {
 
   /// Update post save status
   Future<void> updatePostSave(String postId, bool isSaved) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.update(
       'posts',
@@ -783,6 +833,7 @@ class DatabaseHelper {
 
   /// Delete old posts (retention policy)
   Future<void> deleteOldPosts({int retentionDays = 90}) async {
+    if (kIsWeb) return;
     final db = await database;
     final cutoffDate = DateTime.now()
         .subtract(Duration(days: retentionDays))
@@ -800,6 +851,7 @@ class DatabaseHelper {
 
   /// Save a post
   Future<void> savePost(String postId) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.insert('saved_posts', {
       'postId': postId,
@@ -812,6 +864,7 @@ class DatabaseHelper {
 
   /// Unsave a post
   Future<void> unsavePost(String postId) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.delete('saved_posts', where: 'postId = ?', whereArgs: [postId]);
 
@@ -821,6 +874,7 @@ class DatabaseHelper {
 
   /// Check if post is saved
   Future<bool> isPostSaved(String postId) async {
+    if (kIsWeb) return false;
     final db = await database;
     final results = await db.query(
       'saved_posts',
@@ -834,6 +888,7 @@ class DatabaseHelper {
 
   /// Insert or update comment
   Future<void> upsertComment(Comment comment) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.insert('comments', {
       'id': comment.id,
@@ -842,6 +897,7 @@ class DatabaseHelper {
       'userName': comment.userName,
       'userAvatarUrl': comment.userAvatarUrl,
       'content': comment.content,
+      'parentId': comment.parentId,
       'likeCount': comment.likeCount,
       'isLiked': comment.isLiked ? 1 : 0,
       'createdAt': comment.createdAt.toIso8601String(),
@@ -851,6 +907,7 @@ class DatabaseHelper {
 
   /// Get comments for a post
   Future<List<Comment>> getCommentsByPostId(String postId) async {
+    if (kIsWeb) return [];
     final db = await database;
     final results = await db.query(
       'comments',
@@ -863,6 +920,7 @@ class DatabaseHelper {
 
   /// Get pending comments (not synced)
   Future<List<Comment>> getPendingComments() async {
+    if (kIsWeb) return [];
     final db = await database;
     final results = await db.query(
       'comments',
@@ -878,6 +936,7 @@ class DatabaseHelper {
     String commentId,
     SyncStatus status,
   ) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.update(
       'comments',
@@ -889,6 +948,7 @@ class DatabaseHelper {
 
   /// Delete comment
   Future<void> deleteComment(String id) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.delete('comments', where: 'id = ?', whereArgs: [id]);
   }
@@ -902,6 +962,7 @@ class DatabaseHelper {
       userName: map['userName'] as String,
       userAvatarUrl: map['userAvatarUrl'] as String?,
       content: map['content'] as String,
+      parentId: map['parentId'] as String?,
       likeCount: map['likeCount'] as int,
       isLiked: (map['isLiked'] as int) == 1,
       createdAt: DateTime.parse(map['createdAt'] as String),
@@ -913,6 +974,7 @@ class DatabaseHelper {
 
   /// Add action to queue
   Future<void> enqueueAction(ActionQueue action) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.insert('action_queue', {
       'id': action.id,
@@ -925,6 +987,7 @@ class DatabaseHelper {
 
   /// Get all queued actions
   Future<List<ActionQueue>> getQueuedActions() async {
+    if (kIsWeb) return [];
     final db = await database;
     final results = await db.query('action_queue', orderBy: 'createdAt ASC');
     return results.map((map) => _actionQueueFromMap(map)).toList();
@@ -932,6 +995,7 @@ class DatabaseHelper {
 
   /// Get queued actions by type
   Future<List<ActionQueue>> getQueuedActionsByType(ActionType type) async {
+    if (kIsWeb) return [];
     final db = await database;
     final results = await db.query(
       'action_queue',
@@ -944,6 +1008,7 @@ class DatabaseHelper {
 
   /// Update action queue attempts
   Future<void> updateActionAttempts(String actionId, int attempts) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.update(
       'action_queue',
@@ -955,12 +1020,14 @@ class DatabaseHelper {
 
   /// Remove action from queue
   Future<void> dequeueAction(String actionId) async {
+    if (kIsWeb) return;
     final db = await database;
     await db.delete('action_queue', where: 'id = ?', whereArgs: [actionId]);
   }
 
   /// Clear all queued actions
   Future<void> clearActionQueue() async {
+    if (kIsWeb) return;
     final db = await database;
     await db.delete('action_queue');
   }

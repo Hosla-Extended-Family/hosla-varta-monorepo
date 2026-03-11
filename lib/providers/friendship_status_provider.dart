@@ -68,6 +68,12 @@ class FriendshipStatusNotifier
   final String targetUserId;
   final String currentUserId;
 
+  /// Tracks an optimistic update timestamp. When set, `_syncFromProviders`
+  /// will NOT overwrite the current state for [_optimisticGuardDuration],
+  /// preventing flicker when the server hasn't propagated yet.
+  DateTime? _optimisticSetAt;
+  static const _optimisticGuardDuration = Duration(seconds: 8);
+
   FriendshipStatusNotifier({
     required this.ref,
     required this.targetUserId,
@@ -77,7 +83,18 @@ class FriendshipStatusNotifier
   /// Re-derive state from the current friends & requests providers.
   /// Only resolves when BOTH providers have loaded data; otherwise keeps
   /// whatever state we already have (preserving optimistic updates).
+  ///
+  /// If an optimistic update was recently applied, skip the sync to prevent
+  /// UI flicker caused by stale server data.
   void _syncFromProviders() {
+    // Guard: if we set an optimistic update recently, don't overwrite it.
+    if (_optimisticSetAt != null) {
+      final elapsed = DateTime.now().difference(_optimisticSetAt!);
+      if (elapsed < _optimisticGuardDuration) return;
+      // Guard expired — allow server data to take over.
+      _optimisticSetAt = null;
+    }
+
     final friendsAsync = ref.read(friendsListProvider);
     final requestsAsync = ref.read(friendRequestsProvider);
 
@@ -143,25 +160,35 @@ class FriendshipStatusNotifier
   // ── Actions with optimistic UI ─────────────────────────────────
 
   Future<void> sendRequest() async {
-    // Optimistic
+    // Optimistic — mark guard so _syncFromProviders won't overwrite.
+    _optimisticSetAt = DateTime.now();
     state = const AsyncValue.data(
       FriendshipStatusState(state: FriendshipState.outgoing),
     );
     try {
       await ref.read(friendActionsProvider).sendRequest(targetUserId);
-      // Re-derive after server sync
+      // Re-derive after server sync (guard will prevent premature reset)
       _refreshLists();
     } catch (e) {
       // Rollback
+      _optimisticSetAt = null;
       state = const AsyncValue.data(
         FriendshipStatusState(state: FriendshipState.none),
       );
     }
   }
 
+  // TODO: Integrate remove friend request API in future build
+  // When the API is available, add a `cancelSentRequest()` method that:
+  //  1. Optimistically sets state to `FriendshipState.none`
+  //  2. Calls the remove request endpoint
+  //  3. Refreshes lists on success, rolls back on failure
+  // The button should transition from "Request Sent" → "Add Friend".
+
   Future<void> cancelRequest() async {
     final prevState = state;
     final fId = prevState.value?.friendshipId;
+    _optimisticSetAt = DateTime.now();
     state = const AsyncValue.data(
       FriendshipStatusState(state: FriendshipState.none),
     );
@@ -171,12 +198,14 @@ class FriendshipStatusNotifier
       }
       _refreshLists();
     } catch (e) {
+      _optimisticSetAt = null;
       state = prevState;
     }
   }
 
   Future<void> acceptRequest() async {
     final fId = state.value?.friendshipId;
+    _optimisticSetAt = DateTime.now();
     state = const AsyncValue.data(
       FriendshipStatusState(state: FriendshipState.friend),
     );
@@ -186,6 +215,7 @@ class FriendshipStatusNotifier
       }
       _refreshLists();
     } catch (e) {
+      _optimisticSetAt = null;
       state = AsyncValue.data(
         FriendshipStatusState(
           state: FriendshipState.incoming,
@@ -197,6 +227,7 @@ class FriendshipStatusNotifier
 
   Future<void> rejectRequest() async {
     final fId = state.value?.friendshipId;
+    _optimisticSetAt = DateTime.now();
     state = const AsyncValue.data(
       FriendshipStatusState(state: FriendshipState.none),
     );
@@ -206,6 +237,7 @@ class FriendshipStatusNotifier
       }
       _refreshLists();
     } catch (e) {
+      _optimisticSetAt = null;
       state = AsyncValue.data(
         FriendshipStatusState(
           state: FriendshipState.incoming,
@@ -217,6 +249,7 @@ class FriendshipStatusNotifier
 
   Future<void> removeFriend() async {
     final fId = state.value?.friendshipId;
+    _optimisticSetAt = DateTime.now();
     state = const AsyncValue.data(
       FriendshipStatusState(state: FriendshipState.none),
     );
@@ -226,6 +259,7 @@ class FriendshipStatusNotifier
       }
       _refreshLists();
     } catch (e) {
+      _optimisticSetAt = null;
       state = AsyncValue.data(
         FriendshipStatusState(state: FriendshipState.friend, friendshipId: fId),
       );

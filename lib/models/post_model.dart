@@ -88,8 +88,10 @@ class Post {
     final iso = DateTime.tryParse(s);
     if (iso != null) return iso;
 
-    // Backend format observed in feed: "DD-MM-YYYYHH:MM:SS"
-    final re = RegExp(r'^(\d{2})-(\d{2})-(\d{4})(\d{2}):(\d{2}):(\d{2})$');
+    // Backend format: "DD-MM-YYYY HH:MM:SS" or "DD-MM-YYYYHH:MM:SS"
+    final re = RegExp(
+      r'^(\d{2})-(\d{2})-(\d{4})[\sT]?(\d{2}):(\d{2}):(\d{2})$',
+    );
     final m = re.firstMatch(s);
     if (m != null) {
       final d = int.tryParse(m.group(1)!) ?? 1;
@@ -99,6 +101,12 @@ class Post {
       final mi = int.tryParse(m.group(5)!) ?? 0;
       final sec = int.tryParse(m.group(6)!) ?? 0;
       return DateTime(y, mo, d, h, mi, sec);
+    }
+
+    // Epoch millis fallback
+    final epoch = int.tryParse(s);
+    if (epoch != null) {
+      return DateTime.fromMillisecondsSinceEpoch(epoch);
     }
 
     return DateTime.now();
@@ -378,6 +386,27 @@ enum SyncStatus {
   }
 }
 
+/// A user who liked a post — returned by GET /api/posts/:id/likes
+class LikeUser {
+  final String id;
+  final String name;
+  final String? profilePicUrl;
+
+  const LikeUser({
+    required this.id,
+    required this.name,
+    this.profilePicUrl,
+  });
+
+  factory LikeUser.fromJson(Map<String, dynamic> json) {
+    return LikeUser(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? 'Unknown',
+      profilePicUrl: ApiConstants.resolveUrl(json['profilePicUrl']?.toString()),
+    );
+  }
+}
+
 /// Model for comment on a post
 class Comment {
   final String id;
@@ -386,10 +415,20 @@ class Comment {
   final String userName;
   final String? userAvatarUrl;
   final String content;
+  final String? parentId;
   final int likeCount;
   final bool isLiked;
   final DateTime createdAt;
   final SyncStatus syncStatus;
+
+  /// Whether this comment was soft-deleted (content replaced with placeholder).
+  final bool isDeleted;
+
+  /// Number of direct replies (from server metadata).
+  final int replyCount;
+
+  /// In-memory child comments (populated from tree-structured API response).
+  final List<Comment> replies;
 
   const Comment({
     required this.id,
@@ -398,10 +437,14 @@ class Comment {
     required this.userName,
     this.userAvatarUrl,
     required this.content,
+    this.parentId,
     this.likeCount = 0,
     this.isLiked = false,
     required this.createdAt,
     this.syncStatus = SyncStatus.synced,
+    this.isDeleted = false,
+    this.replyCount = 0,
+    this.replies = const [],
   });
 
   static DateTime _parseBackendDate(dynamic raw) {
@@ -412,7 +455,10 @@ class Comment {
     final iso = DateTime.tryParse(s);
     if (iso != null) return iso;
 
-    final re = RegExp(r'^(\d{2})-(\d{2})-(\d{4})(\d{2}):(\d{2}):(\d{2})$');
+    // Backend format: "DD-MM-YYYY HH:MM:SS" or "DD-MM-YYYYHH:MM:SS"
+    final re = RegExp(
+      r'^(\d{2})-(\d{2})-(\d{4})[\sT]?(\d{2}):(\d{2}):(\d{2})$',
+    );
     final m = re.firstMatch(s);
     if (m != null) {
       final d = int.tryParse(m.group(1)!) ?? 1;
@@ -424,27 +470,67 @@ class Comment {
       return DateTime(y, mo, d, h, mi, sec);
     }
 
+    // Epoch millis fallback
+    final epoch = int.tryParse(s);
+    if (epoch != null) {
+      return DateTime.fromMillisecondsSinceEpoch(epoch);
+    }
+
     return DateTime.now();
   }
 
   factory Comment.fromJson(Map<String, dynamic> json) {
-    final userId = json['userId'] ?? json['authorId'];
-    final userName = json['userName'] ?? json['authorName'];
-    final userAvatarUrl = json['userAvatarUrl'] ?? json['authorProfilePicUrl'];
+    // Handle nested author object: { author: { id, name, profilePicUrl } }
+    final authorObj = json['author'];
+    String userId;
+    String userName;
+    String? userAvatarUrl;
+    if (authorObj is Map<String, dynamic>) {
+      userId = (authorObj['id'] ?? authorObj['_id'] ?? '').toString();
+      userName = (authorObj['name'] ?? authorObj['userName'] ?? 'Unknown User')
+          .toString();
+      userAvatarUrl = ApiConstants.resolveUrl(
+        (authorObj['profilePicUrl'] ?? authorObj['avatarUrl'])?.toString(),
+      );
+    } else {
+      userId = (json['userId'] ?? json['authorId'] ?? json['user'] ?? '')
+          .toString();
+      userName = (json['userName'] ?? json['authorName'] ?? 'Unknown User')
+          .toString();
+      userAvatarUrl = ApiConstants.resolveUrl(
+        (json['userAvatarUrl'] ?? json['authorProfilePicUrl'])?.toString(),
+      );
+    }
+
+    // Parse nested replies array (tree-structured response)
+    final repliesJson = json['replies'];
+    final List<Comment> replies;
+    if (repliesJson is List) {
+      replies = repliesJson
+          .whereType<Map>()
+          .map((r) => Comment.fromJson(r.cast<String, dynamic>()))
+          .toList();
+    } else {
+      replies = const [];
+    }
 
     return Comment(
-      id: json['id'] ?? '',
-      postId: json['postId'] ?? '',
-      userId: userId?.toString() ?? '',
-      userName: userName?.toString() ?? 'Unknown User',
-      userAvatarUrl: userAvatarUrl?.toString(),
+      id: (json['id'] ?? json['_id'] ?? '').toString(),
+      postId: (json['postId'] ?? '').toString(),
+      userId: userId,
+      userName: userName,
+      userAvatarUrl: userAvatarUrl,
       content: json['content'] ?? '',
-      likeCount: json['likeCount'] ?? 0,
-      isLiked: json['isLiked'] ?? false,
+      parentId: json['parentId']?.toString(),
+      likeCount: json['likeCount'] ?? json['likes'] ?? 0,
+      isLiked: json['isLiked'] ?? json['liked'] ?? false,
       createdAt: _parseBackendDate(json['createdAt']),
       syncStatus: json['syncStatus'] != null
           ? SyncStatus.fromJson(json['syncStatus'])
           : SyncStatus.synced,
+      isDeleted: json['isDeleted'] ?? json['deleted'] ?? false,
+      replyCount: json['replyCount'] ?? json['repliesCount'] ?? replies.length,
+      replies: replies,
     );
   }
 
@@ -456,10 +542,13 @@ class Comment {
       'userName': userName,
       'userAvatarUrl': userAvatarUrl,
       'content': content,
+      'parentId': parentId,
       'likeCount': likeCount,
       'isLiked': isLiked,
       'createdAt': createdAt.toIso8601String(),
       'syncStatus': syncStatus.toJson(),
+      'isDeleted': isDeleted,
+      'replyCount': replyCount,
     };
   }
 
@@ -470,10 +559,14 @@ class Comment {
     String? userName,
     String? userAvatarUrl,
     String? content,
+    String? parentId,
     int? likeCount,
     bool? isLiked,
     DateTime? createdAt,
     SyncStatus? syncStatus,
+    bool? isDeleted,
+    int? replyCount,
+    List<Comment>? replies,
   }) {
     return Comment(
       id: id ?? this.id,
@@ -482,10 +575,14 @@ class Comment {
       userName: userName ?? this.userName,
       userAvatarUrl: userAvatarUrl ?? this.userAvatarUrl,
       content: content ?? this.content,
+      parentId: parentId ?? this.parentId,
       likeCount: likeCount ?? this.likeCount,
       isLiked: isLiked ?? this.isLiked,
       createdAt: createdAt ?? this.createdAt,
       syncStatus: syncStatus ?? this.syncStatus,
+      isDeleted: isDeleted ?? this.isDeleted,
+      replyCount: replyCount ?? this.replyCount,
+      replies: replies ?? this.replies,
     );
   }
 }

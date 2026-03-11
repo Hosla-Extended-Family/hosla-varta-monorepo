@@ -516,6 +516,7 @@ class PostActions {
       userName: userName,
       userAvatarUrl: userAvatarUrl,
       content: content,
+      parentId: parentId,
       createdAt: DateTime.now(),
       syncStatus: SyncStatus.pending,
     );
@@ -551,6 +552,40 @@ class PostActions {
         },
       );
       return true;
+    }
+  }
+
+  /// Delete a comment from a post
+  Future<bool> deleteComment({
+    required Post post,
+    required Comment comment,
+  }) async {
+    try {
+      await postService.deleteComment(commentId: comment.id);
+      await localRepo.deleteComment(comment.id);
+
+      // Decrement comment count
+      final updatedPost = post.copyWith(
+        commentCount: post.commentCount > 0 ? post.commentCount - 1 : 0,
+      );
+      await localRepo.savePost(updatedPost);
+      _updatePostInProviders(updatedPost);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Report a post
+  Future<bool> reportPost({
+    required String postId,
+    required String reason,
+  }) async {
+    try {
+      await postService.reportPost(postId: postId, reason: reason);
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 

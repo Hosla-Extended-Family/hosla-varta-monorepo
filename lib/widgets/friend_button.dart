@@ -64,11 +64,13 @@ class FriendButton extends ConsumerWidget {
         );
 
       case FriendshipState.outgoing:
+        // TODO: Integrate remove friend request API in future build
+        // Once the cancel/remove request endpoint is available, re-enable
+        // the onTap to call cancelRequest(). For now, disable to prevent
+        // duplicate requests and clearly indicate the pending state.
         return _RequestSentPill(
           compact: compact,
-          onTap: () => ref
-              .read(friendshipStatusProvider(targetUserId).notifier)
-              .cancelRequest(),
+          onTap: null, // Disabled until remove request API is integrated
         );
 
       case FriendshipState.incoming:
@@ -193,7 +195,7 @@ class _AddFriendPill extends StatelessWidget {
 
 class _RequestSentPill extends StatelessWidget {
   final bool compact;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   const _RequestSentPill({required this.compact, required this.onTap});
 
   @override
@@ -269,7 +271,7 @@ class _PillButton extends StatelessWidget {
   final bool filled;
   final bool compact;
   final bool muted;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final Color? accentColor;
 
   const _PillButton({
@@ -285,14 +287,21 @@ class _PillButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = accentColor ?? ThemeColors.primaryColor;
+    final isDisabled = onTap == null;
 
-    final bgColor = filled
+    final bgColor = isDisabled
+        ? ThemeColors.getSurfaceColor(context)
+        : filled
         ? primary
         : (muted ? ThemeColors.getSurfaceColor(context) : Colors.transparent);
-    final fgColor = filled
+    final fgColor = isDisabled
+        ? ThemeColors.getSecondaryTextColor(context).withValues(alpha: 0.6)
+        : filled
         ? Colors.black
         : (muted ? ThemeColors.getSecondaryTextColor(context) : primary);
-    final borderColor = filled
+    final borderColor = isDisabled
+        ? ThemeColors.getBorderColor(context).withValues(alpha: 0.3)
+        : filled
         ? Colors.transparent
         : (muted
               ? ThemeColors.getBorderColor(context).withValues(alpha: 0.4)
@@ -316,7 +325,7 @@ class _PillButton extends StatelessWidget {
             color: bgColor,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: borderColor, width: 1.5),
-            boxShadow: filled
+            boxShadow: filled && !isDisabled
                 ? [
                     BoxShadow(
                       color: primary.withValues(alpha: 0.25),

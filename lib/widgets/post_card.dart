@@ -9,6 +9,8 @@ import 'package:hosla/providers/post_provider.dart';
 import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/widgets/comments_bottom_sheet.dart';
 import 'package:hosla/widgets/friend_button.dart';
+import 'package:hosla/widgets/post_likes_panel.dart';
+import 'package:hosla/widgets/full_screen_image_viewer.dart';
 import 'package:hosla/widgets/profile_pic.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
 import 'package:share_plus/share_plus.dart';
@@ -591,19 +593,51 @@ class _PostCardState extends ConsumerState<PostCard>
           if (_hasValidImage(_post.imageUrl))
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12.0),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(0),
-                child: AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: Image.network(
-                    _post.imageUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      // If loading fails, hide the image section
-                      return const SizedBox.shrink();
-                    },
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(0),
+                    child: AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child: Hero(
+                        tag: 'post_image_${_post.id}',
+                        child: Image.network(
+                          _post.imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const SizedBox.shrink();
+                          },
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  // Zoom / expand button (top-right)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Material(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      shape: const CircleBorder(),
+                      clipBehavior: Clip.antiAlias,
+                      child: InkWell(
+                        onTap: () => FullScreenImageViewer.open(
+                          context,
+                          imageUrl: _post.imageUrl!,
+                          heroTag: 'post_image_${_post.id}',
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.all(6),
+                          child: Icon(
+                            Icons.zoom_out_map_rounded,
+                            color: Colors.white,
+                            size: 18,
+                            semanticLabel: 'View image full screen',
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -615,11 +649,22 @@ class _PostCardState extends ConsumerState<PostCard>
             ),
             child: Row(
               children: [
-                Text(
-                  '${_post.likeCount} likes',
-                  style: TextThemes.getBodySmallStyle(
+                GestureDetector(
+                  onTap: () => PostLikesPanel.show(
                     context,
-                  ).copyWith(color: ThemeColors.getSecondaryTextColor(context)),
+                    postId: _post.id,
+                    likeCount: _post.likeCount,
+                  ),
+                  child: Text(
+                    '${_post.likeCount} likes',
+                    style: TextThemes.getBodySmallStyle(context).copyWith(
+                      color: ThemeColors.getSecondaryTextColor(context),
+                      decoration: TextDecoration.underline,
+                      decorationColor: ThemeColors.getSecondaryTextColor(
+                        context,
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Text(

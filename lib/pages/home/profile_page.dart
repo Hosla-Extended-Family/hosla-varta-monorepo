@@ -9,7 +9,10 @@ import 'package:hosla/pages/home/saved_posts_page.dart';
 import 'package:hosla/pages/home/settings_page.dart';
 import 'package:hosla/providers/theme_provider.dart';
 import 'package:hosla/providers/user_provider.dart';
-import 'package:hosla/services/user_service.dart';
+import 'package:hosla/providers/chat_provider.dart';
+import 'package:hosla/providers/event_provider.dart';
+import 'package:hosla/providers/feed_provider.dart';
+import 'package:hosla/providers/friend_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
@@ -20,8 +23,6 @@ class ProfilePage extends ConsumerStatefulWidget {
 }
 
 class _ProfilePageState extends ConsumerState<ProfilePage> {
-  final UserService _userService = UserService();
-
   @override
   Widget build(BuildContext context) {
     final currentUser = ref.watch(currentUserProfileProvider);
@@ -745,10 +746,24 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   Future<void> _performLogout(BuildContext context) async {
     try {
-      await _userService.logout();
+      // 1. Clear server session + local DB + SharedPreferences
+      await ref.read(currentUserProfileProvider.notifier).logout();
+
+      // 2. Invalidate all Riverpod providers to reset global app state
+      ref.invalidate(currentUserProfileProvider);
+      ref.invalidate(appSettingsProvider);
+      ref.invalidate(friendsListProvider);
+      ref.invalidate(friendRequestsProvider);
+      ref.invalidate(feedPostsProvider);
+      ref.invalidate(chatsProvider);
+      ref.invalidate(eventsProvider);
+      ref.invalidate(currentUserProvider);
+
+      // 3. Ensure is_logged_in flag is cleared (belt-and-suspenders)
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('is_logged_in', false);
 
+      // 4. Navigate to login and remove all previous routes to block back nav
       if (mounted) {
         Navigator.of(
           context,

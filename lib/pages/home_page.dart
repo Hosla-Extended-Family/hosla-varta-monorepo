@@ -14,24 +14,29 @@ class Homepage extends StatefulWidget {
 class _HomepageState extends State<Homepage> {
   int _selectedIndex = 0;
 
-  List<Widget> _pages = [
-    FeedPage(),
-    EventsPage(),
-    ChatPage(),
-    EmergencyPage(),
-    SettingsPage(showBackButton: false),
-  ];
-
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
 
+  void _navigateToFeed() {
+    setState(() {
+      _selectedIndex = 0;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final pages = [
+      const FeedPage(),
+      const EventsPage(),
+      const ChatPage(),
+      EmergencyPage(onSuccess: _navigateToFeed),
+      SettingsPage(showBackButton: false),
+    ];
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         selectedFontSize: 14,
         selectedLabelStyle: const TextStyle(

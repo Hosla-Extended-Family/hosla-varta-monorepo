@@ -599,7 +599,9 @@ class PostService {
 
   /// Update a post
   ///
-  /// Updates an existing post with new content, image, or tags
+  /// PUT /posts/:id
+  /// Authentication: Post Author or Admin
+  /// Body: Same structure as Create Post body
   Future<Map<String, dynamic>> updatePost({
     required String postId,
     required String content,
@@ -613,17 +615,6 @@ class PostService {
     DateTime? createdAt,
   }) async {
     try {
-      // Authentication: Required
-      final prefs = await SharedPreferences.getInstance();
-      final accessToken = prefs.getString('access_token');
-      if (accessToken == null || accessToken.trim().isEmpty) {
-        return {
-          'success': false,
-          'message': 'Authentication required. Please login again.',
-          'data': null,
-        };
-      }
-
       final url = Uri.parse(
         '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId',
       );
@@ -646,15 +637,13 @@ class PostService {
           ? visibility.toUpperCase()
           : 'PUBLIC';
 
-      final requestBody = {
-        'id': postId,
-        'title': resolvedTitle.isNotEmpty ? resolvedTitle : null,
+      // Body: same structure as Create Post
+      final requestBody = <String, dynamic>{
+        if (resolvedTitle.isNotEmpty) 'title': resolvedTitle,
         'body': content,
         'visibility': normalizedVisibility,
         'mediaUrls': normalizedMediaUrls,
         'tagIds': normalizedTagIds,
-
-        // Requested Mapped Fields (best-effort)
         if (userId != null) 'authorId': userId,
         if (userName != null) 'authorName': userName,
         if (userAvatarUrl != null) 'authorProfilePicUrl': userAvatarUrl,
@@ -1047,12 +1036,13 @@ class PostService {
 
   /// Get comments for a post
   ///
-  /// GET /posts/:postId/comments?page=1&limit=50
+  /// GET /posts/:postId/comments?page=1&limit=20
   /// Authentication: Optional
-  Future<List<Comment>> getComments({
+  /// Returns tree-structured comments with pagination metadata.
+  Future<CommentsResponse> getComments({
     required String postId,
     int page = 1,
-    int limit = 50,
+    int limit = 20,
   }) async {
     final uri =
         Uri.parse(
@@ -1073,10 +1063,57 @@ class PostService {
         ? (data['comments'] as List)
         : (res['comments'] is List ? (res['comments'] as List) : const []);
 
-    return commentsJson
+    final comments = commentsJson
         .whereType<Map>()
         .map((j) => Comment.fromJson(j.cast<String, dynamic>()))
         .toList();
+
+    // Parse pagination metadata
+    final paginationData = data is Map<String, dynamic>
+        ? (data['pagination'] ??
+              data['meta'] ??
+              res['pagination'] ??
+              res['meta'])
+        : (res['pagination'] ?? res['meta']);
+    int totalComments = comments.length;
+    int totalPages = 1;
+    bool hasMore = false;
+    if (paginationData is Map<String, dynamic>) {
+      totalComments =
+          paginationData['total'] ??
+          paginationData['totalComments'] ??
+          totalComments;
+      totalPages = paginationData['totalPages'] ?? paginationData['pages'] ?? 1;
+      hasMore =
+          paginationData['hasMore'] ??
+          paginationData['hasNextPage'] ??
+          (page < totalPages);
+    }
+
+    return CommentsResponse(
+      comments: comments,
+      page: page,
+      totalComments: totalComments,
+      totalPages: totalPages,
+      hasMore: hasMore,
+    );
+  }
+
+  /// Flatten a tree-structured comment list into a flat list preserving parentId.
+  /// Useful for local DB storage.
+  static List<Comment> flattenComments(List<Comment> comments) {
+    final result = <Comment>[];
+    void walk(Comment c) {
+      result.add(c.copyWith(replies: const []));
+      for (final reply in c.replies) {
+        walk(reply);
+      }
+    }
+
+    for (final c in comments) {
+      walk(c);
+    }
+    return result;
   }
 
   /// Add a comment to a post
@@ -1137,19 +1174,22 @@ class PostService {
   ///
   /// POST /api/comments/:id/like
   /// Authentication: Required
+  /// Response: { "success": true, "liked": true }
   Future<Map<String, dynamic>> likeComment({required String commentId}) async {
     try {
       final uri = Uri.parse(
         '${ApiConstants.baseUrl}${ApiConstants.commentsEndpoint}/$commentId/like',
       );
 
-      final response = await _api.post(uri).timeout(ApiConstants.timeout);
+      final response = await _api
+          .post(uri, body: jsonEncode({}))
+          .timeout(ApiConstants.timeout);
 
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
         return {
-          'success': responseData['success'] == true,
-          'liked': responseData['liked'] == true,
+          'success': responseData['success'] ?? true,
+          'liked': responseData['liked'] ?? true,
         };
       } else {
         final errorData = jsonDecode(response.body);
@@ -1167,6 +1207,7 @@ class PostService {
   ///
   /// DELETE /api/comments/:id/like
   /// Authentication: Required
+  /// Response: { "success": true, "liked": false }
   Future<Map<String, dynamic>> unlikeComment({
     required String commentId,
   }) async {
@@ -1178,10 +1219,10 @@ class PostService {
       final response = await _api.delete(uri).timeout(ApiConstants.timeout);
 
       if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
+        final responseData = jsonDecode(response.body) as Map<String, dynamic>;
         return {
-          'success': responseData['success'] == true,
-          'liked': responseData['liked'] == false,
+          'success': responseData['success'] ?? true,
+          'liked': responseData['liked'] ?? false,
         };
       } else {
         final errorData = jsonDecode(response.body);
@@ -1195,10 +1236,11 @@ class PostService {
     }
   }
 
-  /// Report content (post)
+  /// Report a post
   ///
   /// POST /reports
   /// Authentication: Required (Member+)
+  /// Body: { "postId": "uuid", "reason": "SPAM" }
   Future<void> reportPost({
     required String postId,
     required String reason,
@@ -1218,4 +1260,21 @@ class PostService {
   void dispose() {
     _httpClient.close();
   }
+}
+
+/// Paginated response for comments
+class CommentsResponse {
+  final List<Comment> comments;
+  final int page;
+  final int totalComments;
+  final int totalPages;
+  final bool hasMore;
+
+  const CommentsResponse({
+    required this.comments,
+    this.page = 1,
+    this.totalComments = 0,
+    this.totalPages = 1,
+    this.hasMore = false,
+  });
 }

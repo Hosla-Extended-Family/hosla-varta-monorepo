@@ -38,7 +38,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
       case 'FRIENDS':
         return 'Friends';
       case 'ONLY_ME':
-        return 'Only me';
+        return 'Private';
       default:
         return value;
     }
@@ -81,6 +81,64 @@ class _CreatePostPageState extends State<CreatePostPage> {
         ],
       ),
       child: child,
+    );
+  }
+
+  Widget _visibilitySelector() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark
+            ? ThemeColors.getCardColor(context)
+            : Colors.grey.shade300,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        children: _allowedVisibilities.map((v) {
+          final selected = _visibility == v;
+          return Expanded(
+            child: GestureDetector(
+              onTap: _isLoading ? null : () => setState(() => _visibility = v),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? ThemeColors.primaryColor
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      _visibilityIcon(v),
+                      size: 18,
+                      color: selected
+                          ? Colors.black
+                          : ThemeColors.getSecondaryTextColor(context),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _visibilityLabel(v),
+                      style: TextStyle(
+                        fontFamily: 'Quicksand',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: selected
+                            ? Colors.black
+                            : ThemeColors.getSecondaryTextColor(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -785,92 +843,16 @@ class _CreatePostPageState extends State<CreatePostPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Visibility',
-                            style: TextStyle(
-                              fontFamily: 'Quicksand',
-                              fontWeight: FontWeight.w700,
-                              color: ThemeColors.getTextColor(context),
-                            ),
-                          ),
-                          const Spacer(),
-                          Row(
-                            children: [
-                              Icon(
-                                _visibilityIcon(_visibility),
-                                size: 18,
-                                color: ThemeColors.getSecondaryTextColor(
-                                  context,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                _visibilityLabel(_visibility),
-                                style: TextStyle(
-                                  fontFamily: 'Quicksand',
-                                  fontWeight: FontWeight.w600,
-                                  color: ThemeColors.getSecondaryTextColor(
-                                    context,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                      Text(
+                        'Visibility',
+                        style: TextStyle(
+                          fontFamily: 'Quicksand',
+                          fontWeight: FontWeight.w700,
+                          color: ThemeColors.getTextColor(context),
+                        ),
                       ),
                       const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: _allowedVisibilities
-                            .map((v) {
-                              final selected = _visibility == v;
-                              return ChoiceChip(
-                                selected: selected,
-                                label: Text(
-                                  _visibilityLabel(v),
-                                  style: TextStyle(
-                                    fontFamily: 'Quicksand',
-                                    fontWeight: FontWeight.w700,
-                                    color: selected
-                                        ? colorScheme.onPrimary
-                                        : ThemeColors.getTextColor(context),
-                                  ),
-                                ),
-                                avatar: Icon(
-                                  _visibilityIcon(v),
-                                  size: 18,
-                                  color: selected
-                                      ? colorScheme.onPrimary
-                                      : ThemeColors.getSecondaryTextColor(
-                                          context,
-                                        ),
-                                ),
-                                selectedColor: ThemeColors.primaryColor,
-                                backgroundColor: ThemeColors.getCardColor(
-                                  context,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(999),
-                                  side: BorderSide(
-                                    color: selected
-                                        ? ThemeColors.primaryColor
-                                        : ThemeColors.getBorderColor(context),
-                                  ),
-                                ),
-                                onSelected: _isLoading
-                                    ? null
-                                    : (_) {
-                                        setState(() {
-                                          _visibility = v;
-                                        });
-                                      },
-                              );
-                            })
-                            .toList(growable: false),
-                      ),
+                      _visibilitySelector(),
                     ],
                   ),
                 ),

@@ -293,6 +293,29 @@ class FeedService {
     throw Exception('Failed to load comments: ${response.statusCode}');
   }
 
+  /// Get users who liked a post
+  /// GET /api/posts/:postId/likes
+  Future<List<LikeUser>> getPostLikes(String postId) async {
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}${ApiConstants.postsEndpoint}/$postId/likes',
+    );
+
+    final response = await _api.get(uri);
+    if (response.statusCode == 200) {
+      final res = json.decode(response.body) as Map<String, dynamic>;
+      final data = res['data'];
+      if (data is List) {
+        return data
+            .whereType<Map>()
+            .map((j) => LikeUser.fromJson(j.cast<String, dynamic>()))
+            .toList();
+      }
+      return const [];
+    }
+
+    throw Exception('Failed to load likes: ${response.statusCode}');
+  }
+
   /// Add a comment to a post
   /// POST /posts/:postId/comments
   /// Authentication: Required

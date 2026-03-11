@@ -51,7 +51,7 @@ class _EditPostPageState extends ConsumerState<EditPostPage> {
       case 'FRIENDS':
         return 'Friends';
       case 'ONLY_ME':
-        return 'Only me';
+        return 'Private';
       default:
         return value;
     }
@@ -94,6 +94,64 @@ class _EditPostPageState extends ConsumerState<EditPostPage> {
         ],
       ),
       child: child,
+    );
+  }
+
+  Widget _visibilitySelector() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark
+            ? ThemeColors.getCardColor(context)
+            : Colors.grey.shade300,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        children: _allowedVisibilities.map((v) {
+          final selected = _visibility.toUpperCase() == v;
+          return Expanded(
+            child: GestureDetector(
+              onTap: _isSaving ? null : () => setState(() => _visibility = v),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? ThemeColors.primaryColor
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      _visibilityIcon(v),
+                      size: 18,
+                      color: selected
+                          ? Colors.black
+                          : ThemeColors.getSecondaryTextColor(context),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _visibilityLabel(v),
+                      style: TextStyle(
+                        fontFamily: 'Quicksand',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: selected
+                            ? Colors.black
+                            : ThemeColors.getSecondaryTextColor(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -464,7 +522,7 @@ class _EditPostPageState extends ConsumerState<EditPostPage> {
             _sectionCard(
               context: context,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
                     'Visibility',
@@ -476,48 +534,7 @@ class _EditPostPageState extends ConsumerState<EditPostPage> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: _allowedVisibilities
-                        .map((value) {
-                          final isSelected = _visibility.toUpperCase() == value;
-                          return ChoiceChip(
-                            selected: isSelected,
-                            onSelected: _isSaving
-                                ? null
-                                : (v) {
-                                    if (!v) return;
-                                    setState(() => _visibility = value);
-                                  },
-                            avatar: Icon(
-                              _visibilityIcon(value),
-                              size: 18,
-                              color: isSelected
-                                  ? Theme.of(context).colorScheme.onPrimary
-                                  : ThemeColors.getSecondaryTextColor(context),
-                            ),
-                            label: Text(
-                              _visibilityLabel(value),
-                              style: TextStyle(
-                                fontFamily: 'Quicksand',
-                                fontWeight: FontWeight.w700,
-                                color: isSelected
-                                    ? Theme.of(context).colorScheme.onPrimary
-                                    : ThemeColors.getTextColor(context),
-                              ),
-                            ),
-                            selectedColor: ThemeColors.primaryColor,
-                            backgroundColor: ThemeColors.getBackgroundColor(
-                              context,
-                            ),
-                            side: BorderSide(
-                              color: ThemeColors.getBorderColor(context),
-                            ),
-                          );
-                        })
-                        .toList(growable: false),
-                  ),
+                  _visibilitySelector(),
                 ],
               ),
             ),

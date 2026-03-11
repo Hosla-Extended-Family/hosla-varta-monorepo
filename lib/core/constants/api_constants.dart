@@ -1,6 +1,6 @@
 class ApiConstants {
   static const String baseUrl =
-      'https://array-physics-code-showing.trycloudflare.com';
+      'https://quarterly-quantum-feeding-appendix.trycloudflare.com';
 
   /// Resolves API-provided URLs that may be absolute or relative.
   ///
@@ -30,6 +30,7 @@ class ApiConstants {
   static const String friendsEndpoint = '/api/friends';
   static const String authEndpoint = '/api/auth';
   static const String tagsEndpoint = '/api/tags';
+  static const String emergencyEndpoint = '/api/emergency/log';
 
   static const Duration timeout = Duration(seconds: 30);
 }
