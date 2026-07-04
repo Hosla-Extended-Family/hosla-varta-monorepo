@@ -8,6 +8,27 @@ class AuthService {
   AuthService._internal();
   static final AuthService instance = AuthService._internal();
 
+  Map<String, dynamic>? _tryDecodeJsonObject(String raw) {
+    try {
+      final decoded = json.decode(raw);
+      if (decoded is Map<String, dynamic>) return decoded;
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _errorMessageFromBody(String responseBody) {
+    final obj = _tryDecodeJsonObject(responseBody);
+    if (obj == null) return responseBody;
+    final error = obj['error'];
+    if (error is Map<String, dynamic>) {
+      final msg = error['message']?.toString();
+      if (msg != null && msg.isNotEmpty) return msg;
+    }
+    return responseBody;
+  }
+
   String _getClientPlatform() {
     if (kIsWeb) return 'web';
     switch (defaultTargetPlatform) {
@@ -37,29 +58,38 @@ class AuthService {
       'Content-Type': 'application/json',
       'X-Client-Platform': _getClientPlatform(),
     };
-    final body = jsonEncode({
-      'phone': phone,
-      'otp': otp,
-      'device': {
-        //if (fcmToken != null)
-        'fcmToken': '123456',
-        'platform': _getClientPlatform(),
-        'model': deviceModel ?? 'unknown',
-      },
-    });
+    final body = jsonEncode({'phone': phone, 'otp': otp});
 
     final response = await http.post(uri, headers: headers, body: body);
     final responseBody = response.body;
-    print(responseBody);
 
     if (response.statusCode == 200) {
-      final data = json.decode(responseBody) as Map<String, dynamic>;
+      final data = _tryDecodeJsonObject(responseBody);
+      if (data == null) {
+        throw Exception('Verify OTP failed: Invalid JSON response');
+      }
       await _storeAuthResponse(data);
-      print(data);
       return data;
-    } else {
-      throw Exception('Verify OTP failed: $responseBody');
     }
+
+    // Expected error shapes:
+    // 401: { success:false, error:{ code:"UNAUTHORIZED", message:"Invalid or expired OTP" } }
+    // 429: { success:false, error:{ code:"RATE_LIMITED", message:"Too many verification attempts" } }
+    final errorObj = _tryDecodeJsonObject(responseBody);
+    final error = (errorObj?['error'] is Map<String, dynamic>)
+        ? (errorObj!['error'] as Map<String, dynamic>)
+        : null;
+
+    final code = error?['code']?.toString() ?? 'UNKNOWN';
+    final message =
+        error?['message']?.toString() ?? _errorMessageFromBody(responseBody);
+
+    throw AuthApiException(
+      statusCode: response.statusCode,
+      code: code,
+      message: message,
+      responseBody: responseBody,
+    );
   }
 
   Future<Map<String, dynamic>> refreshTokens({
@@ -76,11 +106,17 @@ class AuthService {
     final responseBody = response.body;
 
     if (response.statusCode == 200) {
-      final data = json.decode(responseBody) as Map<String, dynamic>;
-      await _storeTokensFromData(data['data']);
+      final data = _tryDecodeJsonObject(responseBody);
+      if (data == null) {
+        throw Exception('Refresh tokens failed: Invalid JSON response');
+      }
+      await _storeTokensFromData(
+        (data['data'] as Map?)?.cast<String, dynamic>() ?? data,
+      );
       return data;
     } else {
-      throw Exception('Refresh tokens failed: $responseBody');
+      final message = _errorMessageFromBody(responseBody);
+      throw Exception('Refresh tokens failed: $message');
     }
   }
 
@@ -126,20 +162,32 @@ class AuthService {
   Future<void> _storeAuthResponse(Map<String, dynamic> apiResponse) async {
     final prefs = await SharedPreferences.getInstance();
     try {
-      // Expected shape: { success: true, data: { user, tokens, isNewUser } }
-      final data = apiResponse['data'] ?? apiResponse;
+      // Expected verify-otp shape:
+      // { success:true, data:{ user:{id,name,role}, accessToken, expiresIn, refreshToken, refreshExpiresIn } }
+      final data =
+          (apiResponse['data'] as Map?)?.cast<String, dynamic>() ?? apiResponse;
       await _storeTokensFromData(data);
 
-      final user = data['user'] ?? {};
+      final user =
+          (data['user'] as Map?)?.cast<String, dynamic>() ??
+          const <String, dynamic>{};
       final userId =
           (user['id']?.toString() ??
           user['userId']?.toString() ??
           'current_user');
-      final phone = user['phone']?.toString();
+      final phone = (user['phone']?.toString());
+      final name = user['name']?.toString();
+      final role = user['role']?.toString();
 
       await prefs.setString('user_id', userId);
-      if (phone != null) {
+      if (phone != null && phone.isNotEmpty) {
         await prefs.setString('phone_number', phone);
+      }
+      if (name != null && name.isNotEmpty) {
+        await prefs.setString('user_name', name);
+      }
+      if (role != null && role.isNotEmpty) {
+        await prefs.setString('user_role', role);
       }
       await prefs.setBool('is_logged_in', true);
       await prefs.setString('login_time', DateTime.now().toIso8601String());
@@ -150,26 +198,60 @@ class AuthService {
 
   Future<void> _storeTokensFromData(Map<String, dynamic>? data) async {
     if (data == null) return;
-    final tokens = data['tokens'] as Map<String, dynamic>?;
-    if (tokens == null) return;
-
-    final access = tokens['access'] as Map<String, dynamic>?;
-    final refresh = tokens['refresh'] as Map<String, dynamic>?;
-
     final prefs = await SharedPreferences.getInstance();
-    if (access != null) {
-      final token = access['token']?.toString();
-      final expires = access['expires']?.toString();
-      if (token != null) await prefs.setString('access_token', token);
-      if (expires != null)
-        await prefs.setString('access_token_expires', expires);
+
+    // New shape: { accessToken, expiresIn, refreshToken, refreshExpiresIn }
+    final accessToken = data['accessToken']?.toString();
+    final refreshToken = data['refreshToken']?.toString();
+    final expiresIn = data['expiresIn'];
+    final refreshExpiresIn = data['refreshExpiresIn'];
+
+    if (accessToken != null && accessToken.isNotEmpty) {
+      await prefs.setString('access_token', accessToken);
     }
-    if (refresh != null) {
-      final token = refresh['token']?.toString();
-      final expires = refresh['expires']?.toString();
-      if (token != null) await prefs.setString('refresh_token', token);
-      if (expires != null)
-        await prefs.setString('refresh_token_expires', expires);
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await prefs.setString('refresh_token', refreshToken);
+    }
+    if (expiresIn is num) {
+      final exp = DateTime.now().toUtc().add(
+        Duration(seconds: expiresIn.toInt()),
+      );
+      await prefs.setString('access_token_expires', exp.toIso8601String());
+    }
+    if (refreshExpiresIn is num) {
+      final exp = DateTime.now().toUtc().add(
+        Duration(seconds: refreshExpiresIn.toInt()),
+      );
+      await prefs.setString('refresh_token_expires', exp.toIso8601String());
+    }
+
+    // Backward-compatible shape: { tokens: { access: {token,expires}, refresh:{token,expires} } }
+    final tokens = data['tokens'];
+    if (tokens is Map) {
+      final tokensMap = tokens.cast<String, dynamic>();
+      final access = (tokensMap['access'] as Map?)?.cast<String, dynamic>();
+      final refresh = (tokensMap['refresh'] as Map?)?.cast<String, dynamic>();
+
+      if (access != null) {
+        final token = access['token']?.toString();
+        final expires = access['expires']?.toString();
+        if (token != null && token.isNotEmpty) {
+          await prefs.setString('access_token', token);
+        }
+        if (expires != null && expires.isNotEmpty) {
+          await prefs.setString('access_token_expires', expires);
+        }
+      }
+      if (refresh != null) {
+        final token = refresh['token']?.toString();
+        final expires = refresh['expires']?.toString();
+        if (token != null && token.isNotEmpty) {
+          await prefs.setString('refresh_token', token);
+        }
+        if (expires != null && expires.isNotEmpty) {
+          await prefs.setString('refresh_token_expires', expires);
+        }
+      }
     }
   }
 
@@ -178,4 +260,21 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
   }
+}
+
+class AuthApiException implements Exception {
+  final int statusCode;
+  final String code;
+  final String message;
+  final String? responseBody;
+
+  AuthApiException({
+    required this.statusCode,
+    required this.code,
+    required this.message,
+    this.responseBody,
+  });
+
+  @override
+  String toString() => 'AuthApiException($statusCode, $code): $message';
 }

@@ -1,6 +1,6 @@
 class ApiConstants {
   static const String baseUrl =
-      'https://quarterly-quantum-feeding-appendix.trycloudflare.com';
+      'https://app.hosla.in';
 
   /// Resolves API-provided URLs that may be absolute or relative.
   ///
