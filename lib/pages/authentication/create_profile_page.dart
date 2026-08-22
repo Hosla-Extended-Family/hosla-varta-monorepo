@@ -53,12 +53,20 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
 
   String _getClientPlatform() {
     if (kIsWeb) return 'web';
-    if (Platform.isAndroid) return 'android';
-    if (Platform.isIOS) return 'ios';
-    if (Platform.isMacOS) return 'macos';
-    if (Platform.isWindows) return 'windows';
-    if (Platform.isLinux) return 'linux';
-    return 'unknown';
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return 'android';
+      case TargetPlatform.iOS:
+        return 'ios';
+      case TargetPlatform.macOS:
+        return 'macos';
+      case TargetPlatform.windows:
+        return 'windows';
+      case TargetPlatform.linux:
+        return 'linux';
+      case TargetPlatform.fuchsia:
+        return 'fuchsia';
+    }
   }
 
   Future<String> _createProfile() async {
@@ -96,9 +104,10 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
 
       // File field (profile picture)
       if (_selectedImage != null) {
-        final file = await http.MultipartFile.fromPath(
+        final bytes = await _selectedImage!.readAsBytes();
+        final file = http.MultipartFile.fromBytes(
           'profilePicture',
-          _selectedImage!.path,
+          bytes,
           filename: _selectedImage!.name,
         );
         request.files.add(file);

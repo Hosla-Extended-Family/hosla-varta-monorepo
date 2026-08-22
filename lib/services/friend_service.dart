@@ -53,6 +53,19 @@ class FriendService {
     return response;
   }
 
+  String _errorMessage(http.Response response, String fallback) {
+    try {
+      final decoded = json.decode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        final error = decoded['error'];
+        if (error is Map<String, dynamic> && error['message'] != null) {
+          return error['message'].toString();
+        }
+      }
+    } catch (_) {}
+    return fallback;
+  }
+
   /// Send a friend request to target user
   Future<FriendshipEdge> sendFriendRequest(String userId) async {
     final uri = _friendUri('request/$userId');
@@ -65,27 +78,31 @@ class FriendService {
       return FriendshipEdge.fromJson(data);
     }
 
-    throw Exception('Failed to send friend request');
+    throw Exception(_errorMessage(response, 'Failed to send friend request'));
   }
 
-  /// Accept a pending friend request
-  Future<List<FriendshipEdge>> acceptRequest(String friendshipId) async {
+  /// Accept a pending friend request.
+  ///
+  /// Handles both response shapes: a single friendship object (current
+  /// backend) or a list of edges (legacy transaction-array responses).
+  Future<FriendshipEdge> acceptRequest(String friendshipId) async {
     final uri = _friendUri('accept/$friendshipId');
     final fallback = _friendFallbackUri('accept/$friendshipId');
     final response = await _postWithFallback(uri, fallback);
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       final body = json.decode(response.body) as Map<String, dynamic>;
-      final list = body['data'] as List<dynamic>? ?? const [];
-      return list
-          .whereType<Map>()
-          .map(
-            (item) => FriendshipEdge.fromJson(Map<String, dynamic>.from(item)),
-          )
-          .toList();
+      final data = body['data'];
+      if (data is Map<String, dynamic>) {
+        return FriendshipEdge.fromJson(data);
+      }
+      if (data is List && data.isNotEmpty) {
+        final first = data.whereType<Map>().first;
+        return FriendshipEdge.fromJson(Map<String, dynamic>.from(first));
+      }
     }
 
-    throw Exception('Failed to accept friend request');
+    throw Exception(_errorMessage(response, 'Failed to accept friend request'));
   }
 
   /// Reject a pending friend request
@@ -100,7 +117,24 @@ class FriendService {
       return FriendshipEdge.fromJson(data);
     }
 
-    throw Exception('Failed to reject friend request');
+    throw Exception(_errorMessage(response, 'Failed to reject friend request'));
+  }
+
+  /// Cancel a pending request that the current user sent.
+  ///
+  /// DELETE /api/friends/requests/:friendshipId
+  Future<void> cancelRequest(String friendshipId) async {
+    final uri = _friendUri('requests/$friendshipId');
+    final fallback = _friendFallbackUri('requests/$friendshipId');
+    final response = await _deleteWithFallback(uri, fallback);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return;
+    }
+
+    throw Exception(
+      _errorMessage(response, 'Failed to cancel friend request'),
+    );
   }
 
   /// Remove an existing friendship

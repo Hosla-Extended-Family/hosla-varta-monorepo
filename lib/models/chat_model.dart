@@ -23,19 +23,29 @@ class Message {
     this.imageUrl,
   });
 
-  /// Factory constructor for creating Message from JSON
+  /// Factory constructor for creating Message from JSON.
+  ///
+  /// Accepts the live API shape:
+  ///   { id, conversationId, senderId, content, createdAt }
+  /// plus legacy/local keys (chatId/timestamp/isRead).
   factory Message.fromJson(Map<String, dynamic> json) {
+    final createdRaw =
+        json['createdAt']?.toString() ?? json['timestamp']?.toString() ?? '';
+    final parsed = createdRaw.isNotEmpty ? DateTime.tryParse(createdRaw) : null;
+    final created = parsed ?? DateTime.now();
+
     return Message(
-      id: json['id'] ?? '',
-      senderId: json['senderId'] ?? '',
-      chatId: json['chatId'] ?? '',
-      content: json['content'] ?? '',
+      id: json['id']?.toString() ?? '',
+      senderId: json['senderId']?.toString() ?? '',
+      chatId:
+          json['conversationId']?.toString() ?? json['chatId']?.toString() ?? '',
+      content: json['content']?.toString() ?? '',
       type: MessageType.values.firstWhere(
         (e) => e.toString() == 'MessageType.${json['type']}',
         orElse: () => MessageType.text,
       ),
-      timestamp: DateTime.parse(json['timestamp']),
-      isRead: json['isRead'] ?? false,
+      timestamp: created,
+      isRead: json['isRead'] == true,
       imageUrl: json['imageUrl'],
     );
   }
@@ -94,6 +104,10 @@ class Chat {
   final int unreadCount;
   final bool isMuted;
 
+  /// Last message preview content resolved from THIS device's local store.
+  /// Server metadata never includes message text.
+  final String? lastMessageContent;
+
   const Chat({
     required this.id,
     required this.name,
@@ -102,27 +116,50 @@ class Chat {
     required this.participantIds,
     this.lastMessageId,
     this.lastMessage,
+    this.lastMessageContent,
     required this.lastActivity,
     this.unreadCount = 0,
     this.isMuted = false,
   });
 
-  /// Factory constructor for creating Chat from JSON
+  /// Factory constructor for creating Chat from JSON.
+  ///
+  /// Accepts the live API shape:
+  ///   { id, type: 'DIRECT', name, photoUrl, participants: [...],
+  ///     lastMessage, unreadCount, updatedAt }
   factory Chat.fromJson(Map<String, dynamic> json) {
+    final rawType = json['type']?.toString().toUpperCase() ?? 'DIRECT';
+    final participants = (json['participants'] as List<dynamic>? ?? const [])
+        .whereType<Map>()
+        .map((m) => m['id']?.toString() ?? '')
+        .where((id) => id.isNotEmpty)
+        .toList();
+
+    DateTime activity;
+    final updatedRaw = json['updatedAt']?.toString();
+    final lastActivityRaw = json['lastActivity']?.toString();
+    if (updatedRaw != null && updatedRaw.isNotEmpty) {
+      activity = DateTime.tryParse(updatedRaw) ?? DateTime.now();
+    } else if (lastActivityRaw != null && lastActivityRaw.isNotEmpty) {
+      activity = DateTime.tryParse(lastActivityRaw) ?? DateTime.now();
+    } else {
+      activity = DateTime.now();
+    }
+
     return Chat(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      avatarUrl: json['avatarUrl'],
-      type: ChatType.values.firstWhere(
-        (e) => e.toString() == 'ChatType.${json['type']}',
-        orElse: () => ChatType.individual,
-      ),
-      participantIds: List<String>.from(json['participantIds'] ?? []),
-      lastMessageId: json['lastMessageId'],
-      lastMessage: json['lastMessage'] != null 
-          ? Message.fromJson(json['lastMessage']) 
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      avatarUrl: json['photoUrl']?.toString() ?? json['avatarUrl']?.toString(),
+      type: rawType == 'GROUP' ? ChatType.group : ChatType.individual,
+      participantIds: participants.isNotEmpty
+          ? participants
+          : List<String>.from(json['participantIds'] ?? []),
+      lastMessage: json['lastMessage'] != null
+          ? Message.fromJson(
+              Map<String, dynamic>.from(json['lastMessage'] as Map),
+            )
           : null,
-      lastActivity: DateTime.parse(json['lastActivity']),
+      lastActivity: activity,
       unreadCount: json['unreadCount'] ?? 0,
       isMuted: json['isMuted'] ?? false,
     );
@@ -156,6 +193,7 @@ class Chat {
     DateTime? lastActivity,
     int? unreadCount,
     bool? isMuted,
+    String? lastMessageContent,
   }) {
     return Chat(
       id: id ?? this.id,
@@ -168,6 +206,7 @@ class Chat {
       lastActivity: lastActivity ?? this.lastActivity,
       unreadCount: unreadCount ?? this.unreadCount,
       isMuted: isMuted ?? this.isMuted,
+      lastMessageContent: lastMessageContent ?? this.lastMessageContent,
     );
   }
 }

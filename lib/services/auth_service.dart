@@ -58,10 +58,23 @@ class AuthService {
       'Content-Type': 'application/json',
       'X-Client-Platform': _getClientPlatform(),
     };
-    final body = jsonEncode({'phone': phone, 'otp': otp});
+    final resolvedToken = (fcmToken != null && fcmToken.isNotEmpty)
+        ? fcmToken
+        : (kIsWeb ? 'web_token' : 'no_fcm_token');
+
+    final body = jsonEncode({
+      'phone': phone,
+      'otp': otp,
+      'device': {
+        'fcmToken': resolvedToken,
+        'platform': _getClientPlatform(),
+        'model': deviceModel ?? 'unknown',
+      },
+    });
 
     final response = await http.post(uri, headers: headers, body: body);
     final responseBody = response.body;
+    debugPrint(responseBody);
 
     if (response.statusCode == 200) {
       final data = _tryDecodeJsonObject(responseBody);
@@ -70,6 +83,15 @@ class AuthService {
       }
       await _storeAuthResponse(data);
       return data;
+    } else {
+      String errorMessage;
+      try {
+        final decoded = json.decode(responseBody);
+        errorMessage = decoded['error']?['message'] ?? decoded['message'] ?? responseBody;
+      } catch (_) {
+        errorMessage = responseBody;
+      }
+      throw Exception(errorMessage);
     }
 
     // Expected error shapes:

@@ -42,12 +42,17 @@ class FeedService {
     final response = await _api.get(uri);
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to load feed: ${response.statusCode}');
+      String errorMessage = 'Failed to load feed (${response.statusCode})';
+      try {
+        final decoded = json.decode(response.body);
+        errorMessage = decoded['error']?['message'] ?? decoded['message'] ?? errorMessage;
+      } catch (_) {}
+      throw Exception(errorMessage);
     }
 
     final body = json.decode(response.body) as Map<String, dynamic>;
     if (body['success'] != true) {
-      final message = body['message']?.toString();
+      final message = body['error']?['message'] ?? body['message']?.toString();
       throw Exception(message?.isNotEmpty == true ? message : 'Feed failed');
     }
 

@@ -178,13 +178,6 @@ class FriendshipStatusNotifier
     }
   }
 
-  // TODO: Integrate remove friend request API in future build
-  // When the API is available, add a `cancelSentRequest()` method that:
-  //  1. Optimistically sets state to `FriendshipState.none`
-  //  2. Calls the remove request endpoint
-  //  3. Refreshes lists on success, rolls back on failure
-  // The button should transition from "Request Sent" → "Add Friend".
-
   Future<void> cancelRequest() async {
     final prevState = state;
     final fId = prevState.value?.friendshipId;
@@ -194,7 +187,7 @@ class FriendshipStatusNotifier
     );
     try {
       if (fId != null && fId.isNotEmpty) {
-        await ref.read(friendActionsProvider).reject(fId);
+        await ref.read(friendActionsProvider).cancel(fId);
       }
       _refreshLists();
     } catch (e) {

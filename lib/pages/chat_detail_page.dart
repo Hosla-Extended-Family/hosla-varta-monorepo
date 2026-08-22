@@ -7,9 +7,10 @@ import 'package:hosla/models/chat_model.dart';
 import 'package:hosla/models/user_model.dart';
 import 'package:hosla/pages/home/contact_info_page.dart';
 import 'package:hosla/providers/chat_provider.dart';
+import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/widgets/glass_app_bar.dart';
 import 'package:hosla/widgets/profile_pic.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -37,10 +38,10 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
-  final ImagePicker _picker = ImagePicker();
   bool _hasText = false;
   bool _showScrollToBottom = false;
   File? _pendingImage;
+  String? _cachedUserId;
 
   late final AnimationController _sendBtnController;
   late final Animation<double> _sendBtnScale;
@@ -48,6 +49,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
   @override
   void initState() {
     super.initState();
+    _loadCachedUserId();
     _sendBtnController = AnimationController(
       duration: const Duration(milliseconds: 150),
       vsync: this,
@@ -57,6 +59,7 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(activeChatIdProvider.notifier).state = widget.chat.id;
       ref
           .read(chatMessagesProvider(widget.chat.id).notifier)
           .markMessagesAsRead();
@@ -64,6 +67,14 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
 
     _messageController.addListener(_onTextChanged);
     _scrollController.addListener(_onScroll);
+  }
+
+  Future<void> _loadCachedUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getString('user_id');
+    if (mounted && id != null && id.isNotEmpty) {
+      setState(() => _cachedUserId = id);
+    }
   }
 
   void _onTextChanged() {
@@ -81,6 +92,12 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
 
   @override
   void dispose() {
+    // Clear active chat ID
+    Future.microtask(() {
+      try {
+        ref.read(activeChatIdProvider.notifier).state = null;
+      } catch (_) {}
+    });
     _messageController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
@@ -94,7 +111,9 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
 
   @override
   Widget build(BuildContext context) {
-    final messages = ref.watch(chatMessagesProvider(widget.chat.id));
+    final messagesAsync = ref.watch(chatMessagesProvider(widget.chat.id));
+    final profileUser = ref.watch(currentUserProfileProvider);
+    final effectiveUserId = profileUser?.id ?? _cachedUserId ?? '';
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -102,7 +121,11 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
       backgroundColor: ThemeColors.getBackgroundColor(context),
       appBar: GlassAppBar(
         titleText: null,
-        title: _AppBarTitle(chat: widget.chat, onTap: _viewContactInfo),
+        title: _AppBarTitle(
+          chat: widget.chat,
+          currentUserId: effectiveUserId,
+          onTap: _viewContactInfo,
+        ),
         actions: [
           IconButton(
             icon: Icon(
@@ -130,49 +153,70 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
 
               // ── Messages ──
               Expanded(
-                child: messages.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        controller: _scrollController,
-                        physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
-                        itemCount: messages.length,
-                        itemBuilder: (_, i) {
-                          final msg = messages[i];
-                          final isMe = msg.senderId == 'current_user';
+                child: messagesAsync.when(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  error: (e, _) => Center(
+                    child: Text(
+                      'Could not load messages',
+                      style: TextThemes.getBodyMediumStyle(context),
+                    ),
+                  ),
+                  data: (messages) => messages.isEmpty
+                      ? _buildEmptyState()
+                      : ListView.builder(
+                          controller: _scrollController,
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+                          itemCount: messages.length,
+                          itemBuilder: (_, i) {
+                            final msg = messages[i];
+                            if (msg.content.trim().isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+                            final isMe = (effectiveUserId.isNotEmpty &&
+                                    msg.senderId == effectiveUserId) ||
+                                (profileUser != null &&
+                                    msg.senderId == profileUser.id) ||
+                                (_cachedUserId != null &&
+                                    msg.senderId == _cachedUserId) ||
+                                msg.senderId == 'current_user' ||
+                                msg.senderId.isEmpty;
 
-                          // Date separator
-                          bool showDate =
-                              i == 0 ||
-                              !_sameDay(
-                                msg.timestamp,
-                                messages[i - 1].timestamp,
-                              );
+                            // Date separator
+                            bool showDate =
+                                i == 0 ||
+                                !_sameDay(
+                                  msg.timestamp,
+                                  messages[i - 1].timestamp,
+                                );
 
-                          // Tail (last in sender sequence)
-                          final showTail =
-                              i == messages.length - 1 ||
-                              messages[i + 1].senderId != msg.senderId ||
-                              !_sameDay(
-                                msg.timestamp,
-                                messages[i + 1].timestamp,
-                              );
+                            // Tail (last in sender sequence)
+                            final showTail =
+                                i == messages.length - 1 ||
+                                messages[i + 1].senderId != msg.senderId ||
+                                !_sameDay(
+                                  msg.timestamp,
+                                  messages[i + 1].timestamp,
+                                );
 
-                          return Column(
-                            children: [
-                              if (showDate) _DateChip(date: msg.timestamp),
-                              _MessageBubble(
-                                message: msg,
-                                isCurrentUser: isMe,
-                                isDark: isDark,
-                                showTail: showTail,
-                                avatarUrl: widget.chat.avatarUrl ?? '',
-                                onLongPress: () => _showMessageOptions(msg),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
+                            return Column(
+                              children: [
+                                if (showDate) _DateChip(date: msg.timestamp),
+                                _MessageBubble(
+                                  message: msg,
+                                  isCurrentUser: isMe,
+                                  isDark: isDark,
+                                  showTail: showTail,
+                                  avatarUrl: widget.chat.avatarUrl ?? '',
+                                  onLongPress: () => _showMessageOptions(msg),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                ),
               ),
 
               // ── Input area ──
@@ -305,47 +349,22 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
 
   void _sendMessage() {
     final text = _messageController.text.trim();
-    if (text.isEmpty && _pendingImage == null) return;
+    if (text.isEmpty) return;
     HapticFeedback.lightImpact();
 
-    if (_pendingImage != null) {
-      // Send as image message with optional caption
-      ref
-          .read(chatMessagesProvider(widget.chat.id).notifier)
-          .sendMessage(text, MessageType.image, imageUrl: _pendingImage!.path);
-    } else {
-      ref
-          .read(chatMessagesProvider(widget.chat.id).notifier)
-          .sendMessage(text, MessageType.text);
-    }
+    final profileUser = ref.read(currentUserProfileProvider);
+    final myId = profileUser?.id ?? _cachedUserId ?? '';
+
+    ref
+        .read(chatMessagesProvider(widget.chat.id).notifier)
+        .sendMessage(text, senderId: myId);
+
     _messageController.clear();
     setState(() {
       _hasText = false;
       _pendingImage = null;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
-  }
-
-  Future<void> _pickFromCamera() async {
-    final xFile = await _picker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 70,
-      maxWidth: 1280,
-    );
-    if (xFile != null) {
-      setState(() => _pendingImage = File(xFile.path));
-    }
-  }
-
-  Future<void> _pickFromGallery() async {
-    final xFile = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 70,
-      maxWidth: 1280,
-    );
-    if (xFile != null) {
-      setState(() => _pendingImage = File(xFile.path));
-    }
   }
 
   void _clearPendingImage() {
@@ -463,73 +482,28 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
   }
 
   void _showAttachmentOptions() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: ThemeColors.getCardColor(context),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Attachments are coming soon — text only for now'),
+        duration: Duration(seconds: 2),
       ),
-      builder: (_) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _handle(),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _attachOption(
-                    Icons.camera_alt_rounded,
-                    'Camera',
-                    const Color(0xFFE91E63),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _pickFromCamera();
-                    },
-                  ),
-                  _attachOption(
-                    Icons.photo_rounded,
-                    'Gallery',
-                    const Color(0xFF9C27B0),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _pickFromGallery();
-                    },
-                  ),
-                  _attachOption(
-                    Icons.insert_drive_file_rounded,
-                    'Document',
-                    const Color(0xFF3F51B5),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _attachOption(
-                    Icons.location_on_rounded,
-                    'Location',
-                    const Color(0xFF4CAF50),
-                  ),
-                  _attachOption(
-                    Icons.person_rounded,
-                    'Contact',
-                    const Color(0xFF2196F3),
-                  ),
-                  _attachOption(
-                    Icons.headphones_rounded,
-                    'Audio',
-                    const Color(0xFFFF9800),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        ),
+    );
+  }
+
+  Future<void> _pickFromCamera() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Attachments are coming soon — text only for now'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _pickFromGallery() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Attachments are coming soon — text only for now'),
+        duration: Duration(seconds: 2),
       ),
     );
   }
@@ -577,36 +551,6 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
     );
   }
 
-  Widget _attachOption(
-    IconData icon,
-    String label,
-    Color color, {
-    VoidCallback? onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap ?? () => Navigator.pop(context),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextThemes.getBodySmallStyle(context).copyWith(fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
-
   bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 }
@@ -615,15 +559,28 @@ class _ChatDetailPageState extends ConsumerState<ChatDetailPage>
 // EXTRACTED WIDGETS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/// AppBar title with avatar + name + status — keeps GlassAppBar lightweight.
-class _AppBarTitle extends StatelessWidget {
+/// AppBar title with avatar + name + dynamic status — keeps GlassAppBar lightweight.
+class _AppBarTitle extends ConsumerWidget {
   final Chat chat;
+  final String currentUserId;
   final VoidCallback onTap;
-  const _AppBarTitle({required this.chat, required this.onTap});
+  const _AppBarTitle({
+    required this.chat,
+    required this.currentUserId,
+    required this.onTap,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isGroup = chat.type == ChatType.group;
+    final onlineUsers = ref.watch(onlineUsersProvider);
+    final otherUserId = chat.participantIds.firstWhere(
+      (id) => id != currentUserId,
+      orElse: () => '',
+    );
+    final isOnline = !isGroup &&
+        otherUserId.isNotEmpty &&
+        onlineUsers.contains(otherUserId);
 
     return GestureDetector(
       onTap: onTap,
@@ -634,7 +591,7 @@ class _AppBarTitle extends StatelessWidget {
             child: Stack(
               children: [
                 ProfilePic(radius: 20, imageUrl: chat.avatarUrl ?? ''),
-                if (!isGroup)
+                if (!isGroup && isOnline)
                   Positioned(
                     bottom: 0,
                     right: 0,
@@ -674,11 +631,13 @@ class _AppBarTitle extends StatelessWidget {
                 Text(
                   isGroup
                       ? '${chat.participantIds.length} participants'
-                      : 'Online',
+                      : (isOnline ? 'Online' : 'Offline'),
                   style: TextThemes.getBodySmallStyle(context).copyWith(
-                    color: ThemeColors.primaryColor,
+                    color: isOnline
+                        ? ThemeColors.primaryColor
+                        : ThemeColors.getSecondaryTextColor(context),
                     fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: isOnline ? FontWeight.w600 : FontWeight.w500,
                   ),
                 ),
               ],

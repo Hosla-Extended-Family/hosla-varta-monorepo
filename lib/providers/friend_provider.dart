@@ -89,6 +89,14 @@ class FriendRequestsNotifier
     await load();
   }
 
+  Future<void> removeById(String friendshipId) async {
+    state.whenData((items) {
+      state = AsyncValue.data(
+        items.where((edge) => edge.id != friendshipId).toList(),
+      );
+    });
+  }
+
   Future<void> addOutgoing(FriendshipEdge edge) async {
     state.whenData((items) {
       state = AsyncValue.data([edge, ...items]);
@@ -116,6 +124,11 @@ class FriendActions {
 
   Future<void> reject(String friendshipId) async {
     await _service.rejectRequest(friendshipId);
+    await ref.read(friendRequestsProvider.notifier).refresh();
+  }
+
+  Future<void> cancel(String friendshipId) async {
+    await _service.cancelRequest(friendshipId);
     await ref.read(friendRequestsProvider.notifier).refresh();
   }
 

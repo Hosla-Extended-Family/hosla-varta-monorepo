@@ -1,448 +1,375 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:hosla/core/constants/api_constants.dart';
 import 'package:hosla/models/chat_model.dart';
-import 'package:hosla/models/user_model.dart';
+import 'package:hosla/services/api_client.dart';
+import 'package:hosla/services/chat_socket_service.dart';
 import 'package:hosla/services/database_helper.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
-/// Service class for handling chat-related API calls and data management
-/// Implements offline-first approach with local database caching
-class ChatService {
-  // TODO: Add HTTP client dependency injection
-  // final http.Client _httpClient;
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+/// Persistent Web message store backed by browser localStorage (SharedPreferences)
+/// with in-memory caching for zero-latency lookups.
+class _WebStorageMessageStore {
+  static final Map<String, List<Message>> _memoryCache = {};
 
-  /// Dummy data for testing - replace with actual API calls
-  static final List<User> _dummyUsers = [
-    User(
-      id: '1',
-      name: 'Alice Johnson',
-      avatarUrl:
-          'https://images.unsplash.com/photo-1494790108755-2616b612b784?w=150&h=150&fit=crop&crop=face',
-      bio: 'Love exploring new places!',
-      email: 'alice@example.com',
-      isOnline: true,
-    ),
-    User(
-      id: '2',
-      name: 'Bob Smith',
-      avatarUrl:
-          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-      bio: 'Tech enthusiast and coffee lover',
-      email: 'bob@example.com',
-      isOnline: false,
-      lastSeen: DateTime.now().subtract(const Duration(hours: 2)),
-    ),
-    User(
-      id: '3',
-      name: 'Carol Williams',
-      avatarUrl:
-          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-      bio: 'Artist and nature photographer',
-      email: 'carol@example.com',
-      isOnline: true,
-    ),
-    User(
-      id: '4',
-      name: 'Study Group',
-      avatarUrl:
-          'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=150&h=150&fit=crop',
-      bio: 'Computer Science study group',
-      isOnline: false,
-    ),
-  ];
+  String _key(String chatId) => 'hosla_chat_messages_$chatId';
 
-  static final List<Message> _dummyMessages = [
-    Message(
-      id: '1',
-      senderId: '1',
-      chatId: 'chat_1',
-      content: 'Hey! How are you doing?',
-      type: MessageType.text,
-      timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-      isRead: true,
-    ),
-    Message(
-      id: '2',
-      senderId: 'current_user',
-      chatId: 'chat_1',
-      content: 'I\'m good! Just finished my project. What about you?',
-      type: MessageType.text,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 45)),
-      isRead: true,
-    ),
-    Message(
-      id: '3',
-      senderId: '1',
-      chatId: 'chat_1',
-      content:
-          'That\'s awesome! I\'m planning a trip to the mountains this weekend.',
-      type: MessageType.text,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
-      isRead: false,
-    ),
-    Message(
-      id: '4',
-      senderId: '2',
-      chatId: 'chat_2',
-      content: 'Did you see the new Flutter update?',
-      type: MessageType.text,
-      timestamp: DateTime.now().subtract(const Duration(hours: 3)),
-      isRead: true,
-    ),
-    Message(
-      id: '5',
-      senderId: '3',
-      chatId: 'chat_3',
-      content: '📸 Check out this amazing sunset!',
-      type: MessageType.emoji,
-      timestamp: DateTime.now().subtract(const Duration(hours: 6)),
-      isRead: false,
-    ),
-  ];
+  Future<void> upsert(Message message) async {
+    final list = await byChat(message.chatId);
+    final idx = list.indexWhere((m) => m.id == message.id);
+    if (idx >= 0) {
+      list[idx] = message;
+    } else {
+      list.add(message);
+    }
+    list.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    _memoryCache[message.chatId] = list;
 
-  static final List<Chat> _dummyChats = [
-    Chat(
-      id: 'chat_1',
-      name: 'Alice Johnson',
-      avatarUrl:
-          'https://images.unsplash.com/photo-1494790108755-2616b612b784?w=150&h=150&fit=crop&crop=face',
-      type: ChatType.individual,
-      participantIds: ['current_user', '1'],
-      lastMessage: _dummyMessages[2],
-      lastActivity: DateTime.now().subtract(const Duration(minutes: 30)),
-      unreadCount: 1,
-    ),
-    Chat(
-      id: 'chat_2',
-      name: 'Bob Smith',
-      avatarUrl:
-          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-      type: ChatType.individual,
-      participantIds: ['current_user', '2'],
-      lastMessage: _dummyMessages[3],
-      lastActivity: DateTime.now().subtract(const Duration(hours: 3)),
-      unreadCount: 0,
-    ),
-    Chat(
-      id: 'chat_3',
-      name: 'Carol Williams',
-      avatarUrl:
-          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-      type: ChatType.individual,
-      participantIds: ['current_user', '3'],
-      lastMessage: _dummyMessages[4],
-      lastActivity: DateTime.now().subtract(const Duration(hours: 6)),
-      unreadCount: 1,
-    ),
-    Chat(
-      id: 'chat_4',
-      name: 'Study Group',
-      avatarUrl:
-          'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=150&h=150&fit=crop',
-      type: ChatType.group,
-      participantIds: ['current_user', '1', '2', '3'],
-      lastMessage: Message(
-        id: '6',
-        senderId: '2',
-        chatId: 'chat_4',
-        content: 'Let\'s meet tomorrow at 3 PM in the library',
-        type: MessageType.text,
-        timestamp: DateTime.now().subtract(const Duration(days: 1)),
-        isRead: true,
-      ),
-      lastActivity: DateTime.now().subtract(const Duration(days: 1)),
-      unreadCount: 0,
-    ),
-  ];
-
-  /// Get all chats for the current user
-  /// Implements offline-first: returns cached data immediately, then syncs with API
-  Future<List<Chat>> getChats() async {
     try {
-      // First, try to get cached chats from local database
-      final cachedChats = await _dbHelper.getAllChats();
+      final prefs = await SharedPreferences.getInstance();
+      final jsonList = list.map((m) => m.toJson()).toList();
+      await prefs.setString(_key(message.chatId), jsonEncode(jsonList));
+    } catch (_) {}
+  }
 
-      // TODO: Replace with actual HTTP request
-      // try {
-      //   final response = await _httpClient.get(Uri.parse('$baseUrl/chats'));
-      //   if (response.statusCode == 200) {
-      //     final List<dynamic> jsonList = json.decode(response.body);
-      //     final chats = jsonList.map((json) => Chat.fromJson(json)).toList();
-      //
-      //     // Cache the fetched chats
-      //     await _dbHelper.upsertChats(chats);
-      //     return chats;
-      //   }
-      // } catch (e) {
-      //   // Network error - return cached data if available
-      //   print('Network error, using cached chats: $e');
-      // }
+  Future<void> remove(String messageId, String chatId) async {
+    final list = await byChat(chatId);
+    list.removeWhere((m) => m.id == messageId);
+    _memoryCache[chatId] = list;
 
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonList = list.map((m) => m.toJson()).toList();
+      await prefs.setString(_key(chatId), jsonEncode(jsonList));
+    } catch (_) {}
+  }
 
-      // Cache dummy data
-      await _dbHelper.upsertChats(_dummyChats);
+  Future<List<Message>> byChat(String chatId) async {
+    if (_memoryCache.containsKey(chatId)) {
+      return List<Message>.from(
+        _memoryCache[chatId]!.where((m) => m.content.trim().isNotEmpty),
+      );
+    }
 
-      return cachedChats.isNotEmpty ? cachedChats : _dummyChats;
-    } catch (e) {
-      print('Error loading chats: $e');
-      rethrow;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_key(chatId));
+      if (raw != null && raw.isNotEmpty) {
+        final decoded = jsonDecode(raw) as List<dynamic>;
+        final list = decoded
+            .whereType<Map>()
+            .map((m) => Message.fromJson(Map<String, dynamic>.from(m)))
+            .where((m) => m.content.trim().isNotEmpty)
+            .toList();
+        list.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+        _memoryCache[chatId] = list;
+        return List<Message>.from(list);
+      }
+    } catch (_) {}
+
+    return [];
+  }
+
+  Future<Message?> byId(String chatId, String messageId) async {
+    final list = await byChat(chatId);
+    for (final m in list) {
+      if (m.id == messageId) return m;
+    }
+    return null;
+  }
+}
+
+class _SqfliteMessageStore {
+  final DatabaseHelper _db = DatabaseHelper.instance;
+
+  Future<void> upsert(Message message) => _db.upsertMessage(message);
+
+  Future<void> remove(String messageId, String chatId) async {
+    final all = await _db.getMessagesByChatId(chatId);
+    for (final m in all.where((m) => m.id == messageId)) {
+      await _db.deleteMessage(m.id);
     }
   }
 
-  /// Get messages for a specific chat
-  /// Implements offline-first: returns cached messages immediately, then syncs with API
-  Future<List<Message>> getChatMessages(String chatId) async {
-    try {
-      // First, get cached messages from local database
-      final cachedMessages = await _dbHelper.getMessagesByChatId(chatId);
+  Future<List<Message>> byChat(String chatId) =>
+      _db.getMessagesByChatId(chatId);
 
-      // TODO: Replace with actual HTTP request
-      // try {
-      //   final response = await _httpClient.get(Uri.parse('$baseUrl/chats/$chatId/messages'));
-      //   if (response.statusCode == 200) {
-      //     final List<dynamic> jsonList = json.decode(response.body);
-      //     final messages = jsonList.map((json) => Message.fromJson(json)).toList();
-      //
-      //     // Cache the fetched messages
-      //     await _dbHelper.upsertMessages(messages);
-      //     return messages;
-      //   }
-      // } catch (e) {
-      //   // Network error - return cached data if available
-      //   print('Network error, using cached messages: $e');
-      // }
+  Future<Message?> byId(String chatId, String messageId) async {
+    final all = await _db.getMessagesByChatId(chatId);
+    for (final m in all) {
+      if (m.id == messageId) return m;
+    }
+    return null;
+  }
+}
 
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 300));
+/// Live chat service backed by the Hosla REST API + Socket.IO.
+///
+/// PRIVACY MODEL: the backend stores only metadata (message ids, sender,
+/// timestamps). Message CONTENT exists solely on the participants' devices:
+///  - outgoing/incoming texts are persisted here via [_localStore]
+///  - the server relays payloads live over Socket.IO and queues them in a
+///    short-lived Redis buffer (48h) for offline recipients
+/// History shown in a chat comes from this device's local store.
+class ChatService {
+  final ApiClient _api = ApiClient.instance;
 
-      final messages = _dummyMessages
-          .where((message) => message.chatId == chatId)
-          .toList();
+  static final _WebStorageMessageStore _webStore = _WebStorageMessageStore();
+  _SqfliteMessageStore? _sqfliteStore;
 
-      // Cache dummy data
-      if (messages.isNotEmpty) {
-        await _dbHelper.upsertMessages(messages);
+  dynamic get _localStore {
+    if (kIsWeb) return _webStore;
+    return _sqfliteStore ??= _SqfliteMessageStore();
+  }
+
+  Uri _chatUri([String path = '']) {
+    final suffix = path.isNotEmpty ? '/$path' : '';
+    return Uri.parse('${ApiConstants.baseUrl}${ApiConstants.chatsEndpoint}$suffix');
+  }
+
+  Map<String, dynamic> _decode(http.Response response) {
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Chat API error ${response.statusCode}: ${response.body}');
+  }
+
+  /// All DIRECT conversations for the current user, newest activity first.
+  Future<List<Chat>> getChats() async {
+    final response = await _api.get(_chatUri());
+    final body = _decode(response);
+    final data = body['data'] as List<dynamic>? ?? const [];
+    final chats = data
+        .whereType<Map>()
+        .map((item) => Chat.fromJson(Map<String, dynamic>.from(item)))
+        .toList();
+
+    // Server metadata carries no content - enrich previews from local store.
+    final enriched = <Chat>[];
+    for (final chat in chats) {
+      final localMsgs = await _listMessagesLocally(chat.id);
+      Message? latest = localMsgs.isNotEmpty ? localMsgs.last : null;
+
+      // If local store is empty, sync from server to populate local store
+      if (latest == null) {
+        final fetched = await getChatMessages(chat.id);
+        if (fetched.isNotEmpty) {
+          latest = fetched.last;
+        }
       }
 
-      return cachedMessages.isNotEmpty ? cachedMessages : messages;
-    } catch (e) {
-      print('Error loading messages: $e');
-      rethrow;
+      if (latest != null && latest.content.isNotEmpty) {
+        final lastActivity = latest.timestamp.isAfter(chat.lastActivity)
+            ? latest.timestamp
+            : chat.lastActivity;
+        enriched.add(chat.copyWith(
+          lastMessage: latest,
+          lastActivity: lastActivity,
+        ));
+      } else {
+        enriched.add(chat);
+      }
+    }
+    enriched.sort((a, b) => b.lastActivity.compareTo(a.lastActivity));
+    return enriched;
+  }
+
+  Future<Chat?> getChatById(String chatId) async {
+    final all = await getChats();
+    for (final c in all) {
+      if (c.id == chatId) return c;
+    }
+    return null;
+  }
+
+  /// Create or fetch an existing 1-on-1 chat with another user.
+  Future<Chat> startIndividualChat(String targetUserId) async {
+    final response = await _api.post(_chatUri('direct/$targetUserId'));
+    final body = _decode(response);
+    final data = body['data'] as Map<String, dynamic>;
+    return Chat.fromJson(data);
+  }
+
+  /// Get-or-create the DIRECT conversation with an accepted friend.
+  Future<Chat> getOrCreateDirectChat(String friendId) => startIndividualChat(friendId);
+
+  /// History for a chat: reconciles local device storage with server history.
+  Future<List<Message>> getChatMessages(String chatId, {int page = 1}) async {
+    final local = await _listMessagesLocally(chatId);
+
+    try {
+      final response =
+          await _api.get(_chatUri('$chatId/messages?page=$page&limit=50'));
+      final body = _decode(response);
+      final data = body['data'] as Map<String, dynamic>? ?? <String, dynamic>{};
+      final metaList = data['messages'] as List<dynamic>? ?? const [];
+
+      // 1. Parse server messages
+      final List<Message> serverMessages = [];
+      for (final raw in metaList.whereType<Map>()) {
+        try {
+          final sMsg = Message.fromJson(Map<String, dynamic>.from(raw));
+          if (sMsg.id.isNotEmpty) {
+            serverMessages.add(sMsg);
+          }
+        } catch (_) {}
+      }
+
+      // 2. Map existing local messages by ID for fast lookup
+      final Map<String, Message> localById = {
+        for (final m in local) m.id: m
+      };
+
+      // 3. Merge server and local messages
+      final Map<String, Message> merged = {};
+
+      for (final sMsg in serverMessages) {
+        final localMsg = localById[sMsg.id];
+        final effectiveContent = sMsg.content.isNotEmpty
+            ? sMsg.content
+            : (localMsg?.content ?? '');
+        final effectiveMsg = sMsg.copyWith(
+          content: effectiveContent,
+          senderId: sMsg.senderId.isNotEmpty
+              ? sMsg.senderId
+              : (localMsg?.senderId ?? ''),
+        );
+        merged[effectiveMsg.id] = effectiveMsg;
+        await _upsertMessageLocally(effectiveMsg);
+      }
+
+      // Keep any pending local messages (tmp_)
+      for (final lMsg in local) {
+        if (lMsg.id.startsWith('tmp_') && !merged.containsKey(lMsg.id)) {
+          merged[lMsg.id] = lMsg;
+        }
+      }
+
+      final result = merged.values.toList()
+        ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      return result;
+    } catch (_) {
+      return local;
     }
   }
 
-  /// Send a message to a chat
-  /// Saves to local database first, then syncs with API
-  Future<Message> sendMessage({
+  /// Send a text message.
+  ///
+  /// Saves optimistically on-device, delivers via the realtime socket and
+  /// adopts the server-assigned id/timestamp from the ack. Falls back to
+  /// REST when the socket is unavailable. Returns the final message or null.
+  Future<Message?> sendMessage({
     required String chatId,
     required String content,
-    required MessageType type,
-    String? imageUrl,
   }) async {
-    try {
-      final message = Message(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        senderId: 'current_user',
-        chatId: chatId,
-        content: content,
-        type: type,
-        timestamp: DateTime.now(),
-        imageUrl: imageUrl,
-      );
+    final trimmed = content.trim();
+    if (trimmed.isEmpty) return null;
 
-      // Save to local database immediately
-      await _dbHelper.upsertMessage(message);
+    final prefs = await SharedPreferences.getInstance();
+    final currentUserId = prefs.getString('user_id') ?? '';
 
-      // TODO: Replace with actual HTTP request
-      // try {
-      //   final response = await _httpClient.post(
-      //     Uri.parse('$baseUrl/chats/$chatId/messages'),
-      //     headers: {'Content-Type': 'application/json'},
-      //     body: json.encode({
-      //       'content': content,
-      //       'type': type.toString().split('.').last,
-      //       'imageUrl': imageUrl,
-      //     }),
-      //   );
-      //   if (response.statusCode == 201) {
-      //     final serverMessage = Message.fromJson(json.decode(response.body));
-      //     // Update local database with server response
-      //     await _dbHelper.upsertMessage(serverMessage);
-      //     return serverMessage;
-      //   }
-      // } catch (e) {
-      //   // Network error - message is already saved locally
-      //   print('Network error sending message, saved locally: $e');
-      // }
+    final temp = Message(
+      id: 'tmp_${DateTime.now().microsecondsSinceEpoch}',
+      senderId: currentUserId,
+      chatId: chatId,
+      content: trimmed,
+      type: MessageType.text,
+      timestamp: DateTime.now(),
+    );
+    await _upsertMessageLocally(temp);
 
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 200));
-
-      return message;
-    } catch (e) {
-      print('Error sending message: $e');
-      rethrow;
+    Map<String, dynamic>? savedMeta;
+    final ack = await ChatSocketService.instance.sendMessage(chatId, trimmed);
+    if (ack != null && ack['ok'] == true && ack['data'] is Map) {
+      savedMeta = Map<String, dynamic>.from(ack['data'] as Map);
     }
+
+    if (savedMeta == null) {
+      try {
+        final response = await _api.post(
+          _chatUri('$chatId/messages'),
+          body: json.encode({'content': trimmed}),
+        );
+        final body = _decode(response);
+        savedMeta = body['data'] as Map<String, dynamic>?;
+      } catch (_) {}
+    }
+
+    if (savedMeta == null || !savedMeta.containsKey('id')) {
+      // Delivery failed entirely - keep the optimistic copy so the user can
+      // retry/copy it, but signal failure upstream.
+      return null;
+    }
+
+    final deliveredAtRaw = savedMeta['createdAt']?.toString();
+    final serverSenderId = savedMeta['senderId']?.toString();
+    final finalMsg = Message(
+      id: savedMeta['id']?.toString() ?? temp.id,
+      senderId: (serverSenderId != null && serverSenderId.isNotEmpty)
+          ? serverSenderId
+          : (currentUserId.isNotEmpty ? currentUserId : temp.senderId),
+      chatId: chatId,
+      content: trimmed,
+      type: MessageType.text,
+      timestamp: DateTime.tryParse(deliveredAtRaw ?? '') ?? temp.timestamp,
+    );
+
+    await _removeMessageLocally(temp.id, chatId);
+    await _upsertMessageLocally(finalMsg);
+    return finalMsg;
   }
 
-  /// Create a new chat
-  /// Saves to local database first, then syncs with API
-  Future<Chat> createChat(Chat chat) async {
-    try {
-      // Save to local database immediately
-      await _dbHelper.upsertChat(chat);
-
-      // TODO: Replace with actual HTTP request
-      // try {
-      //   final response = await _httpClient.post(
-      //     Uri.parse('$baseUrl/chats'),
-      //     headers: {'Content-Type': 'application/json'},
-      //     body: json.encode(chat.toJson()),
-      //   );
-      //   if (response.statusCode == 201) {
-      //     final serverChat = Chat.fromJson(json.decode(response.body));
-      //     // Update local database with server response
-      //     await _dbHelper.upsertChat(serverChat);
-      //     return serverChat;
-      //   }
-      // } catch (e) {
-      //   // Network error - chat is already saved locally
-      //   print('Network error creating chat, saved locally: $e');
-      // }
-
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 300));
-      return chat;
-    } catch (e) {
-      print('Error creating chat: $e');
-      rethrow;
-    }
+  /// Persist an incoming realtime message on this device.
+  Future<void> saveIncoming(Map<String, dynamic> payload) async {
+    if (!payload.containsKey('id')) return;
+    final msg = Message.fromJson(payload);
+    if (msg.content.isEmpty) return;
+    await _upsertMessageLocally(msg);
   }
 
-  /// Mark a chat as read
-  /// Updates local database first, then syncs with API
-  Future<void> markChatAsRead(String chatId) async {
-    try {
-      // Update local database immediately
-      await _dbHelper.updateChatUnreadCount(chatId, 0);
-
-      // TODO: Replace with actual HTTP request
-      // try {
-      //   final response = await _httpClient.put(Uri.parse('$baseUrl/chats/$chatId/read'));
-      //   if (response.statusCode != 200) {
-      //     throw Exception('Failed to mark chat as read on server');
-      //   }
-      // } catch (e) {
-      //   // Network error - already updated locally
-      //   print('Network error marking chat as read, updated locally: $e');
-      // }
-
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 100));
-    } catch (e) {
-      print('Error marking chat as read: $e');
-      rethrow;
-    }
-  }
-
-  /// Mark messages in a chat as read
-  /// Updates local database first, then syncs with API
+  /// Mark all incoming messages of a conversation as read.
   Future<void> markMessagesAsRead(String chatId) async {
     try {
-      // Update local database immediately
-      await _dbHelper.markMessagesAsRead(chatId);
+      ChatSocketService.instance.markRead(chatId);
+      await _api.post(_chatUri('$chatId/read'));
+    } catch (_) {}
+  }
 
-      // TODO: Replace with actual HTTP request
-      // try {
-      //   final response = await _httpClient.put(Uri.parse('$baseUrl/chats/$chatId/messages/read'));
-      //   if (response.statusCode != 200) {
-      //     throw Exception('Failed to mark messages as read on server');
-      //   }
-      // } catch (e) {
-      //   // Network error - already updated locally
-      //   print('Network error marking messages as read, updated locally: $e');
-      // }
+  // ── local store helpers ─────────────────────────────────────────
 
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 100));
-    } catch (e) {
-      print('Error marking messages as read: $e');
-      rethrow;
+  Future<Message?> _getMessageLocally(String chatId, String messageId) async {
+    final store = _localStore;
+    if (store is _WebStorageMessageStore) {
+      return store.byId(chatId, messageId);
+    }
+    return (store as _SqfliteMessageStore).byId(chatId, messageId);
+  }
+
+  Future<List<Message>> _listMessagesLocally(String chatId) async {
+    final store = _localStore;
+    if (store is _WebStorageMessageStore) {
+      return store.byChat(chatId);
+    }
+    return (store as _SqfliteMessageStore).byChat(chatId);
+  }
+
+  Future<void> _upsertMessageLocally(Message message) async {
+    final store = _localStore;
+    if (store is _WebStorageMessageStore) {
+      await store.upsert(message);
+    } else {
+      await (store as _SqfliteMessageStore).upsert(message);
     }
   }
 
-  /// Get all users (for contacts/participants)
-  /// Implements offline-first: returns cached users, then syncs with API
-  Future<List<User>> getUsers() async {
-    try {
-      // First, try to get cached users from local database
-      final cachedUsers = await _dbHelper.getAllUsers();
-
-      // TODO: Replace with actual HTTP request
-      // try {
-      //   final response = await _httpClient.get(Uri.parse('$baseUrl/users'));
-      //   if (response.statusCode == 200) {
-      //     final List<dynamic> jsonList = json.decode(response.body);
-      //     final users = jsonList.map((json) => User.fromJson(json)).toList();
-      //
-      //     // Cache the fetched users
-      //     await _dbHelper.upsertUsers(users);
-      //     return users;
-      //   }
-      // } catch (e) {
-      //   // Network error - return cached data if available
-      //   print('Network error, using cached users: $e');
-      // }
-
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 400));
-
-      // Cache dummy data
-      await _dbHelper.upsertUsers(_dummyUsers);
-
-      return cachedUsers.isNotEmpty ? cachedUsers : _dummyUsers;
-    } catch (e) {
-      print('Error loading users: $e');
-      rethrow;
-    }
-  }
-
-  /// Search users by name or email
-  /// Searches local database for offline support
-  Future<List<User>> searchUsers(String query) async {
-    try {
-      // TODO: Replace with actual HTTP request
-      // try {
-      //   final response = await _httpClient.get(Uri.parse('$baseUrl/users/search?q=$query'));
-      //   if (response.statusCode == 200) {
-      //     final List<dynamic> jsonList = json.decode(response.body);
-      //     return jsonList.map((json) => User.fromJson(json)).toList();
-      //   }
-      // } catch (e) {
-      //   // Network error - search local database
-      //   print('Network error, searching cached users: $e');
-      // }
-
-      // Get all users from local database and filter
-      final allUsers = await _dbHelper.getAllUsers();
-
-      // Simulate network delay
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      // If no cached users, use dummy data
-      final users = allUsers.isNotEmpty ? allUsers : _dummyUsers;
-
-      return users
-          .where(
-            (user) =>
-                user.name.toLowerCase().contains(query.toLowerCase()) ||
-                (user.email?.toLowerCase().contains(query.toLowerCase()) ??
-                    false),
-          )
-          .toList();
-    } catch (e) {
-      print('Error searching users: $e');
-      rethrow;
+  Future<void> _removeMessageLocally(String messageId, String chatId) async {
+    final store = _localStore;
+    if (store is _WebStorageMessageStore) {
+      await store.remove(messageId, chatId);
+    } else {
+      await (store as _SqfliteMessageStore).remove(messageId, chatId);
     }
   }
 }

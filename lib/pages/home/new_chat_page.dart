@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
-import 'package:hosla/models/chat_model.dart';
 import 'package:hosla/models/friend_model.dart';
 import 'package:hosla/pages/chat_detail_page.dart';
 import 'package:hosla/pages/home/new_group_chat_page.dart';
@@ -32,6 +31,7 @@ class NewChatPage extends ConsumerStatefulWidget {
 class _NewChatPageState extends ConsumerState<NewChatPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  bool _isStartingChat = false;
 
   @override
   void dispose() {
@@ -474,21 +474,28 @@ class _NewChatPageState extends ConsumerState<NewChatPage> {
 
   // ───────────────────── ACTIONS ────────────────────────────────
 
-  void _startChat(FriendUserSummary user) {
-    final chat = Chat(
-      id: 'chat_${DateTime.now().millisecondsSinceEpoch}',
-      name: user.name,
-      avatarUrl: user.profilePicUrl,
-      type: ChatType.individual,
-      participantIds: [user.id],
-      lastActivity: DateTime.now(),
-    );
+  Future<void> _startChat(FriendUserSummary user) async {
+    if (_isStartingChat) return;
+    _isStartingChat = true;
 
-    ref.read(chatsProvider.notifier).addChat(chat);
+    try {
+      final service = ref.read(chatServiceProvider);
+      final chat = await service.getOrCreateDirectChat(user.id);
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => ChatDetailPage(chat: chat)),
-    );
+      if (!mounted) return;
+      ref.read(chatsProvider.notifier).applyLocalUpdate(chat);
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => ChatDetailPage(chat: chat)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not start chat: $e')),
+      );
+    } finally {
+      _isStartingChat = false;
+    }
   }
 }

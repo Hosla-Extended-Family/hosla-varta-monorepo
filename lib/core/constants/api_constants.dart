@@ -1,6 +1,5 @@
 class ApiConstants {
-  static const String baseUrl =
-      'https://app.hosla.in';
+  static const String baseUrl = 'https://app.hosla.in';
 
   /// Resolves API-provided URLs that may be absolute or relative.
   ///
@@ -28,9 +27,13 @@ class ApiConstants {
   static const String userEndpoint = '/api/user';
   static const String usersEndpoint = '/api/users';
   static const String friendsEndpoint = '/api/friends';
+  static const String chatsEndpoint = '/api/chats';
   static const String authEndpoint = '/api/auth';
   static const String tagsEndpoint = '/api/tags';
   static const String emergencyEndpoint = '/api/emergency/log';
+
+  /// WebSocket URL for realtime chat (Socket.IO)
+  static const String socketUrl = baseUrl;
 
   static const Duration timeout = Duration(seconds: 30);
 }

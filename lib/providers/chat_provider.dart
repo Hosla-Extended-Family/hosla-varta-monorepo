@@ -1,162 +1,270 @@
-import 'package:riverpod/riverpod.dart';
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hosla/models/chat_model.dart';
 import 'package:hosla/models/user_model.dart';
 import 'package:hosla/services/chat_service.dart';
+import 'package:hosla/services/chat_socket_service.dart';
 
 /// Provider for ChatService instance
 final chatServiceProvider = Provider<ChatService>((ref) => ChatService());
 
-/// Provider for current user
+/// Legacy current-user provider (kept for existing pages).
 final currentUserProvider = StateProvider<User?>((ref) => null);
 
+/// Tracks the currently active/open chat screen ID (to suppress notifications inside active chat).
+final activeChatIdProvider = StateProvider<String?>((ref) => null);
+
+/// Realtime socket singleton
+final chatSocketProvider = Provider<ChatSocketService>(
+  (ref) => ChatSocketService.instance,
+);
+
 /// Provider for list of chats
-final chatsProvider = StateNotifierProvider<ChatsNotifier, List<Chat>>((ref) {
-  return ChatsNotifier(ref.read(chatServiceProvider));
+final chatsProvider =
+    StateNotifierProvider<ChatsNotifier, AsyncValue<List<Chat>>>((ref) {
+  final notifier = ChatsNotifier(ref.read(chatServiceProvider));
+  ref.onDispose(notifier.disposeStreams);
+  return notifier;
 });
 
 /// Provider for chat messages - takes chatId as parameter
-final chatMessagesProvider = StateNotifierProvider.family<ChatMessagesNotifier, List<Message>, String>((ref, chatId) {
-  return ChatMessagesNotifier(ref.read(chatServiceProvider), chatId);
+final chatMessagesProvider = StateNotifierProvider.family<
+    ChatMessagesNotifier, AsyncValue<List<Message>>, String>((ref, chatId) {
+  final notifier = ChatMessagesNotifier(
+    ref.read(chatServiceProvider),
+    ref.read(chatSocketProvider),
+    chatId,
+  );
+  ref.onDispose(notifier.disposeStreams);
+  return notifier;
 });
 
-/// Provider for users list (for contacts/participants)
-final usersProvider = StateNotifierProvider<UsersNotifier, List<User>>((ref) {
-  return UsersNotifier(ref.read(chatServiceProvider));
-});
-
-/// Notifier for managing chats list
-class ChatsNotifier extends StateNotifier<List<Chat>> {
+class ChatsNotifier extends StateNotifier<AsyncValue<List<Chat>>> {
   final ChatService _chatService;
+  StreamSubscription? _messageSub;
+  StreamSubscription? _refreshSub;
 
-  ChatsNotifier(this._chatService) : super([]) {
+  ChatsNotifier(this._chatService) : super(const AsyncValue.loading()) {
     loadChats();
+    _listenRealtime();
   }
 
-  /// Load all chats for current user
-  Future<void> loadChats() async {
+  void _listenRealtime() {
+    _refreshSub = ChatSocketService.instance.conversationRefresh.listen((_) {
+      loadChats(silent: true);
+    });
+    _messageSub = ChatSocketService.instance.messages.listen((_) {
+      loadChats(silent: true);
+    });
+  }
+
+  Future<void> loadChats({bool silent = false}) async {
     try {
-      // TODO: Implement API call
+      if (!silent) state = const AsyncValue.loading();
       final chats = await _chatService.getChats();
-      state = chats;
-    } catch (e) {
-      // Handle error - could use error provider
-      print('Error loading chats: $e');
+      state = AsyncValue.data(chats);
+    } catch (e, st) {
+      if (state is! AsyncData<List<Chat>>) {
+        state = AsyncValue.error(e, st);
+      }
     }
   }
 
-  /// Add a new chat
+  Future<void> refresh() => loadChats(silent: true);
+
+  /// Kept for group-chat flow compatibility (groups are not live yet).
   Future<void> addChat(Chat chat) async {
-    try {
-      // TODO: Implement API call
-      await _chatService.createChat(chat);
-      state = [...state, chat];
-    } catch (e) {
-      print('Error adding chat: $e');
-    }
+    state = state.whenData((chats) => [chat, ...chats]);
   }
 
-  /// Update chat (e.g., when new message arrives)
-  void updateChat(Chat updatedChat) {
-    state = state.map((chat) {
-      return chat.id == updatedChat.id ? updatedChat : chat;
-    }).toList();
+  void applyLocalUpdate(Chat updatedChat) {
+    state = state.whenData((chats) {
+      final exists = chats.any((c) => c.id == updatedChat.id);
+      return exists
+          ? chats.map((c) => c.id == updatedChat.id ? updatedChat : c).toList()
+          : [updatedChat, ...chats];
+    });
   }
 
-  /// Mark chat as read
   Future<void> markChatAsRead(String chatId) async {
-    try {
-      // TODO: Implement API call
-      await _chatService.markChatAsRead(chatId);
-      
-      state = state.map((chat) {
-        return chat.id == chatId ? chat.copyWith(unreadCount: 0) : chat;
-      }).toList();
-    } catch (e) {
-      print('Error marking chat as read: $e');
-    }
+    await _chatService.markMessagesAsRead(chatId);
+    state = state.whenData(
+      (chats) => chats
+          .map((c) => c.id == chatId ? c.copyWith(unreadCount: 0) : c)
+          .toList(),
+    );
+  }
+
+  void disposeStreams() {
+    _messageSub?.cancel();
+    _refreshSub?.cancel();
   }
 }
 
-/// Notifier for managing messages in a specific chat
-class ChatMessagesNotifier extends StateNotifier<List<Message>> {
+/// Tracks online user IDs in real-time via Socket.IO presence events.
+final onlineUsersProvider =
+    StateNotifierProvider<OnlineUsersNotifier, Set<String>>((ref) {
+  return OnlineUsersNotifier(ChatSocketService.instance);
+});
+
+class OnlineUsersNotifier extends StateNotifier<Set<String>> {
+  StreamSubscription? _presenceSub;
+
+  OnlineUsersNotifier(ChatSocketService socket) : super(<String>{}) {
+    _presenceSub = socket.presenceUpdates.listen((event) {
+      final userId = event['userId']?.toString();
+      final isOnline = event['isOnline'] == true;
+      if (userId == null || userId.isEmpty) return;
+
+      if (isOnline) {
+        state = {...state, userId};
+      } else {
+        state = state.where((id) => id != userId).toSet();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _presenceSub?.cancel();
+    super.dispose();
+  }
+}
+
+/// Placeholder users list (contacts are resolved from friends search).
+final usersProvider = StateNotifierProvider<UsersNotifier, List<User>>((ref) {
+  return UsersNotifier();
+});
+
+class UsersNotifier extends StateNotifier<List<User>> {
+  UsersNotifier() : super(const []);
+
+  void updateUserStatus(String userId, bool isOnline) {
+    state = state
+        .map((user) => user.id == userId
+            ? user.copyWith(isOnline: isOnline, lastSeen: DateTime.now())
+            : user)
+        .toList();
+  }
+}
+
+class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<Message>>> {
   final ChatService _chatService;
   final String chatId;
+  StreamSubscription? _messageSub;
+  StreamSubscription? _readSub;
 
-  ChatMessagesNotifier(this._chatService, this.chatId) : super([]) {
+  ChatMessagesNotifier(this._chatService, ChatSocketService socket, this.chatId)
+      : super(const AsyncValue.loading()) {
     loadMessages();
+    _listenRealtime(socket);
   }
 
-  /// Load messages for this chat
+  void _listenRealtime(ChatSocketService socket) {
+    socket.joinChat(chatId);
+
+    _messageSub = socket.messages.listen((msg) {
+      if (msg['conversationId']?.toString() != chatId) return;
+
+      // Persist content on THIS device before displaying.
+      _chatService.saveIncoming(msg);
+
+      final incoming = Message.fromJson(msg);
+      state = state.whenData((messages) {
+        if (messages.any((m) => m.id == incoming.id)) return messages;
+        return [...messages, incoming];
+      });
+      markMessagesAsRead();
+    });
+
+    _readSub = socket.readReceipts.listen((receipt) {
+      if (receipt['conversationId']?.toString() != chatId) return;
+      state = state.whenData((messages) {
+        return messages.map((m) {
+          if (!m.isRead) {
+            final updated = m.copyWith(isRead: true);
+            _chatService.saveIncoming(updated.toJson());
+            return updated;
+          }
+          return m;
+        }).toList();
+      });
+    });
+  }
+
   Future<void> loadMessages() async {
     try {
-      // TODO: Implement API call
+      state = const AsyncValue.loading();
       final messages = await _chatService.getChatMessages(chatId);
-      state = messages;
-    } catch (e) {
-      print('Error loading messages: $e');
+      state = AsyncValue.data(messages);
+
+      await markMessagesAsRead();
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
     }
   }
 
-  /// Send a new message
-  Future<void> sendMessage(String content, MessageType type, {String? imageUrl}) async {
+  Future<void> refresh() async {
     try {
-      // TODO: Implement API call
-      final message = await _chatService.sendMessage(
-        chatId: chatId,
-        content: content,
-        type: type,
-        imageUrl: imageUrl,
-      );
-      
-      state = [...state, message];
-    } catch (e) {
-      print('Error sending message: $e');
-    }
+      final messages = await _chatService.getChatMessages(chatId);
+      state = AsyncValue.data(messages);
+    } catch (_) {}
   }
 
-  /// Mark messages as read
+  /// Send via realtime socket (REST fallback inside the service).
+  Future<bool> sendMessage(String content, {String? senderId}) async {
+    final trimmed = content.trim();
+    if (trimmed.isEmpty) return false;
+
+    // 1. Instantly append temporary optimistic message for 0ms delay
+    final tempId = 'tmp_${DateTime.now().microsecondsSinceEpoch}';
+    final tempMsg = Message(
+      id: tempId,
+      senderId: senderId ?? '',
+      chatId: chatId,
+      content: trimmed,
+      type: MessageType.text,
+      timestamp: DateTime.now(),
+    );
+
+    state = state.whenData((messages) {
+      if (messages.any((m) => m.id == tempId)) return messages;
+      return [...messages, tempMsg];
+    });
+
+    // 2. Deliver via socket / REST
+    final sent = await _chatService.sendMessage(
+      chatId: chatId,
+      content: trimmed,
+    );
+    if (sent == null) return false;
+
+    // 3. Reconcile temporary message with server-assigned ID & metadata
+    state = state.whenData((messages) {
+      final updated =
+          messages.map((m) => m.id == tempId ? sent : m).toList();
+      final Map<String, Message> dedup = {};
+      for (final m in updated) {
+        dedup[m.id] = m;
+      }
+      return dedup.values.toList()
+        ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    });
+    return true;
+  }
+
+  /// Optimistic local echo (used while awaiting server ack).
+  void addPending(Message message) {
+    state = state.whenData((messages) => [...messages, message]);
+  }
+
   Future<void> markMessagesAsRead() async {
-    try {
-      // TODO: Implement API call
-      await _chatService.markMessagesAsRead(chatId);
-      
-      state = state.map((message) => message.copyWith(isRead: true)).toList();
-    } catch (e) {
-      print('Error marking messages as read: $e');
-    }
+    await _chatService.markMessagesAsRead(chatId);
   }
 
-  /// Add a message (e.g., when received from real-time updates)
-  void addMessage(Message message) {
-    state = [...state, message];
-  }
-}
-
-/// Notifier for managing users list
-class UsersNotifier extends StateNotifier<List<User>> {
-  final ChatService _chatService;
-
-  UsersNotifier(this._chatService) : super([]) {
-    loadUsers();
-  }
-
-  /// Load all users
-  Future<void> loadUsers() async {
-    try {
-      // TODO: Implement API call
-      final users = await _chatService.getUsers();
-      state = users;
-    } catch (e) {
-      print('Error loading users: $e');
-    }
-  }
-
-  /// Update user status
-  void updateUserStatus(String userId, bool isOnline) {
-    state = state.map((user) {
-      return user.id == userId 
-          ? user.copyWith(isOnline: isOnline, lastSeen: DateTime.now())
-          : user;
-    }).toList();
+  void disposeStreams() {
+    _messageSub?.cancel();
+    _readSub?.cancel();
   }
 }

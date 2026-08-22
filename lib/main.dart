@@ -10,31 +10,60 @@ import 'package:hosla/pages/authentication/signup_page.dart';
 import 'package:hosla/pages/home_page.dart';
 import 'package:hosla/providers/theme_provider.dart';
 import 'package:hosla/services/auth_service.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:hosla/services/firebase_messaging_service.dart';
+import 'package:hosla/services/chat_socket_service.dart';
+import 'package:hosla/widgets/in_app_notification_host.dart';
+import 'firebase_options.dart'; // This file will be generated when you run flutterfire configure
 void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   // Preserve the native splash screen until initialization completes
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  
+  // Initialize Firebase
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    await FirebaseMessagingService().init();
+  } catch (e) {
+    print('Firebase init failed: $e');
+  }
+
   // Eagerly refresh tokens if access is near expiry
   await AuthService.instance.refreshIfExpiringSoon();
+  
+  final prefs = await SharedPreferences.getInstance();
+  final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+
+  // Connect realtime chat when the user has a session
+  if (isLoggedIn) {
+    ChatSocketService.instance.connect();
+  }
+
   // Remove splash screen now that initialization is done
   FlutterNativeSplash.remove();
-  runApp(const ProviderScope(child: MainApp()));
+  runApp(ProviderScope(child: MainApp(isLoggedIn: isLoggedIn)));
 }
 
 class MainApp extends ConsumerWidget {
-  const MainApp({super.key});
+  final bool isLoggedIn;
+  const MainApp({super.key, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeProvider);
 
     return MaterialApp(
+      navigatorKey: rootNavigatorKey,
       debugShowCheckedModeBanner: false,
       navigatorObservers: [routeObserver],
       themeMode: themeMode,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
+      builder: (context, child) =>
+          InAppNotificationHost(child: child ?? const SizedBox.shrink()),
       routes: {
         //'/': (context) => const _CheckUser(),
         '/login': (context) => const LoginPage(),
@@ -69,7 +98,7 @@ class MainApp extends ConsumerWidget {
           return UpdatePasswordPage(phoneNumber: args);
         }, */
       },
-      home: LoginPage(),
+      home: isLoggedIn ? Homepage() : const LoginPage(),
     );
   }
 }

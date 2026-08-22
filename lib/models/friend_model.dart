@@ -31,6 +31,9 @@ class FriendshipEdge {
   final FriendUserSummary? receiver;
   final DateTime? createdAt;
 
+  /// 'incoming' | 'outgoing' when returned by the pending-requests endpoint.
+  final String? direction;
+
   const FriendshipEdge({
     required this.id,
     required this.requesterId,
@@ -39,6 +42,7 @@ class FriendshipEdge {
     this.requester,
     this.receiver,
     this.createdAt,
+    this.direction,
   });
 
   factory FriendshipEdge.fromJson(Map<String, dynamic> json) {
@@ -62,11 +66,14 @@ class FriendshipEdge {
           ? FriendUserSummary.fromJson(json['receiver'] as Map<String, dynamic>)
           : null,
       createdAt: created,
+      direction: json['direction']?.toString(),
     );
   }
 
   bool isPending() => status.toUpperCase() == 'PENDING';
   bool isAccepted() => status.toUpperCase() == 'ACCEPTED';
+  bool isOutgoing(String currentUserId) =>
+      direction?.toLowerCase() == 'outgoing' || requesterId == currentUserId;
 
   FriendUserSummary? otherParty(String currentUserId) {
     if (requesterId == currentUserId) return receiver ?? requester;

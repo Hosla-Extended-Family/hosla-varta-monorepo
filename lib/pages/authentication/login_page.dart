@@ -42,22 +42,13 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<String> _handleLogin() async {
-    final phoneNumber = _phoneNumberController.text;
+    final phoneNumber = _phoneNumberController.text.trim();
 
     if (phoneNumber.isEmpty) {
-      // Show error message
       return "Please enter your phone number.";
     }
 
     try {
-      /* final request = http.Request('POST', Uri.parse('https://comm-involve-drive-sin.trycloudflare.com/api/auth/request-otp/'))
-        ..headers['Content-Type'] = 'application/json'
-        ..body = '{"phone": "$phoneNumber"}';
-      print(request.body);
-      final response = await http.Client().send(request);
-      print(response.toString());
-      final responseBody = await response.stream.bytesToString();
- */
       final response = await http.post(
         Uri.parse('${ApiConstants.baseUrl}/api/auth/request-otp'),
         headers: {
@@ -68,97 +59,20 @@ class _LoginPageState extends State<LoginPage> {
       );
       final responseBody = response.body;
       if (response.statusCode == 200) {
-        // Parse response and extract user data
-        final responseData = json.decode(responseBody);
-
-        // Save user data to local database
-        await _saveUserToDatabase(responseData);
-
-        // Save authentication token and user ID to SharedPreferences
-        await _saveAuthData(responseData);
-
-        return "Login successful!";
+        return "OTP sent successfully!";
       } else if (response.statusCode == 404) {
-        return "Invalid phone number ";
+        return "Invalid phone number";
       } else {
-        return "Login failed: $responseBody";
+        try {
+          final decoded = json.decode(responseBody);
+          return decoded['error']?['message'] ?? decoded['message'] ?? "Failed to send OTP: $responseBody";
+        } catch (_) {
+          return "Failed to send OTP: $responseBody";
+        }
       }
     } catch (e) {
-      return "Login failed. Please try again.";
-    }
-  }
-
-  /// Save user data to local SQLite database
-  Future<void> _saveUserToDatabase(Map<String, dynamic> responseData) async {
-    try {
-      // Extract user data from response
-      final userData = responseData['user'] ?? responseData;
-
-      // Get phone number from controller as fallback
-      final phoneNumber = _phoneNumberController.text;
-
-      // Create User object from response
-      final user = User(
-        id:
-            userData['id']?.toString() ??
-            userData['userId']?.toString() ??
-            'current_user',
-        name:
-            userData['name']?.toString() ??
-            userData['username']?.toString() ??
-            '',
-        email: userData['email']?.toString(),
-        phone: userData['phone']?.toString() ?? phoneNumber,
-        avatarUrl:
-            userData['avatarUrl']?.toString() ?? userData['avatar']?.toString(),
-        bio: userData['bio']?.toString(),
-        isOnline: true,
-      );
-
-      // Save to local database
-      final dbHelper = DatabaseHelper.instance;
-      await dbHelper.upsertUser(user);
-
-      print('User saved to local database: ${user.id}');
-    } catch (e) {
-      print('Error saving user to database: $e');
-      rethrow;
-    }
-  }
-
-  /// Save authentication data to SharedPreferences
-  Future<void> _saveAuthData(Map<String, dynamic> responseData) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-
-      // Save authentication token if available
-      if (responseData.containsKey('token')) {
-        await prefs.setString('auth_token', responseData['token'].toString());
-      }
-
-      // Save user ID
-      final userData = responseData['user'] ?? responseData;
-      final userId =
-          userData['id']?.toString() ??
-          userData['userId']?.toString() ??
-          'current_user';
-      await prefs.setString('user_id', userId);
-
-      // Save phone number
-      final phoneNumber = _phoneNumberController.text;
-      final userPhone = userData['phone']?.toString() ?? phoneNumber;
-      await prefs.setString('phone_number', userPhone);
-
-      // Save login status
-      await prefs.setBool('is_logged_in', true);
-
-      // Save login timestamp
-      await prefs.setString('login_time', DateTime.now().toIso8601String());
-
-      print('Auth data saved to SharedPreferences');
-    } catch (e) {
-      print('Error saving auth data: $e');
-      rethrow;
+      debugPrint('Login request failed: $e');
+      return "Failed to send OTP: $e";
     }
   }
 
@@ -225,6 +139,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   child: DropdownButtonFormField<String>(
+                    isExpanded: true,
                     borderRadius: BorderRadius.circular(16),
                     initialValue: '+91',
                     items: const [
@@ -324,13 +239,13 @@ class _LoginPageState extends State<LoginPage> {
               text: 'Login',
               onPressed: () async {
                 final result = await _handleLogin();
-                if (result == "Login successful!") {
-                  SnackBarWidget.show(context, result);
+                if (result == "OTP sent successfully!") {
+                  SnackBarWidget.show(context, 'OTP sent successfully to your number');
                   Navigator.pushNamed(
                     context,
                     '/otp-verification',
                     arguments: {
-                      'phoneNumber': _phoneNumberController.text,
+                      'phoneNumber': _phoneNumberController.text.trim(),
                       'endRoute': '/home',
                     },
                   );

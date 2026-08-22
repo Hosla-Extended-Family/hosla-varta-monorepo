@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/pages/home/friends_page.dart';
+import 'package:hosla/pages/home/notifications_page.dart';
 import 'package:hosla/pages/home/profile_page.dart';
 import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/providers/feed_provider.dart';
@@ -58,6 +59,10 @@ class _FeedPageState extends ConsumerState<FeedPage>
     _scrollController.addListener(_onScroll);
     _friendScrollController.addListener(_onFriendScroll);
     _tabController = TabController(length: 2, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(feedPostsProvider.notifier).loadPosts();
+      ref.read(currentUserProfileProvider.notifier).loadCurrentUser();
+    });
   }
 
   void _onScroll() {
@@ -103,6 +108,9 @@ class _FeedPageState extends ConsumerState<FeedPage>
   Widget build(BuildContext context) {
     final currentUser = ref.watch(currentUserProfileProvider);
 
+    final topPadding =
+        MediaQuery.of(context).padding.top + kToolbarHeight + 48;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: GlassAppBar(
@@ -123,6 +131,20 @@ class _FeedPageState extends ConsumerState<FeedPage>
           ],
         ),
         actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationsPage()),
+              );
+            },
+            icon: Icon(
+              Icons.notifications_outlined,
+              color: ThemeColors.getNavBarIconColor(context),
+              size: 24,
+            ),
+            tooltip: 'Notifications',
+          ),
           IconButton(
             onPressed: () {
               Navigator.push(
@@ -240,12 +262,12 @@ class _FeedPageState extends ConsumerState<FeedPage>
             onRefresh: _handleRefresh,
             color: ThemeColors.primaryColor,
             backgroundColor: ThemeColors.getSurfaceColor(context),
-            edgeOffset: 170 + MediaQuery.of(context).padding.top,
+            edgeOffset: topPadding,
             child: CustomScrollView(
               controller: _scrollController,
               physics: const BouncingScrollPhysics(),
               slivers: [
-                SliverToBoxAdapter(child: SizedBox(height: 170)),
+                SliverToBoxAdapter(child: SizedBox(height: topPadding + 8)),
                 // Stories Section - Commented out for now
                 // SliverToBoxAdapter(
                 //   child: Container(
@@ -318,17 +340,7 @@ class _FeedPageState extends ConsumerState<FeedPage>
                           ),
                         ),
                       ),
-                      error: (e, _) => SliverFillRemaining(
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 40),
-                            child: Text(
-                              'Failed to load feed',
-                              style: TextThemes.getBodyMediumStyle(context),
-                            ),
-                          ),
-                        ),
-                      ),
+                      error: (e, _) => _buildFeedErrorWidget(e),
                     );
                   },
                 ),
@@ -341,12 +353,12 @@ class _FeedPageState extends ConsumerState<FeedPage>
             onRefresh: _handleRefresh,
             color: ThemeColors.primaryColor,
             backgroundColor: ThemeColors.getSurfaceColor(context),
-            edgeOffset: 170 + MediaQuery.of(context).padding.top,
+            edgeOffset: topPadding,
             child: CustomScrollView(
               physics: const BouncingScrollPhysics(),
               controller: _friendScrollController,
               slivers: [
-                SliverToBoxAdapter(child: SizedBox(height: 170)),
+                SliverToBoxAdapter(child: SizedBox(height: topPadding + 8)),
                 Consumer(
                   builder: (context, ref, _) {
                     final feed = ref.watch(feedPostsProvider);
@@ -425,17 +437,7 @@ class _FeedPageState extends ConsumerState<FeedPage>
                           child: LoadingWidget(message: 'Loading posts...'),
                         ),
                       ),
-                      error: (e, _) => SliverFillRemaining(
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 40),
-                            child: Text(
-                              'Failed to load friends feed',
-                              style: TextThemes.getBodyMediumStyle(context),
-                            ),
-                          ),
-                        ),
-                      ),
+                      error: (e, _) => _buildFeedErrorWidget(e),
                     );
                   },
                 ),
@@ -443,6 +445,95 @@ class _FeedPageState extends ConsumerState<FeedPage>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFeedErrorWidget(dynamic e) {
+    final errorText = e.toString().replaceFirst('Exception: ', '');
+    final lower = errorText.toLowerCase();
+    final isAuthError = lower.contains('authenticate') ||
+        lower.contains('unauthorized') ||
+        lower.contains('login') ||
+        lower.contains('token');
+    final isRegistrationError = lower.contains('registration');
+
+    IconData iconData = Icons.error_outline;
+    String actionLabel = 'Retry';
+    VoidCallback onAction = () {
+      ref.read(feedPostsProvider.notifier).loadPosts();
+    };
+
+    if (isAuthError) {
+      iconData = Icons.lock_outline;
+      actionLabel = 'Log In Again';
+      onAction = () {
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      };
+    } else if (isRegistrationError) {
+      iconData = Icons.person_outline;
+      actionLabel = 'Complete Profile';
+      onAction = () {
+        Navigator.pushNamed(context, '/create-profile');
+      };
+    }
+
+    return SliverFillRemaining(
+      hasScrollBody: false,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: ThemeColors.primaryColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  iconData,
+                  size: 38,
+                  color: ThemeColors.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                errorText,
+                textAlign: TextAlign.center,
+                style: TextThemes.getBodyMediumStyle(context).copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ThemeColors.primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                onPressed: onAction,
+                child: Text(
+                  actionLabel,
+                  style: const TextStyle(
+                    fontFamily: 'Quicksand',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

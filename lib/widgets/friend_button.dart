@@ -64,13 +64,11 @@ class FriendButton extends ConsumerWidget {
         );
 
       case FriendshipState.outgoing:
-        // TODO: Integrate remove friend request API in future build
-        // Once the cancel/remove request endpoint is available, re-enable
-        // the onTap to call cancelRequest(). For now, disable to prevent
-        // duplicate requests and clearly indicate the pending state.
         return _RequestSentPill(
           compact: compact,
-          onTap: null, // Disabled until remove request API is integrated
+          onTap: () => ref
+              .read(friendshipStatusProvider(targetUserId).notifier)
+              .cancelRequest(),
         );
 
       case FriendshipState.incoming:

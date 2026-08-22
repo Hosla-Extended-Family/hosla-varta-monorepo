@@ -95,6 +95,7 @@ class FeedPostsNotifier extends StateNotifier<AsyncValue<List<Post>>> {
 
   /// Refresh posts
   Future<void> refreshPosts() async {
+    state = const AsyncValue.loading();
     try {
       final result = await _feedService.getFeed(limit: 20);
       _nextCursor = result.nextCursor;

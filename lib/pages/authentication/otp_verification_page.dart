@@ -8,6 +8,7 @@ import 'package:hosla/widgets/hosla_text_field.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
 // http not needed here; API handled by AuthService
 import 'package:hosla/services/auth_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class OtpVerificationPage extends StatefulWidget {
   OtpVerificationPage({
@@ -80,21 +81,36 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
     }
 
     try {
+      String? fcmToken;
+      try {
+        fcmToken = await FirebaseMessaging.instance.getToken();
+      } catch (e) {
+        debugPrint('Failed to get FCM token: $e');
+      }
+
       final result = await AuthService.instance.verifyOtp(
         phone: widget.phoneNumber,
         otp: otp,
         // Optionally pass FCM token/model if available
-        fcmToken: null,
+        fcmToken: fcmToken,
         deviceModel: null,
       );
 
       final success = (result['success'] == true);
       if (success) {
-        return "OTP verified successfully!";
+        final data = result['data'] as Map<String, dynamic>?;
+        final isNewUser = data?['isNewUser'] == true;
+        final user = data?['user'] as Map<String, dynamic>?;
+        final name = user?['name']?.toString().trim() ?? '';
+        if (isNewUser || name.isEmpty) {
+          return "NEEDS_PROFILE";
+        }
+        return "SUCCESS";
       }
       return "OTP verification failed.";
     } catch (e) {
-      return "OTP verification failed. Please try again.";
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      return msg.isNotEmpty ? msg : "OTP verification failed. Please try again.";
     }
   }
 
@@ -134,38 +150,41 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
             Navigator.pop(context);
           },
         ),
-        title: Text(
-          'OTP Verification',
-          style: TextThemes.getTitleStyle(context),
-        ),
-        centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: Constants.defaultPadding,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 24),
-            Text(
-              'Enter the OTP sent to your phone:',
-              style: TextThemes.getBodyMediumStyle(context),
+            SizedBox(height: 20),
+            Center(
+              child: Text(
+                'OTP Verification',
+                style: TextThemes.getTitleStyle(context),
+              ),
+            ),
+            SizedBox(height: 20),
+            Center(
+              child: Text(
+                'Enter the 6-digit OTP sent to your phone number',
+                style: TextThemes.getBodyMediumStyle(context),
+              ),
             ),
             SizedBox(height: 20),
             HoslaTextField(
+              controller: _otpController,
               label: 'OTP',
               icon: Icons.lock_outline,
-              controller: _otpController,
               hintText: 'Enter OTP',
               keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.done,
             ),
+            SizedBox(height: 16),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   _canResend
-                      ? "Didn't receive the code?"
-                      : 'You can resend in ${_formatTime(_secondsRemaining)}',
+                      ? 'Did not receive OTP?'
+                      : 'Resend code in ${_formatTime(_secondsRemaining)}',
                   style: TextThemes.getBodySmallStyle(context),
                 ),
                 const SizedBox(width: 8),
@@ -179,9 +198,16 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
             Button(
               text: 'Verify OTP',
               onPressed: () {
-                // TODO: Handle OTP verification logic here
                 _handleVerifyOtp().then((result) {
-                  if (result == "OTP verified successfully!") {
+                  if (result == "NEEDS_PROFILE") {
+                    SnackBarWidget.show(context, 'Please complete your profile to continue');
+                    Navigator.pushReplacementNamed(
+                      context,
+                      '/create-profile',
+                      arguments: widget.phoneNumber,
+                    );
+                  } else if (result == "SUCCESS") {
+                    SnackBarWidget.show(context, 'Login successful!');
                     Navigator.pushReplacementNamed(
                       context,
                       widget.endRoute,

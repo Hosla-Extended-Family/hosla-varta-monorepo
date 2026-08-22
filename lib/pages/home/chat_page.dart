@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/theme_colors.dart';
 import 'package:hosla/models/chat_model.dart';
 import 'package:hosla/providers/chat_provider.dart';
+import 'package:hosla/providers/user_provider.dart';
 import 'package:hosla/pages/chat_detail_page.dart';
 import 'package:hosla/widgets/glass_app_bar.dart';
 import 'package:hosla/pages/home/new_chat_page.dart';
@@ -32,16 +34,77 @@ class ChatPage extends ConsumerStatefulWidget {
 class _ChatPageState extends ConsumerState<ChatPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  Timer? _debounceTimer;
+  Set<String>? _matchingChatIds;
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
+  void _onSearchChanged(String query) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 250), () async {
+      final trimmed = query.trim().toLowerCase();
+      if (!mounted) return;
+
+      if (trimmed.isEmpty) {
+        setState(() {
+          _searchQuery = '';
+          _matchingChatIds = null;
+        });
+        return;
+      }
+
+      final chatService = ref.read(chatServiceProvider);
+      final chatsAsync = ref.read(chatsProvider);
+      final chats = chatsAsync.value ?? [];
+      final matching = <String>{};
+
+      for (final chat in chats) {
+        if (chat.name.toLowerCase().contains(trimmed)) {
+          matching.add(chat.id);
+          continue;
+        }
+        if (chat.lastMessage?.content.toLowerCase().contains(trimmed) == true) {
+          matching.add(chat.id);
+          continue;
+        }
+        // Deep search through stored messages in local store
+        try {
+          final msgs = await chatService.getChatMessages(chat.id);
+          if (msgs.any((m) => m.content.toLowerCase().contains(trimmed))) {
+            matching.add(chat.id);
+          }
+        } catch (_) {}
+      }
+
+      if (mounted) {
+        setState(() {
+          _searchQuery = trimmed;
+          _matchingChatIds = matching;
+        });
+      }
+    });
+  }
+
+  void _clearSearch() {
+    _debounceTimer?.cancel();
+    _searchController.clear();
+    setState(() {
+      _searchQuery = '';
+      _matchingChatIds = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final chats = ref.watch(chatsProvider);
+    final chatsAsync = ref.watch(chatsProvider);
+    final chats =
+        chatsAsync.whenOrNull(data: (list) => list) ?? const <Chat>[];
+    final isLoading = chatsAsync.isLoading;
     final filteredChats = _filterChats(chats);
 
     return Scaffold(
@@ -62,7 +125,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         ],
       ),
       floatingActionButton: NewChatFab(
-        onPressed: () => _showNewChatOptions(context),
+        onPressed: () => _openNewChat(context),
       ),
       body: Column(
         children: [
@@ -111,16 +174,13 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           vertical: 10,
                         ),
                       ),
-                      onChanged: (v) => setState(() => _searchQuery = v),
+                      onChanged: _onSearchChanged,
                       onTapOutside: (_) => FocusScope.of(context).unfocus(),
                     ),
                   ),
-                  if (_searchQuery.isNotEmpty)
+                  if (_searchController.text.isNotEmpty)
                     GestureDetector(
-                      onTap: () {
-                        _searchController.clear();
-                        setState(() => _searchQuery = '');
-                      },
+                      onTap: _clearSearch,
                       child: Icon(
                         Icons.close_rounded,
                         color: ThemeColors.getSecondaryTextColor(context),
@@ -137,7 +197,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             child: RefreshIndicator(
               color: ThemeColors.primaryColor,
               onRefresh: () => ref.read(chatsProvider.notifier).loadChats(),
-              child: chats.isEmpty
+              child: isLoading && chats.isEmpty
+                  ? const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : chats.isEmpty
                   ? _buildEmptyState()
                   : filteredChats.isEmpty
                   ? _buildNoResultsState()
@@ -236,6 +300,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
   List<Chat> _filterChats(List<Chat> chats) {
     if (_searchQuery.isEmpty) return chats;
+    if (_matchingChatIds != null) {
+      return chats.where((c) => _matchingChatIds!.contains(c.id)).toList();
+    }
     final q = _searchQuery.toLowerCase();
     return chats.where((c) {
       return c.name.toLowerCase().contains(q) ||
@@ -324,49 +391,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     );
   }
 
-  void _showNewChatOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: ThemeColors.getCardColor(context),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _handle(context),
-              const SizedBox(height: 12),
-              _sheetTile(
-                Icons.person_add_alt_1_rounded,
-                'New Chat',
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const NewChatPage()),
-                  );
-                },
-              ),
-              _sheetTile(
-                Icons.group_add_rounded,
-                'New Group',
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const NewGroupChatPage()),
-                  );
-                },
-              ),
-              _sheetTile(Icons.qr_code_scanner_rounded, 'Scan QR Code'),
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
-      ),
+  void _openNewChat(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const NewChatPage()),
     );
   }
 
@@ -416,7 +444,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 // CHAT LIST ITEM — Extracted reusable widget
 // ═══════════════════════════════════════════════════════════════════════════════
 
-class _ChatListItem extends StatelessWidget {
+class _ChatListItem extends ConsumerWidget {
   final Chat chat;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
@@ -428,9 +456,25 @@ class _ChatListItem extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final hasUnread = chat.unreadCount > 0;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final onlineUsers = ref.watch(onlineUsersProvider);
+    final profileUser = ref.watch(currentUserProfileProvider);
+    final myId = profileUser?.id ?? '';
+    final otherUserId = chat.participantIds.firstWhere(
+      (id) => id != myId,
+      orElse: () => '',
+    );
+    final isOnline = chat.type == ChatType.individual &&
+        otherUserId.isNotEmpty &&
+        onlineUsers.contains(otherUserId);
+
+    final lastMsg = chat.lastMessage;
+    final isSentByMe = lastMsg != null &&
+        ((myId.isNotEmpty && lastMsg.senderId == myId) ||
+            lastMsg.senderId == 'current_user' ||
+            lastMsg.senderId.isEmpty);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -455,9 +499,7 @@ class _ChatListItem extends StatelessWidget {
                 // ── Avatar with online dot ──
                 _Avatar(
                   imageUrl: chat.avatarUrl ?? '',
-                  isOnline:
-                      chat.type == ChatType.individual &&
-                      chat.participantIds.length == 2,
+                  isOnline: isOnline,
                   isGroup: chat.type == ChatType.group,
                 ),
                 const SizedBox(width: 14),
@@ -505,15 +547,15 @@ class _ChatListItem extends StatelessWidget {
                       Row(
                         children: [
                           // Read receipts for sent messages
-                          if (chat.lastMessage?.senderId == 'current_user')
+                          if (isSentByMe)
                             Padding(
                               padding: const EdgeInsets.only(right: 4),
                               child: Icon(
-                                chat.lastMessage?.isRead == true
+                                lastMsg.isRead
                                     ? Icons.done_all_rounded
                                     : Icons.done_rounded,
-                                size: 16,
-                                color: chat.lastMessage?.isRead == true
+                                size: 15,
+                                color: lastMsg.isRead
                                     ? ThemeColors.primaryColor
                                     : ThemeColors.getSecondaryTextColor(
                                         context,

@@ -395,11 +395,6 @@ class _PostCardState extends ConsumerState<PostCard>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final maxLines = _isExpanded ? null : 3;
 
-    // Check if post has emergency tag (case insensitive)
-    final hasEmergencyTag = _post.tags.any(
-      (tag) => tag.toLowerCase() == 'emergency',
-    );
-
     // Filter out 'default' tag (case insensitive)
     final displayTags = _post.tags
         .where((tag) => tag.toLowerCase() != 'default')
@@ -408,23 +403,17 @@ class _PostCardState extends ConsumerState<PostCard>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: hasEmergencyTag
-            ? ThemeColors.getCardColor(context)
-            : ThemeColors.getCardColor(context),
+        color: ThemeColors.getCardColor(context),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: hasEmergencyTag
-              ? Colors.red.shade400
-              : ThemeColors.getBorderColor(context).withValues(alpha: 0.1),
-          width: hasEmergencyTag ? 2 : 1,
+          color: ThemeColors.getBorderColor(context).withValues(alpha: 0.1),
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: hasEmergencyTag
-                ? Colors.red.withValues(alpha: 0.3)
-                : (isDark
-                      ? Colors.black.withValues(alpha: 0.3)
-                      : ThemeColors.getOverlayColor(context, opacity: 0.08)),
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.3)
+                : ThemeColors.getOverlayColor(context, opacity: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 4),
             spreadRadius: 0,
