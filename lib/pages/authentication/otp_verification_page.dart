@@ -1,12 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:hosla/core/constants/api_constants.dart';
 import 'package:hosla/core/navigation/route_observer.dart';
 import 'package:hosla/core/constants/text_theme.dart';
 import 'package:hosla/core/constants/constants.dart';
 import 'package:hosla/widgets/button.dart';
 import 'package:hosla/widgets/hosla_text_field.dart';
 import 'package:hosla/widgets/snack_bar_widget.dart';
-// http not needed here; API handled by AuthService
 import 'package:hosla/services/auth_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
@@ -116,10 +118,25 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
 
   Future<void> _handleResendOtp() async {
     if (!_canResend) return;
-    // TODO: Integrate your resend OTP API call here.
-    if (!mounted) return;
-    SnackBarWidget.show(context, 'OTP resent');
-    _startResendCountdown();
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/api/auth/request-otp'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'phone': widget.phoneNumber}),
+      );
+      if (!mounted) return;
+      if (response.statusCode == 200) {
+        SnackBarWidget.show(context, 'OTP resent successfully');
+        _startResendCountdown();
+      } else {
+        SnackBarWidget.show(context, 'Failed to resend OTP');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      SnackBarWidget.show(context, 'Error resending OTP: $e');
+    }
   }
 
   String _formatTime(int seconds) {
