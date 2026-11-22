@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "622978154507",
+    "project_id": "hosla-fcm",
+    "storage_bucket": "hosla-fcm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:622978154507:android:ebc8674252515f6df1470e",
+        "android_client_info": {
+          "package_name": "com.example.hosla"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-m7kaatKI6AaaFkbQt1NgEilysbPWpBc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
