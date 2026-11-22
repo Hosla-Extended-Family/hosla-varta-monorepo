@@ -1,0 +1,75 @@
+import express from 'express';
+import http from 'http';
+import cors from 'cors';
+import helmet from 'helmet';
+import compression from 'compression';
+import config from './config';
+import routes from './routes';
+import { errorHandler } from './middlewares/errorHandler';
+import { apiRateLimiter } from './middlewares/rateLimiter';
+import { platformMiddleware } from './middlewares/platformMiddleware';
+import morgan from 'morgan';
+import logger, { stream } from './utils/logger';
+import { initSocket } from './config/socket';
+import { registerChatHandlers } from './socket/chatHandlers';
+import './config/firebase';
+import './jobs/worker';
+
+const app = express();
+const httpServer = http.createServer(app);
+
+app.use(helmet());
+app.use(cors({
+    origin: config.env === 'development'
+        ? '*'
+        : [config.app.url],
+    credentials: true,
+}));
+
+app.use(morgan('combined', { stream }));
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+app.use(compression());
+
+app.use('/api', platformMiddleware);
+
+app.use('/api', apiRateLimiter);
+
+app.use('/api', routes);
+
+app.use('/uploads', express.static(config.upload.dir));
+
+app.use((_req, res) => {
+    res.status(404).json({
+        success: false,
+        error: {
+            code: 'NOT_FOUND',
+            message: 'Endpoint not found',
+        },
+    });
+});
+
+app.use(errorHandler);
+
+const startServer = async () => {
+    try {
+        const io = initSocket(httpServer);
+        io.on('connection', (socket) => registerChatHandlers(socket));
+
+        httpServer.listen(config.port, () => {
+            logger.info(`Server running on port ${config.port} in ${config.env} mode`);
+        });
+
+        httpServer.timeout = config.app.serverTimeout;
+        logger.info(`Server timeout set to ${config.app.serverTimeout}ms`);
+    } catch (error) {
+        logger.error('Failed to start server:', error);
+        process.exit(1);
+    }
+};
+
+startServer();
+
+export default app;
